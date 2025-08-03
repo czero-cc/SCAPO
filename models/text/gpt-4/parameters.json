@@ -1,0 +1,56 @@
+[
+  {
+    "name": "temperature",
+    "type": "float",
+    "default": 0.7,
+    "recommended": 0.3,
+    "range": {"min": 0.0, "max": 2.0},
+    "description": "Controls randomness in output generation",
+    "impact": "Lower values make output more deterministic and focused, higher values increase creativity and variation"
+  },
+  {
+    "name": "max_tokens",
+    "type": "int",
+    "default": null,
+    "recommended": 2048,
+    "range": {"min": 1, "max": 4096},
+    "description": "Maximum number of tokens to generate",
+    "impact": "Limits response length; set appropriately for your use case to control costs and response completeness"
+  },
+  {
+    "name": "top_p",
+    "type": "float",
+    "default": 1.0,
+    "recommended": 0.9,
+    "range": {"min": 0.0, "max": 1.0},
+    "description": "Nucleus sampling parameter",
+    "impact": "Alternative to temperature; lower values focus on more likely tokens"
+  },
+  {
+    "name": "frequency_penalty",
+    "type": "float",
+    "default": 0.0,
+    "recommended": 0.3,
+    "range": {"min": -2.0, "max": 2.0},
+    "description": "Penalizes repeated tokens based on frequency",
+    "impact": "Positive values reduce repetition; useful for creative tasks"
+  },
+  {
+    "name": "presence_penalty",
+    "type": "float",
+    "default": 0.0,
+    "recommended": 0.3,
+    "range": {"min": -2.0, "max": 2.0},
+    "description": "Penalizes tokens based on presence in text",
+    "impact": "Encourages topic diversity; useful for brainstorming"
+  },
+  {
+    "name": "stop",
+    "type": "array",
+    "default": null,
+    "recommended": ["\\n\\n", "###", "---"],
+    "range": null,
+    "description": "Sequences where the API will stop generating",
+    "impact": "Useful for controlling output format and preventing overgeneration"
+  }
+]

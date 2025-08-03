@@ -1,0 +1,44 @@
+[
+  {
+    "prompt": "A golden retriever puppy playing with a red ball in a sunny backyard, slowly running towards camera, shallow depth of field, warm afternoon lighting, cinematic style, 4 seconds, 1920x1080, 30fps",
+    "explanation": "This prompt includes all essential elements: clear subject, specific action, defined environment, camera technique, style, and technical specifications.",
+    "output_preview": "Smooth video of playful puppy with natural motion, consistent lighting, and professional cinematography",
+    "tags": ["animals", "outdoor", "cinematic", "movement"]
+  },
+  {
+    "prompt": "Timelapse of clouds moving over mountain peaks at sunset, static wide shot, dramatic lighting with orange and purple hues, landscape documentary style, 5 seconds, 4K resolution, 24fps",
+    "explanation": "Perfect for scenic generation - clear subject, atmospheric conditions, fixed camera, and appropriate style for nature content.",
+    "output_preview": "Dramatic cloud movement with vibrant sunset colors and stable mountain silhouettes",
+    "tags": ["landscape", "timelapse", "nature", "atmospheric"]
+  },
+  {
+    "prompt": "Close-up of hands preparing sushi, precise knife movements, soft studio lighting, shallow focus on knife blade, food documentary aesthetic, 3 seconds, 1080p, 60fps",
+    "explanation": "Focuses on detailed hand movements with appropriate framing and high frame rate for smooth motion capture.",
+    "output_preview": "Sharp, detailed footage of sushi preparation with smooth, professional movements",
+    "tags": ["food", "close-up", "hands", "professional"]
+  },
+  {
+    "prompt": "A businessman in a dark suit walking through a modern glass office building, tracking shot from the side, natural window lighting creating shadows, corporate commercial style, 4 seconds, 1920x1080, 30fps",
+    "explanation": "Corporate-friendly prompt with clear subject, environment, camera movement, and appropriate styling.",
+    "output_preview": "Professional footage suitable for corporate videos with smooth tracking and modern aesthetic",
+    "tags": ["corporate", "tracking-shot", "professional", "indoor"]
+  },
+  {
+    "prompt": "Neon-lit cyberpunk city street at night, slow forward dolly shot, rain-slicked pavement reflecting colorful lights, blade runner aesthetic, volumetric fog, 5 seconds, 2K, 24fps",
+    "explanation": "Atmospheric scene with strong style direction, environmental effects, and smooth camera movement.",
+    "output_preview": "Moody cyberpunk scene with rich colors, atmospheric effects, and cinematic movement",
+    "tags": ["cyberpunk", "night", "atmospheric", "dolly-shot"]
+  },
+  {
+    "prompt": "Underwater shot of tropical fish swimming around coral reef, gentle camera drift, crystal clear water with caustic light patterns, nature documentary style, 6 seconds, 4K, 30fps",
+    "explanation": "Underwater scene with appropriate movement for aquatic environment and documentary styling.",
+    "output_preview": "Serene underwater footage with realistic fish movement and beautiful light patterns",
+    "tags": ["underwater", "nature", "documentary", "wildlife"]
+  },
+  {
+    "prompt": "A dancer in flowing white dress spinning in an empty warehouse, orbital camera movement, dramatic side lighting through windows, contemporary dance film aesthetic, 4 seconds, 1080p, 48fps",
+    "explanation": "Dynamic human movement with complementary camera motion and artistic lighting setup.",
+    "output_preview": "Graceful dance footage with smooth camera work and artistic lighting",
+    "tags": ["dance", "artistic", "orbital-shot", "human-movement"]
+  }
+]

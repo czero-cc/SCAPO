@@ -1,0 +1,293 @@
+# SOTA Practices Scraping Sources Configuration
+# This file contains all approved sources for automated scraping
+# Each source includes scraping method, rate limits, and content focus
+
+reddit:
+  description: "Reddit communities focused on AI/ML practices"
+  api: "PRAW (Python Reddit API Wrapper)"
+  rate_limit: "100 requests/minute per app"
+  auth: "OAuth2 with client credentials"
+  sources:
+    - name: "r/PromptEngineering"
+      url: "https://www.reddit.com/r/PromptEngineering/"
+      focus: "Prompt patterns, evaluation threads, paper links"
+      priority: high
+      models: ["gpt-4", "claude", "llama", "general"]
+    
+    - name: "r/LocalLLM"
+      url: "https://www.reddit.com/r/LocalLLM/"
+      focus: "Running LLMs offline, hardware configs, benchmarks"
+      priority: high
+      models: ["llama", "mistral", "phi", "quantized"]
+    
+    - name: "r/LocalLLaMA"
+      url: "https://www.reddit.com/r/LocalLLaMA/"
+      focus: "Model comparisons, quantization techniques"
+      priority: high
+      models: ["llama", "mistral", "general"]
+    
+    - name: "r/LLMOps"
+      url: "https://www.reddit.com/r/llmops/"
+      focus: "Deployment, monitoring, prompt-ops tooling"
+      priority: medium
+      models: ["general", "infrastructure"]
+    
+    - name: "r/StableDiffusion"
+      url: "https://www.reddit.com/r/StableDiffusion/"
+      focus: "Image generation recipes, ControlNet, LoRA"
+      priority: high
+      models: ["stable-diffusion", "sdxl", "controlnet"]
+    
+    - name: "r/midjourney"
+      url: "https://www.reddit.com/r/midjourney/"
+      focus: "Midjourney prompts and parameters"
+      priority: high
+      models: ["midjourney"]
+    
+    - name: "r/OpenAI"
+      url: "https://www.reddit.com/r/OpenAI/"
+      focus: "GPT best practices, API usage"
+      priority: high
+      models: ["gpt-4", "gpt-3.5", "dalle"]
+    
+    - name: "r/ClaudeAI"
+      url: "https://www.reddit.com/r/ClaudeAI/"
+      focus: "Claude usage patterns and tips"
+      priority: high
+      models: ["claude", "claude-3"]
+    
+    - name: "r/generativeAI"
+      url: "https://www.reddit.com/r/generativeAI/"
+      focus: "Broad GenAI Q&A, education, tooling"
+      priority: medium
+      models: ["general"]
+    
+    - name: "r/ArtificialIntelligence"
+      url: "https://www.reddit.com/r/ArtificialIntelligence/"
+      focus: "Meta debates, news, trends"
+      priority: low
+      models: ["general"]
+    
+    - name: "r/comfyui"
+      url: "https://www.reddit.com/r/comfyui/"
+      focus: "ComfyUI workflows and nodes"
+      priority: medium
+      models: ["stable-diffusion", "comfyui"]
+    
+    - name: "r/singularity"
+      url: "https://www.reddit.com/r/singularity/"
+      focus: "AI advances and discussions"
+      priority: low
+      models: ["general"]
+
+github:
+  description: "GitHub repositories with structured AI best practices"
+  api: "GitHub API v4 (GraphQL) or raw.githubusercontent.com"
+  rate_limit: "5000 requests/hour authenticated"
+  auth: "Personal Access Token (PAT)"
+  sources:
+    - name: "DAIR-AI Prompt Engineering Guide"
+      url: "https://github.com/dair-ai/Prompt-Engineering-Guide"
+      raw_url: "https://raw.githubusercontent.com/dair-ai/Prompt-Engineering-Guide/main/README.md"
+      focus: "Research papers, cheat-sheets, prompt engineering courses"
+      license: "CC-BY-SA-4.0"
+      priority: high
+      update_frequency: "weekly"
+    
+    - name: "Awesome Prompt Engineering"
+      url: "https://github.com/promptslab/Awesome-Prompt-Engineering"
+      raw_url: "https://raw.githubusercontent.com/promptslab/Awesome-Prompt-Engineering/main/README.md"
+      focus: "Curated links to papers, tools, datasets, prompt patterns"
+      license: "MIT"
+      priority: high
+      update_frequency: "weekly"
+    
+    - name: "Awesome Generative AI"
+      url: "https://github.com/steven2358/awesome-generative-ai"
+      raw_url: "https://raw.githubusercontent.com/steven2358/awesome-generative-ai/main/README.md"
+      focus: "Broader GenAI resources, models, frameworks"
+      license: "CC0"
+      priority: medium
+      update_frequency: "biweekly"
+    
+    - name: "Brex Prompt Engineering"
+      url: "https://github.com/brexhq/prompt-engineering"
+      raw_url: "https://raw.githubusercontent.com/brexhq/prompt-engineering/main/README.md"
+      focus: "Corporate best practices, guardrails, evaluation"
+      license: "Apache-2.0"
+      priority: high
+      update_frequency: "monthly"
+    
+    - name: "OpenAI Cookbook"
+      url: "https://github.com/openai/openai-cookbook"
+      focus: "Example code and guides for OpenAI API"
+      license: "MIT"
+      priority: high
+      update_frequency: "weekly"
+    
+    - name: "LangChain Documentation"
+      url: "https://github.com/langchain-ai/langchain"
+      focus: "Agent patterns, chain examples"
+      license: "MIT"
+      priority: medium
+      update_frequency: "daily"
+
+forums:
+  description: "Developer forums with structured discussions"
+  sources:
+    - name: "OpenAI Community Forum"
+      url: "https://community.openai.com"
+      api: "Discourse JSON endpoints"
+      endpoints:
+        latest: "https://community.openai.com/latest.json"
+        categories: "https://community.openai.com/categories.json"
+        search: "https://community.openai.com/search.json"
+      focus: "Production guardrails, rate-limit workarounds"
+      priority: high
+      rate_limit: "60 requests/minute"
+    
+    - name: "Hugging Face Forums"
+      url: "https://discuss.huggingface.co"
+      api: "Discourse JSON endpoints"
+      focus: "Model fine-tuning, deployment tips"
+      priority: high
+      rate_limit: "60 requests/minute"
+    
+    - name: "AIPRM Community Forum"
+      url: "https://forum.aiprm.com"
+      api: "Discourse JSON endpoints"
+      focus: "SEO-oriented prompt tweaks"
+      priority: low
+      rate_limit: "60 requests/minute"
+
+apis:
+  description: "Direct API access to prompt/practice databases"
+  sources:
+    - name: "LangChain Hub"
+      url: "https://smith.langchain.com/hub"
+      api: "REST & Python client"
+      sdk: "langchain.hub"
+      focus: "Community-maintained prompt chains"
+      auth: "API key"
+      priority: high
+      example_endpoint: "https://api.smith.langchain.com/v1/public/prompts"
+    
+    - name: "Hugging Face Datasets"
+      url: "https://huggingface.co/datasets"
+      api: "Datasets library"
+      focus: "Prompt templates, evaluation datasets"
+      priority: high
+      specific_datasets:
+        - "bigscience/promptsource"
+        - "databricks/databricks-dolly-15k"
+        - "OpenAssistant/oasst1"
+    
+    - name: "Papers with Code"
+      url: "https://paperswithcode.com"
+      api: "REST API v0"
+      endpoints:
+        tasks: "https://paperswithcode.com/api/v0/tasks/"
+        papers: "https://paperswithcode.com/api/v0/papers/"
+      focus: "Benchmarks, best implementations"
+      priority: medium
+      rate_limit: "100 requests/hour"
+
+discord:
+  description: "Discord communities (requires bot setup)"
+  api: "discord.py with bot token"
+  auth: "Bot token with message read permissions"
+  sources:
+    - name: "LangChain Discord"
+      invite: "Public"
+      size: "~60k members"
+      focus: "Live debugging of agents/chains"
+      priority: medium
+      channels:
+        - "general"
+        - "help"
+        - "showcase"
+    
+    - name: "Hugging Face Discord"
+      invite: "hf.co/join/discord"
+      size: "~180k members"
+      focus: "Fine-tune configs, community sprints"
+      priority: medium
+      channels:
+        - "general"
+        - "beginners"
+        - "research"
+    
+    - name: "Midjourney Discord"
+      invite: "Limited"
+      focus: "Image generation prompts"
+      priority: low
+      note: "Heavily rate-limited, consider manual curation"
+
+rss_feeds:
+  description: "RSS/Atom feeds for blog content"
+  sources:
+    - name: "DEV.to GenerativeAI tag"
+      url: "https://dev.to/feed/tag/generativeai"
+      format: "RSS"
+      focus: "How-to posts, code examples"
+      priority: medium
+    
+    - name: "Towards Data Science - AI"
+      url: "https://towardsdatascience.com/feed"
+      format: "RSS"
+      focus: "Technical deep-dives"
+      priority: low
+    
+    - name: "AI Alignment Forum"
+      url: "https://www.alignmentforum.org/feed.xml"
+      format: "RSS"
+      focus: "Safety practices, alignment techniques"
+      priority: low
+
+news_aggregators:
+  description: "High-signal news and discussion aggregators"
+  sources:
+    - name: "Hacker News"
+      url: "https://news.ycombinator.com"
+      api: "Firebase API"
+      endpoints:
+        top: "https://hacker-news.firebaseio.com/v0/topstories.json"
+        item: "https://hacker-news.firebaseio.com/v0/item/{id}.json"
+        search: "https://hn.algolia.com/api/v1/search"
+      focus: "Technical discussions, new tools"
+      priority: high
+      tags_to_track: ["gpt", "llm", "prompt", "ai", "genai"]
+
+# Scraping Configuration
+scraping_config:
+  user_agent: "Mozilla/5.0 (compatible; SOTAPracticesBot/1.0; +https://github.com/fiefworks/sota-practices)"
+  respect_robots_txt: true
+  concurrent_requests: 5
+  timeout_seconds: 30
+  retry_attempts: 3
+  cache_duration_hours: 24
+  
+# Content Filtering
+content_filters:
+  min_score: 10  # Minimum upvotes/score
+  min_comments: 5  # Minimum engagement
+  keywords:
+    include:
+      - "prompt"
+      - "parameter"
+      - "best practice"
+      - "tip"
+      - "trick"
+      - "optimal"
+      - "recommended"
+      - "setting"
+      - "config"
+      - "guide"
+      - "tutorial"
+      - "workflow"
+    exclude:
+      - "meme"
+      - "joke"
+      - "shitpost"
+      - "[deleted]"
+      - "[removed]"

@@ -1,0 +1,74 @@
+[
+  {
+    "name": "fps",
+    "type": "int",
+    "default": 24,
+    "recommended": 30,
+    "range": {"min": 8, "max": 60},
+    "description": "Frames per second for video generation",
+    "impact": "Higher FPS creates smoother motion but requires more computation. 24-30 fps is ideal for most use cases"
+  },
+  {
+    "name": "duration",
+    "type": "float",
+    "default": 4.0,
+    "recommended": 3.0,
+    "range": {"min": 1.0, "max": 10.0},
+    "description": "Video duration in seconds",
+    "impact": "Longer videos may have reduced consistency. 2-4 seconds typically yields best results"
+  },
+  {
+    "name": "resolution",
+    "type": "string",
+    "default": "1280x720",
+    "recommended": "1920x1080",
+    "range": ["640x480", "1280x720", "1920x1080", "3840x2160"],
+    "description": "Output video resolution",
+    "impact": "Higher resolution provides more detail but increases generation time and file size"
+  },
+  {
+    "name": "motion_strength",
+    "type": "float",
+    "default": 0.5,
+    "recommended": 0.7,
+    "range": {"min": 0.0, "max": 1.0},
+    "description": "Controls the amount of motion in generated video",
+    "impact": "Higher values create more dynamic movement but may reduce stability"
+  },
+  {
+    "name": "consistency_weight",
+    "type": "float",
+    "default": 0.8,
+    "recommended": 0.85,
+    "range": {"min": 0.0, "max": 1.0},
+    "description": "Temporal consistency between frames",
+    "impact": "Higher values maintain better consistency but may limit motion variety"
+  },
+  {
+    "name": "guidance_scale",
+    "type": "float",
+    "default": 7.5,
+    "recommended": 8.0,
+    "range": {"min": 1.0, "max": 20.0},
+    "description": "How closely to follow the text prompt",
+    "impact": "Higher values follow prompt more closely but may reduce video quality"
+  },
+  {
+    "name": "seed",
+    "type": "int",
+    "default": -1,
+    "recommended": -1,
+    "range": {"min": -1, "max": 2147483647},
+    "description": "Random seed for reproducible results (-1 for random)",
+    "impact": "Set to specific value for reproducible outputs, -1 for variation"
+  },
+  {
+    "name": "num_inference_steps",
+    "type": "int",
+    "default": 50,
+    "recommended": 75,
+    "range": {"min": 20, "max": 150},
+    "description": "Number of denoising steps",
+    "impact": "More steps generally improve quality but increase generation time"
+  }
+]
