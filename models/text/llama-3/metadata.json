@@ -1,0 +1,14 @@
+{
+  "model_id": "llama-3",
+  "version": "1.0.0",
+  "last_updated": "2025-08-05T00:48:31.015431",
+  "sources_count": 3,
+  "tags": [
+    "gpt-4",
+    "gpt4",
+    "gpt-3",
+    "claude",
+    "claude-3"
+  ],
+  "update_frequency_hours": 24
+}

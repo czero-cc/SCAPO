@@ -1,0 +1,115 @@
+name: "💡 Share Best Practice"
+description: Share a prompt, parameter setting, or tip that works well
+title: "[Practice]: "
+labels: ["best-practice", "community-knowledge"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Share your discovered best practices with the community! Every contribution helps.
+
+  - type: dropdown
+    id: practice-type
+    attributes:
+      label: Practice Type
+      description: What kind of practice are you sharing?
+      options:
+        - Prompt Template/Example
+        - Parameter Configuration
+        - Common Pitfall/Solution
+        - Integration Pattern
+        - Performance Optimization
+        - Other Tip/Trick
+    validations:
+      required: true
+
+  - type: dropdown
+    id: model
+    attributes:
+      label: Which model(s) does this apply to?
+      description: Select the primary model (mention others in description)
+      options:
+        - GPT-4
+        - GPT-3.5
+        - Claude-3
+        - Claude-2
+        - Llama-3
+        - Llama-2
+        - Stable Diffusion
+        - Midjourney
+        - DALL-E 3
+        - Other (specify below)
+    validations:
+      required: true
+
+  - type: textarea
+    id: practice-content
+    attributes:
+      label: The Practice
+      description: Share your practice in detail
+      placeholder: |
+        For prompt template:
+        ```
+        You are an expert [role]. Your task is to [specific task].
+        
+        Context: [provide context]
+        Requirements: [list requirements]
+        Output format: [specify format]
+        ```
+        
+        For parameters:
+        - temperature: 0.3 (for factual tasks)
+        - top_p: 0.9
+        - frequency_penalty: 0.5
+    validations:
+      required: true
+
+  - type: textarea
+    id: explanation
+    attributes:
+      label: Why does this work?
+      description: Help others understand the reasoning
+      placeholder: |
+        This prompt structure works because:
+        - Clear role definition reduces ambiguity
+        - Explicit requirements prevent common mistakes
+        - Output format ensures consistent results
+    validations:
+      required: true
+
+  - type: textarea
+    id: example-results
+    attributes:
+      label: Example Results (Optional)
+      description: Show what kind of outputs this produces
+      placeholder: |
+        Input: "Explain quantum computing"
+        Output: "Quantum computing uses quantum mechanical phenomena..."
+
+  - type: dropdown
+    id: tested-extent
+    attributes:
+      label: How extensively have you tested this?
+      options:
+        - Used in production for months
+        - Tested on many examples
+        - Works well in my use cases
+        - Initial testing looks promising
+    validations:
+      required: true
+
+  - type: input
+    id: tags
+    attributes:
+      label: Tags
+      description: Help others find this practice
+      placeholder: "code-generation, refactoring, python"
+
+  - type: checkboxes
+    id: share-permission
+    attributes:
+      label: Sharing
+      options:
+        - label: I'm happy for this to be included in the repository
+          required: true
+        - label: Credit me as contributor (optional)

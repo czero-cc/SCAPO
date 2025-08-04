@@ -1,0 +1,106 @@
+name: "🤖 Add New Model"
+description: Request support for a new AI model
+title: "[Model]: "
+labels: ["new-model", "good first issue"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new model! We're always looking to expand our coverage.
+
+  - type: input
+    id: model-name
+    attributes:
+      label: Model Name
+      description: Official name of the model
+      placeholder: "GPT-4 Turbo"
+    validations:
+      required: true
+
+  - type: input
+    id: model-id
+    attributes:
+      label: Model ID
+      description: Lowercase ID with hyphens (we'll use this for file paths)
+      placeholder: "gpt-4-turbo"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Model Category
+      options:
+        - Text Generation
+        - Image Generation
+        - Video Generation
+        - Audio/Speech
+        - Multimodal
+    validations:
+      required: true
+
+  - type: input
+    id: developer
+    attributes:
+      label: Developer/Company
+      placeholder: "OpenAI, Anthropic, Meta, etc."
+    validations:
+      required: true
+
+  - type: textarea
+    id: model-info
+    attributes:
+      label: Model Information
+      description: Tell us about this model
+      placeholder: |
+        - Release date: 
+        - Key capabilities:
+        - Common use cases:
+        - Notable features:
+        - API/Access method:
+
+  - type: textarea
+    id: sources
+    attributes:
+      label: Where is this model discussed?
+      description: Help us find sources for best practices
+      placeholder: |
+        - r/LocalLLaMA frequently discusses this model
+        - Official Discord: discord.gg/example
+        - Documentation: https://docs.example.com
+        - Community forum: https://forum.example.com
+
+  - type: textarea
+    id: initial-practices
+    attributes:
+      label: Initial Best Practices (Optional)
+      description: If you already know some best practices, share them!
+      placeholder: |
+        Prompting tips:
+        - Use XML tags for structure
+        - Temperature 0.7 works well for creative tasks
+        
+        Common parameters:
+        - max_tokens: 4096
+        - temperature: 0.7
+
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: How popular/important is this model?
+      options:
+        - Very popular - used by many
+        - Growing interest
+        - Niche but important
+        - Just released
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contribution
+      options:
+        - label: I'd like to help add this model
+        - label: I can provide prompt examples
+        - label: I can share parameter recommendations

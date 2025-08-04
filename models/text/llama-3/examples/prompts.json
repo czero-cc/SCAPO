@@ -1,0 +1,26 @@
+[
+  {
+    "title": "Example 1",
+    "prompt": "Utilize Retrieval-Augmented Generation (RAG) pipelines to ground LLM responses in specific data sources. This involves providing the LLM with relevant context from a knowledge base before generating an answer.",
+    "category": "general",
+    "expected_output": "See prompt for details"
+  },
+  {
+    "title": "Example 2",
+    "prompt": "Employ clear and specific prompts to guide the LLM's output. Avoid ambiguous or open-ended questions. Define the desired format, style, and length of the response.",
+    "category": "general",
+    "expected_output": "See prompt for details"
+  },
+  {
+    "title": "Example 3",
+    "prompt": "Employing chain-of-thought prompting to improve reasoning capabilities. This involves guiding the model to explicitly show its reasoning steps before providing a final answer.",
+    "category": "general",
+    "expected_output": "See prompt for details"
+  },
+  {
+    "title": "Example 4",
+    "prompt": "Utilizing few-shot learning by providing a small number of example input-output pairs within the prompt to guide the model's response format and content.",
+    "category": "general",
+    "expected_output": "See prompt for details"
+  }
+]

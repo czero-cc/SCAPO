@@ -1,0 +1,44 @@
+[
+  {
+    "name": "temperature",
+    "default_value": "0.7-1.0",
+    "description": "Experiment with temperature parameter (typically between 0.7 and 1.0) to control the randomness of the LLM's output. Higher values lead to more creative but potentially less accurate responses; lower values produce more deterministic outputs.",
+    "recommended_range": "0.7-1.0"
+  },
+  {
+    "name": "unknown",
+    "default_value": "",
+    "description": "Utilize Q4 quantization for improved speed and performance, especially on MLX architectures.",
+    "recommended_range": ""
+  },
+  {
+    "name": "unknown",
+    "default_value": "",
+    "description": "Experiment with context window sizes (e.g., 16k, 32k, 40k, 64k) to optimize performance and memory usage. Performance degrades beyond optimal context length.",
+    "recommended_range": ""
+  },
+  {
+    "name": "unknown",
+    "default_value": "",
+    "description": "Leverage CPU offloading (e.g., 32-45% PP) to distribute the computational load, improving throughput.",
+    "recommended_range": ""
+  },
+  {
+    "name": "unknown",
+    "default_value": "",
+    "description": "Consider using MLX for faster inference on Apple Silicon devices.",
+    "recommended_range": ""
+  },
+  {
+    "name": "temperature",
+    "default_value": "0.7-1.0",
+    "description": "Experimenting with temperature values (typically between 0.7 and 1.0) to control the randomness of the model's output. Higher temperatures lead to more creative but potentially less coherent responses.",
+    "recommended_range": "0.7-1.0"
+  },
+  {
+    "name": "top_p",
+    "default_value": "0.7-0.95",
+    "description": "Adjusting the top_p (nucleus sampling) parameter (typically between 0.7 and 0.95) to control the diversity of the generated text, focusing on the most probable tokens.",
+    "recommended_range": "0.7-0.95"
+  }
+]

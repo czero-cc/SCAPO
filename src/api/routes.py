@@ -7,12 +7,15 @@ from src.core.logging import get_logger
 from src.core.models import ModelBestPractices, ModelCategory
 from src.services.model_service import ModelService
 from src.services.scraper_service import ScraperService
+from src.services.usage_service import UsageService
+from src.core.aliases import normalize_model_name, infer_category
 
 logger = get_logger(__name__)
 
 # Initialize services
 model_service = ModelService()
 scraper_service = ScraperService()
+usage_service = UsageService()
 
 # Routers
 practices_router = APIRouter()
@@ -34,15 +37,25 @@ async def list_models(
 
 @practices_router.get("/search", response_model=List[Dict[str, Any]])
 async def search_models(
-    q: str = Query(..., min_length=2, description="Search query"),
+    q: str = Query(None, min_length=2, description="Search query"),
+    usage: str = Query(None, min_length=2, description="Usage pattern (e.g., code_generation, image_generation)"),
     limit: int = Query(10, ge=1, le=100, description="Maximum results"),
 ) -> List[Dict[str, Any]]:
-    """Search for models by name, tags, or content."""
+    """Search for models by name, tags, content, or usage pattern."""
     try:
-        results = await model_service.search_models(query=q, limit=limit)
+        if usage:
+            # Search by usage pattern
+            results = await usage_service.search_models_by_usage(usage=usage, limit=limit)
+        elif q:
+            # Traditional search
+            results = await model_service.search_models(query=q, limit=limit)
+        else:
+            raise HTTPException(status_code=400, detail="Either 'q' or 'usage' parameter is required")
         return results
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error("Error searching models", query=q, error=str(e))
+        logger.error("Error searching models", query=q, usage=usage, error=str(e))
         raise HTTPException(status_code=500, detail="Search failed")
 
 
@@ -53,9 +66,12 @@ async def get_model_all_practices(
 ) -> ModelBestPractices:
     """Get all best practices for a specific model."""
     try:
+        # Normalize model ID
+        normalized_id = normalize_model_name(model_id)
+        
         practices = await model_service.get_model_practices(
             category=category,
-            model_id=model_id,
+            model_id=normalized_id,
         )
         if not practices:
             raise HTTPException(
@@ -186,6 +202,101 @@ async def get_model_metadata(
     except Exception as e:
         logger.error("Error getting metadata", error=str(e))
         raise HTTPException(status_code=500, detail="Failed to get metadata")
+
+
+@practices_router.get("/usage-patterns", response_model=Dict[str, Any])
+async def list_usage_patterns() -> Dict[str, Any]:
+    """List all available usage patterns with descriptions."""
+    try:
+        patterns = await usage_service.get_usage_patterns()
+        return patterns
+    except Exception as e:
+        logger.error("Error listing usage patterns", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to list usage patterns")
+
+
+@practices_router.get("/recommend", response_model=List[Dict[str, Any]])
+async def recommend_models(
+    usage: str = Query(..., description="Usage pattern (e.g., code_generation)"),
+    category: Optional[ModelCategory] = Query(None, description="Filter by category"),
+) -> List[Dict[str, Any]]:
+    """Get recommended models for a specific usage pattern."""
+    try:
+        recommendations = await usage_service.get_recommended_models(
+            usage=usage,
+            category=category
+        )
+        return recommendations
+    except Exception as e:
+        logger.error("Error getting recommendations", usage=usage, error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to get recommendations")
+
+
+@practices_router.get("/{category}/{model_id}/usages", response_model=List[str])
+async def get_model_usages(
+    category: ModelCategory = Path(..., description="Model category"),
+    model_id: str = Path(..., description="Model ID"),
+) -> List[str]:
+    """Get all usage patterns a model is good for."""
+    try:
+        usages = await usage_service.get_model_usages(
+            model_id=model_id,
+            category=category
+        )
+        return usages
+    except Exception as e:
+        logger.error("Error getting model usages", model_id=model_id, error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to get model usages")
+
+
+@practices_router.post("/bulk", response_model=Dict[str, Any])
+async def get_models_bulk(
+    models: List[Dict[str, str]] = Query(..., description="List of {category, model_id} objects"),
+) -> Dict[str, Any]:
+    """Fetch practices for multiple models at once."""
+    try:
+        results = {}
+        errors = []
+        
+        for model_spec in models:
+            try:
+                model_id = model_spec.get("model_id")
+                if not model_id:
+                    errors.append({"error": "model_id required", "spec": model_spec})
+                    continue
+                
+                # Normalize model ID
+                model_id = normalize_model_name(model_id)
+                
+                # Get category or infer it
+                category_str = model_spec.get("category")
+                if not category_str:
+                    category_str = infer_category(model_id)
+                
+                category = ModelCategory(category_str)
+                
+                practices = await model_service.get_model_practices(
+                    category=category,
+                    model_id=model_id
+                )
+                
+                if practices:
+                    results[f"{category.value}/{model_id}"] = practices
+                else:
+                    errors.append({"error": "not found", "model": f"{category.value}/{model_id}"})
+                    
+            except Exception as e:
+                errors.append({"error": str(e), "spec": model_spec})
+        
+        return {
+            "results": results,
+            "errors": errors,
+            "requested": len(models),
+            "successful": len(results),
+        }
+    except Exception as e:
+        logger.error("Error in bulk fetch", error=str(e))
+        raise HTTPException(status_code=500, detail="Bulk fetch failed")
 
 
 # Scraper endpoints

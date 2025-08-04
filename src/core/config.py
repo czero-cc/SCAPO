@@ -13,8 +13,8 @@ class Settings(BaseSettings):
     )
 
     # Reddit API
-    reddit_client_id: str = Field(..., description="Reddit API client ID")
-    reddit_client_secret: str = Field(..., description="Reddit API client secret")
+    reddit_client_id: Optional[str] = Field(None, description="Reddit API client ID")
+    reddit_client_secret: Optional[str] = Field(None, description="Reddit API client secret")
     reddit_user_agent: str = Field(
         default="sota-practices-bot/1.0 by Fiefworks",
         description="Reddit user agent",
@@ -22,9 +22,12 @@ class Settings(BaseSettings):
 
     # Discord
     discord_bot_token: Optional[str] = Field(None, description="Discord bot token")
+    
+    # GitHub
+    github_token: Optional[str] = Field(None, description="GitHub personal access token")
 
     # Database
-    database_url: str = Field(..., description="Database connection URL")  # Changed to str to support SQLite
+    database_url: str = Field(default="sqlite:///./sota_practices.db", description="Database connection URL")
     redis_url: str = Field(default="redis://localhost:6379", description="Redis connection URL")
 
     # API Configuration
@@ -33,8 +36,8 @@ class Settings(BaseSettings):
     api_prefix: str = Field(default="/api/v1", description="API prefix")
 
     # Security
-    api_key: str = Field(..., description="API key for authentication")
-    secret_key: str = Field(..., description="Secret key for JWT")
+    api_key: str = Field(default="dev_api_key_change_in_production", description="API key for authentication")
+    secret_key: str = Field(default="dev_secret_key_change_in_production", description="Secret key for JWT")
 
     # Monitoring
     enable_metrics: bool = Field(default=True, description="Enable Prometheus metrics")

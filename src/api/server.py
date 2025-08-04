@@ -17,6 +17,7 @@ from src.utils.metrics import (
     api_request_duration,
     setup_metrics,
 )
+from src.services.cache_service import init_cache, close_cache, warm_cache
 
 logger = get_logger(__name__)
 
@@ -37,11 +38,22 @@ async def lifespan(app: FastAPI):
     # Startup
     setup_logging()
     setup_metrics()
+    
+    # Initialize cache
+    await init_cache()
+    
+    # Warm cache with popular data
+    try:
+        await warm_cache()
+    except Exception as e:
+        logger.warning(f"Cache warming failed: {e}")
+    
     logger.info("Starting SOTA Practices API", version=app.version)
     
     yield
     
     # Shutdown
+    await close_cache()
     logger.info("Shutting down SOTA Practices API")
 
 

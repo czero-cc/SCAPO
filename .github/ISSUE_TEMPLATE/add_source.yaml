@@ -1,0 +1,104 @@
+name: "🔗 Add New Source"
+description: Suggest a new source for AI/ML best practices
+title: "[Source]: "
+labels: ["new-source", "good first issue"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new source! Our intelligent browser-based scraper can handle any public website - no API keys needed!
+
+  - type: dropdown
+    id: source-type
+    attributes:
+      label: Source Type
+      description: What type of source is this?
+      options:
+        - Reddit Community
+        - Discord Server
+        - Forum/Discussion Board
+        - Blog/RSS Feed
+        - GitHub Repository
+        - YouTube Channel
+        - Twitter/X Account
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: source-url
+    attributes:
+      label: Source URL
+      description: The main URL for this source
+      placeholder: "https://reddit.com/r/LocalLLaMA"
+    validations:
+      required: true
+
+  - type: input
+    id: source-name
+    attributes:
+      label: Source Name
+      description: A descriptive name for this source
+      placeholder: "r/LocalLLaMA - Local AI Models Community"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Suggested Priority
+      description: How often should we check this source?
+      options:
+        - High (Multiple times daily)
+        - Medium (Twice daily)
+        - Low (Weekly)
+      default: 1
+    validations:
+      required: true
+
+  - type: input
+    id: models
+    attributes:
+      label: Models Discussed
+      description: Which AI models are commonly discussed here?
+      placeholder: "gpt-4, claude-3, llama-3, stable-diffusion"
+
+  - type: textarea
+    id: why-valuable
+    attributes:
+      label: Why is this source valuable?
+      description: Help us understand why this source should be added
+      placeholder: |
+        - Active community with 50k+ members
+        - Daily discussions about prompt engineering
+        - Many users share parameter configurations
+        - Original research and experiments
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: permissions
+    attributes:
+      label: Permissions
+      description: Please confirm
+      options:
+        - label: This source is publicly accessible (no login required)
+          required: true
+        - label: The source can be accessed via web browser
+          required: true
+        - label: I'm not affiliated with this source (or I've disclosed if I am)
+          required: true
+
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: Additional Information
+      description: Any other details that might help (auth requirements, best sections, etc.)
+
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Would you like to contribute?
+      options:
+        - label: I'd like to submit a PR to add this source myself!
+        - label: I can help test this source once added

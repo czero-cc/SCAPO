@@ -13,6 +13,8 @@ from src.core.models import (
     PromptExample,
 )
 from src.utils.metrics import model_queries_counter, models_total
+from src.services.cache_service import cache_service, CACHE_CONFIG
+from src.core.aliases import normalize_model_name, get_all_variations
 
 logger = get_logger(__name__)
 
@@ -34,6 +36,14 @@ class ModelService:
         self, category: Optional[ModelCategory] = None
     ) -> Dict[str, List[str]]:
         """List all available models, optionally filtered by category."""
+        # Cache key
+        cache_key = f"list:{category.value if category else 'all'}"
+        
+        # Try cache first
+        cached = await cache_service.get("models", cache_key)
+        if cached is not None:
+            return cached
+        
         result = {}
         
         if category:
@@ -51,14 +61,31 @@ class ModelService:
                 result[cat.value] = sorted(models)
                 models_total.labels(category=cat.value).set(len(models))
         
+        # Cache the result
+        await cache_service.set(
+            "models", cache_key, result,
+            ttl=CACHE_CONFIG["model_list"]["ttl"]
+        )
+        
         return result
 
     async def search_models(
         self, query: str, limit: int = 10
     ) -> List[Dict[str, Any]]:
         """Search for models by name, tags, or content."""
+        # Cache key
+        cache_key = f"query:{query}:{limit}"
+        
+        # Try cache first
+        cached = await cache_service.get("search", cache_key)
+        if cached is not None:
+            return cached
+        
         results = []
         query_lower = query.lower()
+        
+        # Also check if query is a model alias
+        normalized_query = normalize_model_name(query)
         
         for category in ModelCategory:
             category_dir = self.models_dir / category.value
@@ -69,13 +96,27 @@ class ModelService:
                 if not model_dir.is_dir() or model_dir.name.startswith("."):
                     continue
                 
-                # Check model name
-                if query_lower in model_dir.name.lower():
+                # Check model name and aliases
+                model_name = model_dir.name
+                variations = get_all_variations(model_name)
+                
+                # Check direct name match or alias match
+                if query_lower in model_name.lower() or normalized_query == model_name:
                     results.append({
-                        "model_id": model_dir.name,
+                        "model_id": model_name,
                         "category": category.value,
                         "match_type": "name",
                         "score": 1.0,
+                    })
+                    continue
+                
+                # Check if query matches any variation
+                elif any(query_lower in var.lower() for var in variations):
+                    results.append({
+                        "model_id": model_name,
+                        "category": category.value,
+                        "match_type": "alias",
+                        "score": 0.9,
                     })
                     continue
                 
@@ -100,7 +141,15 @@ class ModelService:
         
         # Sort by score and limit
         results.sort(key=lambda x: x["score"], reverse=True)
-        return results[:limit]
+        final_results = results[:limit]
+        
+        # Cache the results
+        await cache_service.set(
+            "search", cache_key, final_results,
+            ttl=CACHE_CONFIG["search_results"]["ttl"]
+        )
+        
+        return final_results
 
     async def get_model_practices(
         self, category: ModelCategory, model_id: str
@@ -109,6 +158,20 @@ class ModelService:
         # Handle both string and enum
         if isinstance(category, str):
             category = ModelCategory(category)
+        
+        # Normalize model name using aliases
+        model_id = normalize_model_name(model_id)
+        
+        # Cache key
+        cache_key = f"{category.value}/{model_id}"
+        
+        # Try cache first
+        cached = await cache_service.get("practices", cache_key)
+        if cached is not None:
+            model_queries_counter.labels(model_id=model_id, query_type="all").inc()
+            # Reconstruct ModelBestPractices from cached dict
+            return ModelBestPractices(**cached)
+        
         model_dir = self.models_dir / category.value / model_id
         
         if not model_dir.exists():
@@ -165,7 +228,16 @@ class ModelService:
                         "related_models": metadata.get("related_models", []),
                     })
             
-            return ModelBestPractices(**practices_data)
+            practices = ModelBestPractices(**practices_data)
+            
+            # Cache the result
+            await cache_service.set(
+                "practices", cache_key,
+                practices.model_dump(),
+                ttl=CACHE_CONFIG["model_practices"]["ttl"]
+            )
+            
+            return practices
             
         except Exception as e:
             logger.error(f"Error loading practices for {model_id}: {e}")
