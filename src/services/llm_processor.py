@@ -1,50 +1,51 @@
-"""LLM processor for cleaning and structuring scraped content."""
+"""LLM processor for cleaning and structuring scraped content using LiteLLM."""
 
 import json
 import asyncio
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime
-import httpx
 from pydantic import BaseModel, Field
+import litellm
+from litellm import acompletion, RateLimitError, AuthenticationError
 
 from src.core.logging import get_logger
 from src.core.config import settings
 
 logger = get_logger(__name__)
 
+# Configure LiteLLM
+litellm.drop_params = True  # Drop unsupported params instead of failing
+litellm.set_verbose = False  # Set to True for debugging
+
 
 class ProcessedPractice(BaseModel):
     """Structured output from LLM processing."""
     
     practice_type: str = Field(..., description="Type: prompting, parameter, pitfall, tip")
-    content: str = Field(..., description="Clean, actionable practice")
+    content: str = Field(..., description="The actual practice/tip/parameter description")
+    model_name: str = Field(..., description="Specific model this applies to")
     confidence: float = Field(..., description="Confidence score 0-1")
-    applicable_models: List[str] = Field(default_factory=list, description="Models this applies to")
-    source_quality: str = Field(..., description="high, medium, low")
-    extracted_parameters: Optional[Dict[str, Any]] = None
-    example_code: Optional[str] = None
-    warnings: List[str] = Field(default_factory=list)
+    source: str = Field(..., description="Where this was found")
+    timestamp: datetime = Field(default_factory=datetime.now)
+    category: str = Field(default="general", description="Category: prompting, performance, etc")
 
 
-class LLMProcessor(ABC):
-    """Base class for LLM processors."""
+class BaseLLMProcessor(ABC):
+    """Base class for LLM processors using LiteLLM."""
     
-    def __init__(self, model_name: str, context_window: int, max_chars: Optional[int] = None):
-        self.model_name = model_name
-        self.context_window = context_window
+    def __init__(self, max_chars: Optional[int] = None):
         self.max_chars = max_chars or settings.llm_max_chars
-        self.logger = get_logger(f"{__name__}.{self.__class__.__name__}")
-    
+        self.logger = logger
+        
     @abstractmethod
     async def process_content(self, content: str, content_type: str) -> List[ProcessedPractice]:
-        """Process raw content and extract structured practices."""
+        """Process content and extract practices."""
         pass
     
     @abstractmethod
     async def process_raw_prompt(self, prompt: str) -> str:
-        """Process a raw prompt and return the response as a string.
-        This is used for entity extraction and other non-practice extraction tasks."""
+        """Process a raw prompt and return the response as a string."""
         pass
     
     def truncate_to_limit(self, text: str) -> Tuple[str, bool]:
@@ -65,130 +66,136 @@ class LLMProcessor(ABC):
         
         return text, False
     
-    def truncate_to_context(self, text: str, reserve_tokens: int = 1000) -> str:
-        """Legacy method - now uses character limit instead."""
-        truncated, _ = self.truncate_to_limit(text)
-        return truncated
-    
     def create_extraction_prompt(self, content: str, content_type: str) -> str:
-        """Create prompt for extracting practices from content."""
-        return f"""Analyze this {content_type} content and extract actionable AI/LLM best practices.
+        """Create a prompt for extracting practices from content."""
+        return f"""Analyze this {content_type} content and extract ONLY model-specific best practices.
 
-Content:
+Content to analyze:
 {content}
 
-Extract and structure the following:
-1. Prompting techniques (specific patterns, templates, or strategies)
-2. Parameter recommendations (with specific values and reasoning)
-3. Common pitfalls or mistakes to avoid
-4. Practical tips that are actually useful
-5. Any code examples or templates
+Extract actionable practices in this JSON format:
+{{
+  "practices": [
+    {{
+      "practice_type": "prompting|parameter|pitfall|tip",
+      "content": "specific practice description",
+      "model_name": "exact model name (e.g., gpt-4, llama-3-8b)",
+      "confidence": 0.0-1.0,
+      "source": "{content_type}",
+      "category": "prompting|performance|deployment|fine-tuning|general"
+    }}
+  ]
+}}
 
-For each practice found:
-- Determine confidence (high/medium/low) based on evidence
-- Identify which models it applies to
-- Clean up the language to be clear and actionable
-- Remove noise, opinions, and off-topic content
+Guidelines:
+1. ONLY extract practices that are SPECIFIC to a named model
+2. Include exact model names and versions
+3. Focus on actionable, concrete advice
+4. Set confidence based on how definitive the advice is
+5. Ignore general AI/ML advice that applies to all models
+6. Extract parameters with their recommended values
 
-Return as JSON array with this structure:
-[
-  {{
-    "practice_type": "prompting|parameter|pitfall|tip",
-    "content": "Clear, actionable description",
-    "confidence": 0.0-1.0,
-    "applicable_models": ["model1", "model2"],
-    "source_quality": "high|medium|low",
-    "extracted_parameters": {{"param": value}} or null,
-    "example_code": "code snippet" or null,
-    "warnings": ["any caveats"]
-  }}
-]
-
-Focus on concrete, verifiable practices only. Ignore speculation and unverified claims."""
+Return ONLY valid JSON."""
 
 
-class OpenRouterProcessor(LLMProcessor):
-    """Process content using OpenRouter API with rate limiting and retry logic."""
+class UnifiedLLMProcessor(BaseLLMProcessor):
+    """Unified LLM processor using LiteLLM for all providers."""
     
-    def __init__(
-        self,
-        api_key: str,
-        model: str = "anthropic/claude-3-haiku",
-        context_window: int = 200000,  # Claude 3 Haiku
-        max_chars: Optional[int] = None,
-    ):
-        super().__init__(model, context_window, max_chars)
-        self.api_key = api_key
-        self.base_url = "https://openrouter.ai/api/v1"
-        self.client = httpx.AsyncClient(
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "HTTP-Referer": "https://github.com/fiefworks/scapo",
-                "X-Title": "SCAPO - Stay Calm and Prompt On",
-            },
-            timeout=30.0
-        )
+    def __init__(self, 
+                 provider: str = None,
+                 model: str = None,
+                 api_key: str = None,
+                 base_url: str = None,
+                 max_chars: Optional[int] = None):
+        super().__init__(max_chars)
         
-        # Rate limiting settings
-        self.max_retries = 3
-        self.base_delay = 1.0  # Base delay in seconds
-        self.max_delay = 60.0  # Maximum delay in seconds
-        self.min_request_interval = 0.5  # Minimum time between requests
-        self.last_request_time = 0
+        # Set up provider-specific configuration
+        self.provider = provider or settings.llm_provider
+        
+        if self.provider == "openrouter":
+            self.model = f"openrouter/{model or settings.openrouter_model}"
+            self.api_key = api_key or settings.openrouter_api_key
+            # Set OpenRouter specific settings
+            litellm.api_key = self.api_key
+            litellm.openrouter_api_key = self.api_key
+        elif self.provider == "local":
+            if settings.local_llm_type == "ollama":
+                self.model = f"ollama/{model or settings.local_llm_model}"
+                self.api_base = base_url or settings.local_llm_url
+                litellm.api_base = self.api_base
+            else:  # lmstudio
+                self.model = f"openai/{model or settings.local_llm_model}"
+                self.api_base = base_url or settings.local_llm_url
+                self.api_key = "lm-studio"  # LM Studio doesn't need a real key
+                litellm.api_key = self.api_key
+                litellm.api_base = self.api_base
+        else:
+            raise ValueError(f"Unknown provider: {self.provider}")
+        
+        self.logger.info(f"Initialized LLM processor with model: {self.model}")
     
-    async def _make_request_with_retry(self, json_data: dict) -> httpx.Response:
-        """Make HTTP request with exponential backoff retry logic."""
-        # Implement minimum interval between requests
-        import time
-        current_time = time.time()
-        time_since_last = current_time - self.last_request_time
-        if time_since_last < self.min_request_interval:
-            await asyncio.sleep(self.min_request_interval - time_since_last)
+    async def _make_completion(self, messages: List[Dict[str, str]], 
+                             temperature: float = 0.3,
+                             max_tokens: int = 2000,
+                             response_format: Optional[Dict] = None) -> str:
+        """Make a completion request using LiteLLM with retry logic."""
         
-        for attempt in range(self.max_retries):
+        # Build kwargs
+        kwargs = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "timeout": 120.0,  # 2 minute timeout
+        }
+        
+        # Add response format if supported by the model
+        if response_format and self._supports_json_mode():
+            kwargs["response_format"] = response_format
+        
+        # Add API key/base if needed
+        if hasattr(self, 'api_key'):
+            kwargs["api_key"] = self.api_key
+        if hasattr(self, 'api_base'):
+            kwargs["api_base"] = self.api_base
+        
+        # Retry logic
+        max_retries = 3
+        for attempt in range(max_retries):
             try:
-                self.last_request_time = time.time()
-                response = await self.client.post(
-                    f"{self.base_url}/chat/completions",
-                    json=json_data
-                )
+                response = await acompletion(**kwargs)
+                return response.choices[0].message.content
                 
-                # If successful, return
-                if response.status_code == 200:
-                    return response
-                
-                # If rate limited, retry with backoff
-                if response.status_code == 429:
-                    if attempt < self.max_retries - 1:
-                        # Calculate delay with exponential backoff
-                        delay = min(self.base_delay * (2 ** attempt), self.max_delay)
-                        
-                        # Check if response has Retry-After header
-                        retry_after = response.headers.get('Retry-After')
-                        if retry_after:
-                            delay = float(retry_after)
-                        
-                        self.logger.warning(f"Rate limited. Retrying in {delay}s (attempt {attempt + 1}/{self.max_retries})")
-                        await asyncio.sleep(delay)
-                        continue
-                
-                # For other errors, raise immediately
-                response.raise_for_status()
-                
-            except httpx.TimeoutException:
-                if attempt < self.max_retries - 1:
-                    delay = min(self.base_delay * (2 ** attempt), self.max_delay)
-                    self.logger.warning(f"Request timeout. Retrying in {delay}s (attempt {attempt + 1}/{self.max_retries})")
-                    await asyncio.sleep(delay)
-                    continue
+            except RateLimitError as e:
+                if attempt < max_retries - 1:
+                    wait_time = min(60, 2 ** attempt)  # Exponential backoff
+                    self.logger.warning(f"Rate limited. Waiting {wait_time}s before retry {attempt + 1}")
+                    await asyncio.sleep(wait_time)
+                else:
+                    raise
+                    
+            except AuthenticationError:
+                self.logger.error(f"Authentication failed for {self.provider}")
                 raise
-        
-        # If all retries failed, raise the last response error
-        response.raise_for_status()
-        return response
-
+                
+            except Exception as e:
+                self.logger.error(f"LLM request failed: {str(e)}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(2 ** attempt)
+                else:
+                    raise
+    
+    def _supports_json_mode(self) -> bool:
+        """Check if the current model supports JSON mode."""
+        # Models that support JSON mode
+        json_mode_models = [
+            "gpt-4", "gpt-3.5", "claude", "gemini", 
+            "deepseek", "openai/", "anthropic/"
+        ]
+        return any(model in self.model.lower() for model in json_mode_models)
+    
     async def process_content(self, content: str, content_type: str) -> List[ProcessedPractice]:
-        """Process content using OpenRouter with retry logic."""
+        """Process content using LiteLLM."""
         # Truncate if needed
         content, was_truncated = self.truncate_to_limit(content)
         if was_truncated:
@@ -197,25 +204,62 @@ class OpenRouterProcessor(LLMProcessor):
         prompt = self.create_extraction_prompt(content, content_type)
         
         try:
-            response = await self._make_request_with_retry({
-                "model": self.model_name,
-                "messages": [
+            # Try with JSON mode if supported
+            response_format = {"type": "json_object"} if self._supports_json_mode() else None
+            
+            response = await self._make_completion(
+                messages=[
                     {
                         "role": "system",
-                        "content": "You are an expert at extracting actionable AI/LLM best practices from noisy community content. Be critical and only extract verified, useful practices."
+                        "content": "You are an expert at extracting actionable AI/LLM best practices from noisy community content. Be critical and only extract verified, useful practices. Always respond with valid JSON."
                     },
                     {"role": "user", "content": prompt}
                 ],
-                "temperature": 0.3,
-                "max_tokens": 2000,
-                "response_format": {"type": "json_object"},
-            })
+                temperature=0.3,
+                max_tokens=2000,
+                response_format=response_format
+            )
             
-            result = response.json()
-            content = result["choices"][0]["message"]["content"]
+            # Parse JSON response with multiple strategies
+            practices_data = None
+            try:
+                # Try direct parsing
+                practices_data = json.loads(response)
+            except json.JSONDecodeError:
+                # Clean and retry
+                cleaned_response = response.strip()
+                
+                # Remove common prefixes
+                for prefix in ["Here is the JSON:", "Here's the JSON:", "JSON:", "Based on the analysis:"]:
+                    if cleaned_response.lower().startswith(prefix.lower()):
+                        cleaned_response = cleaned_response[len(prefix):].strip()
+                
+                # Try to extract JSON from various formats
+                import re
+                json_patterns = [
+                    r'```(?:json)?\s*([\[{].*?[\]}])\s*```',  # Markdown code block
+                    r'([\[{][^\[{]*(?:[\[{][^\[{\]}]*[\]}][^\[{\]}]*)*[\]}])',  # Nested JSON
+                    r'([\[{].*[\]}])'  # Any JSON-like structure
+                ]
+                
+                for pattern in json_patterns:
+                    matches = re.findall(pattern, cleaned_response, re.DOTALL)
+                    for match in matches:
+                        try:
+                            practices_data = json.loads(match)
+                            break
+                        except:
+                            continue
+                    if practices_data:
+                        break
+                
+                if not practices_data:
+                    # Last resort: try to construct minimal valid response
+                    self.logger.error(f"No valid JSON found in LLM response. Raw: {response[:500]}...")
+                    # Return empty list but continue processing
+                    return []
             
-            # Parse JSON response
-            practices_data = json.loads(content)
+            # Extract practices list
             if isinstance(practices_data, dict) and "practices" in practices_data:
                 practices_data = practices_data["practices"]
             
@@ -227,292 +271,86 @@ class OpenRouterProcessor(LLMProcessor):
                     practices.append(practice)
                 except Exception as e:
                     self.logger.error(f"Error parsing practice: {e}")
+                    continue
             
             return practices
             
         except Exception as e:
-            self.logger.error(f"OpenRouter processing failed: {str(e)}", exc_info=True)
+            self.logger.error(f"Failed to process content: {str(e)}", exc_info=True)
             return []
-    
-    async def process_raw_prompt(self, prompt: str) -> str:
-        """Process a raw prompt and return the response as a string with retry logic."""
-        try:
-            response = await self._make_request_with_retry({
-                "model": self.model_name,
-                "messages": [
-                    {"role": "user", "content": prompt}
-                ],
-                "temperature": 0.3,
-                "max_tokens": 2000,
-            })
-            
-            result = response.json()
-            return result["choices"][0]["message"]["content"]
-            
-        except Exception as e:
-            self.logger.error(f"OpenRouter raw prompt processing failed after {self.max_retries} attempts: {str(e)}", exc_info=True)
-            return "{}"
-        
-    async def close(self):
-        """Close HTTP client."""
-        await self.client.aclose()
-
-
-class LocalLLMProcessor(LLMProcessor):
-    """Process content using local LLM (Ollama or LM Studio)."""
-    
-    # Known model context windows
-    MODEL_CONTEXT_WINDOWS = {
-        # Ollama models
-        "llama2": 4096,
-        "llama2:13b": 4096,
-        "llama2:70b": 4096,
-        "llama3": 8192,
-        "llama3:70b": 8192,
-        "llama3.1": 128000,
-        "mistral": 8192,
-        "mixtral": 32768,
-        "phi": 2048,
-        "phi3": 128000,
-        "gemma": 8192,
-        "gemma:7b": 8192,
-        "qwen": 32768,
-        "qwen:14b": 32768,
-        "qwen:32b": 32768,
-        "deepseek-coder": 16384,
-        "codellama": 16384,
-        # LM Studio common models
-        "gpt4all-falcon": 2048,
-        "orca-mini": 2048,
-        "vicuna": 2048,
-        "wizardlm": 2048,
-        # Default fallback
-        "default": 4096,
-    }
-    
-    def __init__(
-        self,
-        base_url: str = "http://localhost:11434",  # Ollama default
-        model: str = "llama3",
-        context_window: Optional[int] = None,
-        api_type: str = "ollama",  # "ollama" or "lmstudio"
-        max_chars: Optional[int] = None,
-    ):
-        # Auto-detect context window if not provided
-        if context_window is None:
-            context_window = self.MODEL_CONTEXT_WINDOWS.get(
-                model.lower(),
-                self.MODEL_CONTEXT_WINDOWS["default"]
-            )
-            logger.info(f"Using context window {context_window} for model {model}")
-        
-        super().__init__(model, context_window, max_chars)
-        self.base_url = base_url
-        self.api_type = api_type
-        self.client = httpx.AsyncClient(timeout=120.0)  # Longer timeout for local models
-    
-    async def check_model_availability(self) -> bool:
-        """Check if the model is available locally."""
-        try:
-            if self.api_type == "ollama":
-                response = await self.client.get(f"{self.base_url}/api/tags")
-                if response.status_code == 200:
-                    models = response.json().get("models", [])
-                    available = any(m["name"] == self.model_name for m in models)
-                    if not available:
-                        self.logger.warning(f"Model {self.model_name} not found. Available: {[m['name'] for m in models]}")
-                    return available
-            else:  # lmstudio
-                # LM Studio doesn't have a model list endpoint
-                return True
-        except Exception as e:
-            self.logger.error(f"Error checking model availability: {e}")
-            return False
-    
-    async def process_content(self, content: str, content_type: str) -> List[ProcessedPractice]:
-        """Process content using local LLM."""
-        # Check model availability
-        if not await self.check_model_availability():
-            self.logger.error(f"Model {self.model_name} not available")
-            return []
-        
-        # Truncate content for local models
-        content, was_truncated = self.truncate_to_limit(content)
-        if was_truncated:
-            self.logger.info(f"Content truncated to {self.max_chars} characters for local LLM")
-        
-        prompt = self.create_extraction_prompt(content, content_type)
-        
-        try:
-            if self.api_type == "ollama":
-                response = await self._process_ollama(prompt)
-            else:
-                response = await self._process_lmstudio(prompt)
-            
-            # Parse response
-            practices = self._parse_llm_response(response)
-            return practices
-            
-        except Exception as e:
-            self.logger.error(f"Local LLM processing failed: {e}")
-            return []
-    
-    async def _process_ollama(self, prompt: str) -> str:
-        """Process using Ollama API."""
-        response = await self.client.post(
-            f"{self.base_url}/api/generate",
-            json={
-                "model": self.model_name,
-                "prompt": f"{prompt}\n\nRespond with valid JSON only:",
-                "temperature": 0.3,
-                "stream": False,
-                "format": "json",  # Ollama JSON mode
-            }
-        )
-        response.raise_for_status()
-        return response.json()["response"]
-    
-    async def _process_lmstudio(self, prompt: str) -> str:
-        """Process using LM Studio API (OpenAI compatible)."""
-        response = await self.client.post(
-            f"{self.base_url}/v1/chat/completions",
-            json={
-                "model": self.model_name,
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": "Extract actionable AI best practices. Respond in JSON format only."
-                    },
-                    {"role": "user", "content": prompt}
-                ],
-                "temperature": 0.3,
-                "max_tokens": 2000,
-            }
-        )
-        response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"]
-    
-    def _parse_llm_response(self, response: str) -> List[ProcessedPractice]:
-        """Parse LLM response with fallback for imperfect JSON."""
-        practices = []
-        
-        try:
-            # Try to extract JSON from response
-            import re
-            json_match = re.search(r'\[.*\]', response, re.DOTALL)
-            if json_match:
-                response = json_match.group()
-            
-            data = json.loads(response)
-            if isinstance(data, dict) and "practices" in data:
-                data = data["practices"]
-            
-            for item in data:
-                try:
-                    # Provide defaults for missing fields
-                    item.setdefault("confidence", 0.5)
-                    item.setdefault("source_quality", "medium")
-                    item.setdefault("applicable_models", [])
-                    
-                    practice = ProcessedPractice(**item)
-                    practices.append(practice)
-                except Exception as e:
-                    self.logger.warning(f"Error parsing practice item: {e}")
-        
-        except json.JSONDecodeError as e:
-            self.logger.error(f"JSON parse error: {e}")
-            # Fallback: try to extract any useful content
-            if "practice_type" in response and "content" in response:
-                try:
-                    # Very basic extraction
-                    practices.append(ProcessedPractice(
-                        practice_type="tip",
-                        content=response[:500],
-                        confidence=0.3,
-                        source_quality="low",
-                        warnings=["Extracted with fallback parser"]
-                    ))
-                except:
-                    pass
-        
-        return practices
     
     async def process_raw_prompt(self, prompt: str) -> str:
         """Process a raw prompt and return the response as a string."""
         try:
-            if self.api_type == "ollama":
-                response = await self._process_ollama(prompt)
-            else:
-                response = await self._process_lmstudio(prompt)
+            # For JSON requests, add stronger instructions
+            messages = []
+            if "json" in prompt.lower():
+                messages.append({
+                    "role": "system",
+                    "content": "You are a JSON generator. You MUST respond with ONLY valid JSON, no explanations or text before/after. Start your response with { or [ and end with } or ]."
+                })
+            
+            messages.append({"role": "user", "content": prompt})
+            
+            response = await self._make_completion(
+                messages=messages,
+                temperature=0.1,  # Lower temperature for more consistent JSON
+                max_tokens=2000,
+            )
+            
+            # Clean response if it contains non-JSON prefix/suffix
+            if "json" in prompt.lower():
+                response = response.strip()
+                
+                # Remove common prefixes that models add
+                json_prefixes = [
+                    "Here is the JSON:", "Here's the JSON:", "JSON:", "```json", "```",
+                    "The JSON response is:", "Here is the extracted JSON:",
+                    "Based on the analysis, here is the JSON:"
+                ]
+                for prefix in json_prefixes:
+                    if response.lower().startswith(prefix.lower()):
+                        response = response[len(prefix):].strip()
+                
+                # Remove common suffixes
+                json_suffixes = ["```", "\n\nI hope this helps!", "\n\nLet me know if"]
+                for suffix in json_suffixes:
+                    if suffix in response:
+                        response = response[:response.find(suffix)].strip()
+                
+                # Final cleanup - ensure we have JSON
+                if response and not response.startswith(('[', '{')):
+                    # Try to find JSON in the response
+                    import re
+                    json_match = re.search(r'[\[{].*[\]}]', response, re.DOTALL)
+                    if json_match:
+                        response = json_match.group()
+                    else:
+                        self.logger.warning(f"Model {self.model} returned non-JSON response after cleanup: {response[:200]}...")
+            
             return response
+            
         except Exception as e:
-            self.logger.error(f"Local LLM raw prompt processing failed: {e}")
+            self.logger.error(f"Raw prompt processing failed: {str(e)}", exc_info=True)
             return "{}"
     
     async def close(self):
-        """Close HTTP client."""
-        await self.client.aclose()
+        """Cleanup (no longer needed with LiteLLM)."""
+        pass
 
 
 class LLMProcessorFactory:
     """Factory for creating appropriate LLM processor."""
     
     @staticmethod
-    def create_processor(
-        provider: str = "local",
-        **kwargs
-    ) -> LLMProcessor:
-        """Create an LLM processor based on provider."""
-        if provider == "openrouter":
-            api_key = kwargs.get("api_key") or settings.openrouter_api_key
-            if not api_key:
-                raise ValueError("OpenRouter API key required")
-            
-            return OpenRouterProcessor(
-                api_key=api_key,
-                model=kwargs.get("model", "anthropic/claude-3-haiku"),
-                context_window=kwargs.get("context_window", 200000),
-                max_chars=kwargs.get("max_chars"),
-            )
+    def create_processor(provider: str = None, **kwargs) -> BaseLLMProcessor:
+        """Create LLM processor based on provider using LiteLLM.
         
-        elif provider == "local":
-            return LocalLLMProcessor(
-                base_url=kwargs.get("base_url", "http://localhost:11434"),
-                model=kwargs.get("model", "llama3"),
-                context_window=kwargs.get("context_window"),  # Auto-detected if None
-                api_type=kwargs.get("api_type", "ollama"),
-                max_chars=kwargs.get("max_chars"),
-            )
+        Args:
+            provider: Provider name (openrouter, local, etc.)
+            **kwargs: Additional arguments for the processor
         
-        else:
-            raise ValueError(f"Unknown provider: {provider}")
-
-
-# Example usage function
-async def process_scraped_content(
-    content: Dict[str, Any],
-    provider: str = "local",
-    **processor_kwargs
-) -> Dict[str, List[ProcessedPractice]]:
-    """Process scraped content through LLM."""
-    processor = LLMProcessorFactory.create_processor(provider, **processor_kwargs)
-    
-    results = {}
-    
-    try:
-        # Process different content types
-        for content_type, raw_content in content.items():
-            if isinstance(raw_content, str):
-                practices = await processor.process_content(raw_content, content_type)
-                results[content_type] = practices
-            elif isinstance(raw_content, dict) and "content" in raw_content:
-                practices = await processor.process_content(
-                    raw_content["content"],
-                    content_type
-                )
-                results[content_type] = practices
-    
-    finally:
-        await processor.close()
-    
-    return results
+        Returns:
+            BaseLLMProcessor instance
+        """
+        return UnifiedLLMProcessor(provider=provider, **kwargs)

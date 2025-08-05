@@ -82,5 +82,12 @@
     "source": "reddit:LocalLLaMA",
     "timestamp": "2025-08-05T14:16:20.490398",
     "example": null
+  },
+  {
+    "tip": "Use the Qwen3-Coder-30B-A3B-Instruct-1M variant for tasks requiring analysis of very long documents (e.g., codebases over 100K tokens, lengthy research papers, or extensive code reviews) where standard context windows would be insufficient.",
+    "confidence": 0.7,
+    "source": "reddit:LocalLLaMA",
+    "timestamp": "2025-08-05T15:22:21.217648",
+    "example": null
   }
 ]

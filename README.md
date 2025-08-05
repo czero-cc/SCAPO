@@ -6,7 +6,7 @@
 
 **The Zen Guide to AI Model Best Practices**
 
-[![Made with Love](https://img.shields.io/badge/Made%20with-❤️-red.svg)](https://github.com/fiefworks/scapo)
+[![Made with Love](https://img.shields.io/badge/Made%20with-❤️-red.svg)](https://github.com/czero-cc/scapo)
 [![No API Keys](https://img.shields.io/badge/API%20Keys-Not%20Required-brightgreen.svg)]()
 [![LLM Powered](https://img.shields.io/badge/LLM-Powered-blue.svg)]()
 [![Browser Magic](https://img.shields.io/badge/Scraping-Browser%20Based-orange.svg)]()
@@ -103,19 +103,19 @@ cp .env.example .env
 uv pip install -e .
 
 # Initialize SCAPO (check setup)
-scapo init
+uv run scapo init
 
 # Scrape and process with your configured LLM
-scapo scrape run --sources reddit:LocalLLaMA --limit 10
+uv run scapo scrape run --sources reddit:LocalLLaMA --limit 10
 
 # Or with uv (if not installed globally)
 uv run scapo scrape run --sources reddit:LocalLLaMA --limit 10
 
 # Run scheduled scraping (every SCRAPING_INTERVAL_HOURS)
-scapo schedule
+uv run scapo schedule
 
 # List available sources
-scapo sources
+uv run scapo sources
 
 # Remember: Be respectful! Adjust SCRAPING_DELAY_SECONDS in .env if needed.
 ```
@@ -291,20 +291,16 @@ LOG_FORMAT=json                      # json or text
 - `meta-llama/llama-3.1-70b-instruct` - Open source powerhouse
 - Any model listed on [openrouter.ai/models](https://openrouter.ai/models)
 
-#### Local Models (Ollama)
-Best for SCAPO (7B+ recommended for quality filtering):
-- `llama3:8b` - Excellent general purpose (Recommended)
-- `qwen2.5:7b` - Great for code and technical content
-- `mistral:7b` - Fast and reliable
-- `mixtral:8x7b` - High quality but needs more RAM
-- `gemma2:9b` - Google's powerful model
+#### Local Models (Ollama or LM Studio)
+SCAPO works with any local LLM server. For best results:
+- **Recommended**: 7B+ parameter models for accurate content extraction
+- **Minimum**: 3B parameters (may have lower accuracy)
 
-Smaller models (may struggle with quality filtering):
-- `llama3:latest` - Smaller variant
-- `phi3:mini` - Very small, fast but limited
-- `qwen2.5:3b` - Compact but less accurate
+Popular local model servers:
+- **Ollama**: [ollama.com](https://ollama.com) - Port 11434
+- **LM Studio**: [lmstudio.ai](https://lmstudio.ai) - Port 1234
 
-Any model from [ollama.com/library](https://ollama.com/library)
+The LLM is used to extract best practices from scraped content. Larger models generally provide better extraction quality and fewer false positives.
 
 ## 🚀 Advanced Usage
 
@@ -337,10 +333,10 @@ async def scrape_mycommunity_browser(self, page: Page):
 ### Batch Processing
 ```bash
 # List all available sources (loaded from sources.yaml)
-scapo sources
+uv run scapo sources
 
 # Scrape specific sources
-scapo scrape run \
+uv run scapo scrape run \
   --sources reddit:LocalLLaMA reddit:OpenAI hackernews \
   --limit 20
 
@@ -357,8 +353,8 @@ uv run scapo scrape run \
 
 ### Export Practices
 ```bash
-# Coming soon: Export to your favorite format
-scapo export --format obsidian --model gpt-4
+# Export to your favorite format
+uv run scapo export --format obsidian --model gpt-4
 ```
 
 ## 🤝 Contributing

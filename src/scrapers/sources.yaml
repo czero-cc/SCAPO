@@ -260,7 +260,7 @@ news_aggregators:
 
 # Scraping Configuration
 scraping_config:
-  user_agent: "Mozilla/5.0 (compatible; SCAPOBot/1.0; +https://github.com/fiefworks/scapo)"
+  user_agent: "Mozilla/5.0 (compatible; SCAPOBot/1.0; +https://github.com/czero-cc/scapo)"
   respect_robots_txt: true
   concurrent_requests: 5
   timeout_seconds: 30

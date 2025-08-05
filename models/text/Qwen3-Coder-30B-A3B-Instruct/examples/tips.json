@@ -89,5 +89,33 @@
     "source": "reddit:LocalLLaMA",
     "timestamp": "2025-08-05T14:17:43.228112",
     "example": null
+  },
+  {
+    "tip": "Redownload the first shard to get the updated tool calling functionality. This fix addresses issues with function calling in the previous version of Qwen3-Coder-30B-A3B-Instruct.",
+    "confidence": 0.9,
+    "source": "reddit:LocalLLaMA",
+    "timestamp": "2025-08-05T15:05:50.050944",
+    "example": null
+  },
+  {
+    "tip": "Use GGUF versions of Qwen3-Coder-30B-A3B-Instruct for local deployment. Download from https://huggingface.co/unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF for standard context length or https://huggingface.co/unsloth/Qwen3-Coder-30B-A3B-Instruct-1M-GGUF for 1 million context length. Tool calling has been fixed in these versions.",
+    "confidence": 0.9,
+    "source": "reddit:LocalLLaMA",
+    "timestamp": "2025-08-05T15:59:17.258512",
+    "example": null
+  },
+  {
+    "tip": "Download the 1 million context length GGUF version for extended context windows",
+    "confidence": 0.9,
+    "source": "reddit:LocalLLaMA",
+    "timestamp": "2025-08-05T15:59:17.258512",
+    "example": null
+  },
+  {
+    "tip": "Redownload the first shard of Qwen3-Coder-30B-A3B-Instruct to obtain the updated version with fixed tool calling functionality, as the initial release had issues with this feature.",
+    "confidence": 0.9,
+    "source": "reddit:LocalLLaMA",
+    "timestamp": "2025-08-05T15:59:17.258512",
+    "example": null
   }
 ]

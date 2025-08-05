@@ -73,6 +73,7 @@ class IntelligentBrowserScraper(BrowserBaseScraper):
         super().__init__(SourceType.FORUM, headless=True)
         self.processed_content: List[ProcessedContent] = []
         self.scrape_delay = settings.scraping_delay_seconds  # Use config value for polite delay
+        self._llm_processor = None  # Cache the processor instance
         
     async def fetch_posts(self, subreddit: Optional[str] = None, limit: int = 100, time_filter: str = "week") -> List[ScrapedPost]:
         """Required abstract method - handled by scrape_sources instead."""
@@ -81,34 +82,41 @@ class IntelligentBrowserScraper(BrowserBaseScraper):
     def extract_best_practices(self, posts: List[ScrapedPost]) -> Dict[str, Any]:
         """Required abstract method - handled by LLM processing instead."""
         return {}
+    
+    def _get_llm_processor(self, max_chars: Optional[int] = None):
+        """Get or create a cached LLM processor instance."""
+        if self._llm_processor is None:
+            if settings.llm_provider == "openrouter":
+                self._llm_processor = LLMProcessorFactory.create_processor(
+                    provider="openrouter",
+                    api_key=settings.openrouter_api_key,
+                    model=settings.openrouter_model,
+                    max_chars=max_chars or settings.llm_max_chars
+                )
+            else:
+                self._llm_processor = LLMProcessorFactory.create_processor(
+                    provider="local",
+                    base_url=settings.local_llm_url,
+                    model=settings.local_llm_model,
+                    max_chars=max_chars or settings.llm_max_chars
+                )
+        return self._llm_processor
         
     async def extract_entities_with_llm(self, content: str, source: str) -> ExtractedEntities:
         """Use LLM to extract entities from content."""
-        # Create processor with proper configuration
-        if settings.llm_provider == "openrouter":
-            processor = LLMProcessorFactory.create_processor(
-                provider="openrouter",
-                api_key=settings.openrouter_api_key,
-                model=settings.openrouter_model,
-                max_chars=2000  # Smaller for entity extraction
-            )
-        else:
-            processor = LLMProcessorFactory.create_processor(
-                provider="local",
-                base_url=settings.local_llm_url,
-                model=settings.local_llm_model,
-                api_type=settings.local_llm_type,
-                max_chars=2000  # Smaller for entity extraction
-            )
+        # Use cached processor
+        processor = self._get_llm_processor()
         
         try:
-            # Create extraction prompt
+            # Create extraction prompt with explicit JSON instructions
             prompt = f"""Analyze this {source} content and extract key entities.
 
 Content:
 {content[:2000]}
 
-Extract the following in JSON format:
+You MUST respond with ONLY a valid JSON object. No explanations before or after.
+
+Return this exact JSON structure:
 {{
     "models_mentioned": ["exact model names as mentioned in the text, including version numbers"],
     "theme": "main theme: prompting|fine-tuning|deployment|benchmarks|tools|general",
@@ -119,32 +127,54 @@ Extract the following in JSON format:
     "summary": "one sentence summary of the content"
 }}
 
-Be specific about model names and versions. Only mark as ai_related if it discusses AI/ML models or techniques."""
+IMPORTANT: Start your response with {{ and end with }}. No other text allowed."""
 
-            # Get LLM response using the unified interface
-            response = await processor.process_raw_prompt(prompt)
+            # Get LLM response using the unified interface with better JSON handling
+            system_prompt = "You are a JSON generator. Output ONLY valid JSON. Start with { or [ and end with } or ]. No explanations, no text before or after the JSON."
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt}
+            ]
             
-            # Parse response (handle markdown-wrapped JSON)
+            # Use internal method directly for more control
+            response = await processor._make_completion(
+                messages=messages,
+                temperature=0.1,  # Lower temperature for more consistent JSON
+                max_tokens=1000,
+            )
+            
+            # Parse response (handle various formats)
+            data = None
             try:
                 # Try direct parsing first
                 data = json.loads(response)
             except json.JSONDecodeError:
                 # Try to extract JSON from markdown code block
                 import re
-                json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response, re.DOTALL)
-                if not json_match:
-                    # Try without code block markers
-                    json_match = re.search(r'\{.*\}', response, re.DOTALL)
+                json_patterns = [
+                    r'```(?:json)?\s*(\{.*?\})\s*```',  # Markdown code block
+                    r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}',  # Nested JSON
+                    r'\{.*?\}'  # Simple JSON
+                ]
                 
-                if json_match:
-                    try:
-                        data = json.loads(json_match.group(1) if '```' in response else json_match.group())
-                    except:
-                        logger.error(f"Failed to parse LLM response for entity extraction")
-                        return ExtractedEntities()
-                else:
-                    logger.error(f"No JSON found in LLM response")
-                    return ExtractedEntities()
+                for pattern in json_patterns:
+                    match = re.search(pattern, response, re.DOTALL)
+                    if match:
+                        try:
+                            json_str = match.group(1) if '```' in pattern else match.group()
+                            data = json.loads(json_str)
+                            break
+                        except:
+                            continue
+                
+                if not data:
+                    logger.error(f"No valid JSON found in LLM response. Raw response: {response[:200]}...")
+                    # Return a default entity indicating potential AI content for manual review
+                    return ExtractedEntities(
+                        is_ai_related=True,  # Assume it might be AI related
+                        relevance_score=0.3,  # Low confidence
+                        summary="Could not parse LLM response"
+                    )
             
             return ExtractedEntities(
                 models_mentioned=data.get("models_mentioned", []),
@@ -156,30 +186,17 @@ Be specific about model names and versions. Only mark as ai_related if it discus
                 summary=data.get("summary", "")
             )
                 
-        finally:
-            await processor.close()
+        except Exception as e:
+            logger.error(f"Failed to extract entities: {e}")
+            return ExtractedEntities()
     
     async def extract_best_practices_with_llm(self, content: str, entities: ExtractedEntities) -> List[Dict[str, Any]]:
         """Extract best practices using LLM, guided by entities."""
         if not entities.is_ai_related or entities.relevance_score < 0.3:
             return []
             
-        # Create processor with proper configuration
-        if settings.llm_provider == "openrouter":
-            processor = LLMProcessorFactory.create_processor(
-                provider="openrouter",
-                api_key=settings.openrouter_api_key,
-                model=settings.openrouter_model,
-                max_chars=3000
-            )
-        else:
-            processor = LLMProcessorFactory.create_processor(
-                provider="local",
-                base_url=settings.local_llm_url,
-                model=settings.local_llm_model,
-                api_type=settings.local_llm_type,
-                max_chars=3000
-            )
+        # Use cached processor
+        processor = self._get_llm_processor()
         
         try:
             # Use entities to create focused prompt
@@ -210,31 +227,29 @@ Return a JSON array of practices:
 
 Only extract concrete, verifiable practices. Be specific about which models they apply to."""
 
-            response = await processor.process_raw_prompt(prompt)
+            # Use the structured process_content method instead of raw prompt
+            processed_practices = await processor.process_content(content[:3000], f"reddit post about {entities.theme}")
             
-            # Parse response (handle markdown-wrapped JSON)
-            try:
-                practices = json.loads(response)
-            except json.JSONDecodeError:
-                # Try to extract JSON from markdown code block
-                import re
-                json_match = re.search(r'```(?:json)?\s*(\[.*?\])\s*```', response, re.DOTALL)
-                if not json_match:
-                    # Try without code block markers
-                    json_match = re.search(r'\[.*\]', response, re.DOTALL)
+            # Convert ProcessedPractice objects to the expected format
+            practices = []
+            for practice in processed_practices:
+                # Map model_name to applicable_models array
+                applicable_models = [practice.model_name] if practice.model_name else []
                 
-                if json_match:
-                    try:
-                        practices = json.loads(json_match.group(1) if '```' in response else json_match.group())
-                    except:
-                        logger.error("Failed to parse practices from LLM")
-                        return []
-                else:
-                    logger.error("No JSON array found in LLM response")
-                    return []
-            
-            if isinstance(practices, dict) and "practices" in practices:
-                practices = practices["practices"]
+                # Try to match any mentioned models from entities
+                if entities.models_mentioned and not applicable_models:
+                    # If no specific model in practice, use first mentioned model
+                    applicable_models = entities.models_mentioned[:1]
+                
+                practices.append({
+                    "practice_type": practice.practice_type,
+                    "content": practice.content,
+                    "confidence": practice.confidence,
+                    "applicable_models": applicable_models,
+                    "source_quality": "high" if practice.confidence > 0.8 else ("medium" if practice.confidence > 0.5 else "low"),
+                    "extracted_parameters": None,  # Could extract from content if needed
+                    "example_code": None  # Could extract from content if needed
+                })
             
             # Ensure applicable_models includes entities.models_mentioned
             for practice in practices:
@@ -243,8 +258,9 @@ Only extract concrete, verifiable practices. Be specific about which models they
                     
             return practices
                 
-        finally:
-            await processor.close()
+        except Exception as e:
+            logger.error(f"Failed to extract entities: {e}")
+            return ExtractedEntities()
     
     def normalize_reddit_url(self, url: str) -> str:
         """Convert old.reddit.com URLs to standard reddit.com URLs."""
@@ -254,14 +270,8 @@ Only extract concrete, verifiable practices. Be specific about which models they
     
     async def evaluate_practice_quality(self, practice: Dict[str, Any], model_name: str, content_context: str) -> Dict[str, Any]:
         """Use LLM to evaluate if a practice is actually useful and specific to the model."""
-        processor = LLMProcessorFactory.create_processor(
-            provider=settings.llm_provider,
-            api_key=settings.openrouter_api_key,
-            model=settings.openrouter_model if settings.llm_provider == "openrouter" else settings.local_llm_model,
-            base_url=settings.local_llm_url if settings.llm_provider == "local" else None,
-            api_type=settings.local_llm_type,
-            max_chars=2000
-        )
+        # Use cached processor
+        processor = self._get_llm_processor(max_chars=2000)
         
         try:
             prompt = f"""Evaluate if this practice is actually useful, specific, and relevant to {model_name}.
@@ -280,7 +290,7 @@ Evaluate based on:
 3. Is it ACCURATE based on what you know about {model_name}?
 4. Does the original context actually discuss {model_name} specifically?
 
-Return JSON:
+You MUST respond with ONLY this JSON structure. No explanations:
 {{
   "is_relevant": true/false,
   "is_specific": true/false,
@@ -290,7 +300,7 @@ Return JSON:
   "improved_content": "rewritten practice if needed, or null"
 }}
 
-Be strict - only high-quality, model-specific practices should pass."""
+IMPORTANT: Start with {{ and end with }}. Be strict - only high-quality, model-specific practices should pass."""
 
             response = await processor.process_raw_prompt(prompt)
             
@@ -336,7 +346,8 @@ Be strict - only high-quality, model-specific practices should pass."""
             }
             return practice
         finally:
-            await processor.close()
+            # Don't close the processor - we're reusing it
+            pass
     
     async def scrape_reddit_browser(self, page: Page, subreddit: str, max_posts: int = 10) -> List[ProcessedContent]:
         """Scrape Reddit using browser and process with LLM."""
@@ -620,31 +631,78 @@ Be strict - only high-quality, model-specific practices should pass."""
             
             timestamp = datetime.now().isoformat()
             
-            # Append to prompting guide (don't overwrite)
+            # Update prompting guide with deduplication
             if practices["prompting"]:
                 prompting_file = model_dir / "prompting.md"
                 
-                # Read existing content if file exists
-                existing_content = ""
+                # Parse existing practices from the file
+                existing_practices = []
                 if prompting_file.exists():
                     existing_content = prompting_file.read_text()
+                    # Extract practice headings (lines starting with ##)
+                    import re
+                    practice_pattern = r'^##\s+(.+)$'
+                    for match in re.finditer(practice_pattern, existing_content, re.MULTILINE):
+                        practice_text = match.group(1).strip()
+                        # Skip section headers like "Practices Added..."
+                        if not practice_text.startswith("Practices Added"):
+                            existing_practices.append(practice_text.lower())
                 
-                # Add new content
-                new_content = f"\n\n## Practices Added {timestamp}\n\n"
+                # Build new content, checking for duplicates
+                practices_to_add = []
                 for p in practices["prompting"]:
-                    new_content += f"### {p['content']}\n"
-                    new_content += f"- **Quality Score**: {p.get('quality_score', 'N/A')}\n"
-                    new_content += f"- **Confidence**: {p['confidence']}\n"
-                    new_content += f"- **Source**: [{p['source']}]({p.get('source_url', '#')})\n"
-                    new_content += f"- **Theme**: {p['theme']}\n"
-                    if p.get('example_code'):
-                        new_content += f"\n```\n{p['example_code']}\n```\n"
-                    new_content += "\n"
+                    normalized_content = p['content'].lower().strip()
+                    
+                    # Check for duplicates
+                    is_duplicate = False
+                    for existing in existing_practices:
+                        # Calculate similarity
+                        new_words = set(normalized_content.split())
+                        existing_words = set(existing.split())
+                        
+                        if new_words and existing_words:
+                            common_words = new_words.intersection(existing_words)
+                            similarity = len(common_words) / min(len(new_words), len(existing_words))
+                            
+                            if similarity > 0.8:  # 80% similarity threshold
+                                is_duplicate = True
+                                logger.info(f"Skipping duplicate prompting practice: {p['content'][:50]}...")
+                                break
+                    
+                    if not is_duplicate:
+                        practices_to_add.append(p)
+                        existing_practices.append(normalized_content)
                 
-                # Write combined content
-                if existing_content and not existing_content.endswith('\n'):
-                    existing_content += '\n'
-                prompting_file.write_text(existing_content + new_content)
+                # Only write if we have new practices to add
+                if practices_to_add:
+                    # If file doesn't exist, create with header
+                    if not prompting_file.exists():
+                        existing_content = f"# {model_name} Prompting Guide\n\n*Last updated: {timestamp}*\n"
+                    else:
+                        # Update the last updated timestamp
+                        existing_content = re.sub(
+                            r'\*Last updated: .+\*', 
+                            f'*Last updated: {timestamp}*', 
+                            existing_content
+                        )
+                    
+                    # Add new practices
+                    new_content = "\n"
+                    for p in practices_to_add:
+                        new_content += f"\n## {p['content']}\n"
+                        new_content += f"- **Quality Score**: {p.get('quality_score', 'N/A')}\n"
+                        new_content += f"- **Confidence**: {p['confidence']}\n"
+                        new_content += f"- **Source**: [{p['source']}]({p.get('source_url', '#')})\n"
+                        new_content += f"- **Theme**: {p['theme']}\n"
+                        if p.get('example_code'):
+                            new_content += f"\n```\n{p['example_code']}\n```\n"
+                        new_content += "\n"
+                    
+                    # Write combined content
+                    if existing_content and not existing_content.endswith('\n'):
+                        existing_content += '\n'
+                    prompting_file.write_text(existing_content + new_content)
+                    logger.info(f"Added {len(practices_to_add)} new prompting practices for {model_name}")
             
             # Merge parameters (don't overwrite)
             if practices["parameters"]:
@@ -656,63 +714,136 @@ Be strict - only high-quality, model-specific practices should pass."""
                     with open(params_file, 'r') as f:
                         existing_params = json.load(f)
                 
+                # Create a set of existing parameter descriptions for deduplication
+                existing_descriptions = {param["description"].lower().strip() for param in existing_params}
+                
                 # Add new parameters
                 for p in practices["parameters"]:
-                    # Filter extracted parameters to only include this model's data
-                    extracted_params = p.get("extracted_parameters", {})
-                    filtered_params = {}
+                    normalized_desc = p["content"].lower().strip()
                     
-                    # Check if parameters contain model-specific data
-                    for param_name, param_value in extracted_params.items():
-                        if isinstance(param_value, dict):
-                            # If it's a dict with model names as keys, extract only this model's data
-                            if model_name in param_value:
-                                filtered_params[param_name] = param_value[model_name]
-                            elif clean_model in param_value:
-                                filtered_params[param_name] = param_value[clean_model]
-                            # If neither exact match, skip this parameter for this model
-                        else:
-                            # If it's not a dict, include it as-is
-                            filtered_params[param_name] = param_value
+                    # Check for duplicates
+                    is_duplicate = False
+                    for existing_desc in existing_descriptions:
+                        # Calculate similarity
+                        new_words = set(normalized_desc.split())
+                        existing_words = set(existing_desc.split())
+                        
+                        if new_words and existing_words:
+                            common_words = new_words.intersection(existing_words)
+                            similarity = len(common_words) / min(len(new_words), len(existing_words))
+                            
+                            if similarity > 0.8:  # 80% similarity threshold
+                                is_duplicate = True
+                                logger.info(f"Skipping duplicate parameter: {p['content'][:50]}...")
+                                break
                     
-                    # Only add parameter entry if we have relevant data
-                    if filtered_params or not extracted_params:  # Include if no params or if we found relevant params
-                        param_entry = {
-                            "description": p["content"],
-                            "confidence": p["confidence"],
-                            "source": p["source"],
-                            "timestamp": p["timestamp"],
-                            "extracted_values": filtered_params
-                        }
-                        existing_params.append(param_entry)
+                    if not is_duplicate:
+                        # Filter extracted parameters to only include this model's data
+                        extracted_params = p.get("extracted_parameters", {})
+                        if extracted_params is None:
+                            extracted_params = {}
+                        filtered_params = {}
+                        
+                        # Check if parameters contain model-specific data
+                        for param_name, param_value in extracted_params.items():
+                            if isinstance(param_value, dict):
+                                # If it's a dict with model names as keys, extract only this model's data
+                                if model_name in param_value:
+                                    filtered_params[param_name] = param_value[model_name]
+                                elif clean_model in param_value:
+                                    filtered_params[param_name] = param_value[clean_model]
+                                # If neither exact match, skip this parameter for this model
+                            else:
+                                # If it's not a dict, include it as-is
+                                filtered_params[param_name] = param_value
+                        
+                        # Only add parameter entry if we have relevant data
+                        if filtered_params or not extracted_params:  # Include if no params or if we found relevant params
+                            param_entry = {
+                                "description": p["content"],
+                                "confidence": p["confidence"],
+                                "source": p["source"],
+                                "timestamp": p["timestamp"],
+                                "extracted_values": filtered_params
+                            }
+                            existing_params.append(param_entry)
+                            existing_descriptions.add(normalized_desc)
+                            logger.info(f"Added new parameter for {model_name}: {p['content'][:50]}...")
                 
                 # Save merged parameters
                 with open(params_file, 'w') as f:
                     json.dump(existing_params, f, indent=2)
             
-            # Append to pitfalls (don't overwrite)
+            # Update pitfalls with deduplication
             if practices["pitfalls"]:
                 pitfalls_file = model_dir / "pitfalls.md"
                 
-                # Read existing content if file exists
-                existing_content = ""
+                # Parse existing pitfalls from the file
+                existing_pitfalls = []
                 if pitfalls_file.exists():
                     existing_content = pitfalls_file.read_text()
+                    # Extract pitfall headings (lines starting with ## or ###)
+                    import re
+                    pitfall_pattern = r'^###?\s+(.+)$'
+                    for match in re.finditer(pitfall_pattern, existing_content, re.MULTILINE):
+                        pitfall_text = match.group(1).strip()
+                        # Skip section headers like "Pitfalls Added..."
+                        if not pitfall_text.startswith("Pitfalls Added"):
+                            existing_pitfalls.append(pitfall_text.lower())
                 
-                # Add new content
-                new_content = f"\n\n## Pitfalls Added {timestamp}\n\n"
+                # Build new content, checking for duplicates
+                pitfalls_to_add = []
                 for p in practices["pitfalls"]:
-                    new_content += f"### {p['content']}\n"
-                    new_content += f"- **Confidence**: {p['confidence']}\n"
-                    new_content += f"- **Source**: [{p['source']}]({p.get('source_url', '#')})\n"
-                    if p.get('example_code'):
-                        new_content += f"\n```\n{p['example_code']}\n```\n"
-                    new_content += "\n"
+                    normalized_content = p['content'].lower().strip()
+                    
+                    # Check for duplicates
+                    is_duplicate = False
+                    for existing in existing_pitfalls:
+                        # Calculate similarity
+                        new_words = set(normalized_content.split())
+                        existing_words = set(existing.split())
+                        
+                        if new_words and existing_words:
+                            common_words = new_words.intersection(existing_words)
+                            similarity = len(common_words) / min(len(new_words), len(existing_words))
+                            
+                            if similarity > 0.8:  # 80% similarity threshold
+                                is_duplicate = True
+                                logger.info(f"Skipping duplicate pitfall: {p['content'][:50]}...")
+                                break
+                    
+                    if not is_duplicate:
+                        pitfalls_to_add.append(p)
+                        existing_pitfalls.append(normalized_content)
                 
-                # Write combined content
-                if existing_content and not existing_content.endswith('\n'):
-                    existing_content += '\n'
-                pitfalls_file.write_text(existing_content + new_content)
+                # Only write if we have new pitfalls to add
+                if pitfalls_to_add:
+                    # If file doesn't exist, create with header
+                    if not pitfalls_file.exists():
+                        existing_content = f"# {model_name} Common Pitfalls\n\n*Last updated: {timestamp}*\n"
+                    else:
+                        # Update the last updated timestamp
+                        existing_content = re.sub(
+                            r'\*Last updated: .+\*', 
+                            f'*Last updated: {timestamp}*', 
+                            existing_content
+                        )
+                    
+                    # Add new pitfalls
+                    new_content = "\n"
+                    for p in pitfalls_to_add:
+                        new_content += f"\n## {p['content']}\n"
+                        new_content += f"- **Confidence**: {p['confidence']}\n"
+                        new_content += f"- **Source**: [{p['source']}]({p.get('source_url', '#')})\n"
+                        if p.get('example_code'):
+                            new_content += f"\n```\n{p['example_code']}\n```\n"
+                        new_content += "\n"
+                    
+                    # Write combined content
+                    if existing_content and not existing_content.endswith('\n'):
+                        existing_content += '\n'
+                    pitfalls_file.write_text(existing_content + new_content)
+                    logger.info(f"Added {len(pitfalls_to_add)} new pitfalls for {model_name}")
             
             # Save tips to examples directory
             if practices["tips"]:
@@ -727,15 +858,41 @@ Be strict - only high-quality, model-specific practices should pass."""
                     with open(tips_file, 'r') as f:
                         existing_tips = json.load(f)
                 
-                # Add new tips
+                # Create a set of existing tip contents for deduplication
+                # Normalize content for comparison (lowercase, strip whitespace)
+                existing_contents = {tip["tip"].lower().strip() for tip in existing_tips}
+                
+                # Add new tips, avoiding duplicates
                 for p in practices["tips"]:
-                    existing_tips.append({
-                        "tip": p["content"],
-                        "confidence": p["confidence"],
-                        "source": p["source"],
-                        "timestamp": p["timestamp"],
-                        "example": p.get("example_code")
-                    })
+                    normalized_content = p["content"].lower().strip()
+                    
+                    # Check for similar content (not just exact match)
+                    is_duplicate = False
+                    for existing_content in existing_contents:
+                        # Calculate similarity (simple approach: check if 80% of words match)
+                        new_words = set(normalized_content.split())
+                        existing_words = set(existing_content.split())
+                        
+                        if new_words and existing_words:
+                            common_words = new_words.intersection(existing_words)
+                            similarity = len(common_words) / min(len(new_words), len(existing_words))
+                            
+                            if similarity > 0.8:  # 80% similarity threshold
+                                is_duplicate = True
+                                logger.info(f"Skipping duplicate tip: {p['content'][:50]}...")
+                                break
+                    
+                    if not is_duplicate:
+                        new_tip = {
+                            "tip": p["content"],
+                            "confidence": p["confidence"],
+                            "source": p["source"],
+                            "timestamp": p["timestamp"],
+                            "example": p.get("example_code")
+                        }
+                        existing_tips.append(new_tip)
+                        existing_contents.add(normalized_content)
+                        logger.info(f"Added new tip for {model_name}: {p['content'][:50]}...")
                 
                 # Save merged tips
                 with open(tips_file, 'w') as f:

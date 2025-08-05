@@ -1,5 +1,14 @@
 """CLI for SCAPO (Stay Calm and Prompt On)."""
 
+import warnings
+# Suppress pydantic V2 migration warnings from third-party libraries (specifically litellm)
+warnings.filterwarnings(
+    "ignore",
+    category=UserWarning,
+    message=".*Valid config keys have changed in V2.*",
+    module="pydantic._internal._config"
+)
+
 import asyncio
 import sys
 import click
@@ -358,6 +367,157 @@ def setup_playwright():
     else:
         console.print("[red]✗[/red] Playwright setup failed")
         console.print(result.stderr)
+
+
+@cli.command()
+@click.option("--format", "-f", type=click.Choice(["json", "markdown", "yaml"]), default="json", 
+              help="Export format")
+@click.option("--output", "-o", type=click.Path(), 
+              help="Output file path (default: scapo_export_<timestamp>.<format>)")
+@click.option("--category", "-c", help="Filter by category (text, image, video, audio, multimodal)")
+@click.option("--model", "-m", help="Export specific model only")
+def export(format, output, category, model):
+    """Export SCAPO best practices data."""
+    import json
+    import yaml
+    from datetime import datetime
+    import os
+    
+    console.print(f"[blue]Exporting SCAPO data in {format} format...[/blue]")
+    
+    # Collect data
+    export_data = {
+        "metadata": {
+            "exported_at": datetime.now().isoformat(),
+            "version": "0.1.0",
+            "total_models": 0,
+            "categories": {}
+        },
+        "models": {}
+    }
+    
+    models_dir = "models"
+    if not os.path.exists(models_dir):
+        console.print("[red]No models directory found. Run 'scapo scrape run' first.[/red]")
+        return
+    
+    # Filter categories if specified
+    categories = ["text", "image", "video", "audio", "multimodal"]
+    if category:
+        if category not in categories:
+            console.print(f"[red]Invalid category: {category}[/red]")
+            return
+        categories = [category]
+    
+    # Collect model data
+    for cat in categories:
+        cat_dir = os.path.join(models_dir, cat)
+        if not os.path.exists(cat_dir):
+            continue
+            
+        export_data["models"][cat] = {}
+        model_count = 0
+        
+        model_dirs = os.listdir(cat_dir)
+        if model:
+            # Filter specific model
+            if model in model_dirs:
+                model_dirs = [model]
+            else:
+                continue
+        
+        for model_name in model_dirs:
+            model_path = os.path.join(cat_dir, model_name)
+            if not os.path.isdir(model_path):
+                continue
+                
+            model_data = {
+                "path": f"{cat}/{model_name}",
+                "files": {}
+            }
+            
+            # Read all files in model directory
+            for file_name in os.listdir(model_path):
+                file_path = os.path.join(model_path, file_name)
+                
+                if os.path.isfile(file_path):
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            if file_name.endswith('.json'):
+                                model_data["files"][file_name] = json.load(f)
+                            else:
+                                model_data["files"][file_name] = f.read()
+                    except Exception as e:
+                        console.print(f"[yellow]Warning: Could not read {file_path}: {e}[/yellow]")
+                elif os.path.isdir(file_path):
+                    # Handle subdirectories like examples/
+                    subdir_data = {}
+                    for subfile in os.listdir(file_path):
+                        subfile_path = os.path.join(file_path, subfile)
+                        if os.path.isfile(subfile_path):
+                            try:
+                                with open(subfile_path, 'r', encoding='utf-8') as f:
+                                    if subfile.endswith('.json'):
+                                        subdir_data[subfile] = json.load(f)
+                                    else:
+                                        subdir_data[subfile] = f.read()
+                            except Exception as e:
+                                console.print(f"[yellow]Warning: Could not read {subfile_path}: {e}[/yellow]")
+                    if subdir_data:
+                        model_data["files"][file_name] = subdir_data
+            
+            export_data["models"][cat][model_name] = model_data
+            model_count += 1
+        
+        if model_count > 0:
+            export_data["metadata"]["categories"][cat] = model_count
+            export_data["metadata"]["total_models"] += model_count
+    
+    # Generate output filename if not specified
+    if not output:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output = f"scapo_export_{timestamp}.{format}"
+    
+    # Export based on format
+    try:
+        if format == "json":
+            with open(output, 'w', encoding='utf-8') as f:
+                json.dump(export_data, f, indent=2, ensure_ascii=False)
+        
+        elif format == "yaml":
+            with open(output, 'w', encoding='utf-8') as f:
+                yaml.dump(export_data, f, default_flow_style=False, allow_unicode=True)
+        
+        elif format == "markdown":
+            with open(output, 'w', encoding='utf-8') as f:
+                f.write("# SCAPO Export\n\n")
+                f.write(f"**Exported at:** {export_data['metadata']['exported_at']}\n")
+                f.write(f"**Total models:** {export_data['metadata']['total_models']}\n\n")
+                
+                for cat, models in export_data["models"].items():
+                    f.write(f"## {cat.upper()}\n\n")
+                    for model_name, model_data in models.items():
+                        f.write(f"### {model_name}\n\n")
+                        f.write(f"**Path:** `{model_data['path']}`\n\n")
+                        
+                        # Write file contents
+                        for file_name, content in model_data["files"].items():
+                            f.write(f"#### {file_name}\n\n")
+                            if isinstance(content, dict):
+                                f.write("```json\n")
+                                f.write(json.dumps(content, indent=2))
+                                f.write("\n```\n\n")
+                            else:
+                                f.write(content)
+                                f.write("\n\n")
+        
+        console.print(f"[green]✓[/green] Export complete: {output}")
+        console.print(f"  Total models: {export_data['metadata']['total_models']}")
+        for cat, count in export_data['metadata']['categories'].items():
+            console.print(f"  {cat}: {count} models")
+            
+    except Exception as e:
+        console.print(f"[red]Export failed: {e}[/red]")
 
 
 def display_scraper_result(result: dict):

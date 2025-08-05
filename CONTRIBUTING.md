@@ -5,7 +5,7 @@ Welcome to the zen garden of AI prompting! We're building the most chill knowled
 ## 🌟 The SCAPO Way
 
 Before contributing, remember our philosophy:
-1. **No API keys required** - If it needs keys, we don't want it
+1. **No API keys required for web search** - If it needs keys, we don't want it (we support LMstudio and Ollama!)
 2. **Community wisdom > Corporate docs** - Real users know best
 3. **Automation is key** - Manual work is so 2023
 4. **Keep it simple** - Complexity kills calm
@@ -89,7 +89,7 @@ See something wrong? Fix it! Common issues:
 
 ### 🎯 Medium Priority
 1. **Export features** - Obsidian, Notion formats
-2. **Practice deduplication** - Merge similar tips
+2. ~~**Practice deduplication**~~ - ✅ Already implemented!
 3. **Confidence scoring** - Better quality metrics
 4. **Browser anti-detection** - Stay stealthy
 
@@ -113,7 +113,7 @@ See something wrong? Fix it! Common issues:
 ### Quick Start
 ```bash
 # Clone & enter zen mode
-git clone https://github.com/fiefworks/scapo.git
+git clone https://github.com/czero-cc/scapo.git
 cd scapo
 
 # Install uv (the fast package manager)
@@ -143,23 +143,39 @@ cp .env.example .env
 # LOCAL_LLM_TYPE=lmstudio
 # LOCAL_LLM_URL=http://localhost:1234
 
-# Test the pipeline
-uv run python -m src.scrapers.intelligent_browser_scraper
+# Test SCAPO is working
+uv run scapo init
+
+# Run a test scrape (respects default 2-second delay)
+uv run scapo scrape run --sources reddit:LocalLLaMA --limit 2
 ```
 
 ## 🧪 Testing Your Changes
 
+### Important Notes on Current Implementation
+- The CLI uses `uv run scapo` commands (not `python -m`)
+- Default scraping delay is 2 seconds (configured in .env)
+- LiteLLM is used for all LLM providers (OpenRouter, Ollama, LM Studio)
+- Deduplication is already implemented for all content types
+- Quality filtering threshold is 0.6 by default
+
 ### Test New Scraper
 ```bash
-# Test with a few posts (fast mode for testing)
-SCRAPING_DELAY_SECONDS=0.5 python -m src.cli scrape run --sources mycommunity:test --limit 5
+# Test with a few posts (default 2-second delay is respectful)
+uv run scapo scrape run --sources mycommunity:test --limit 3
 
-# Check the output
-ls -la models/text/  # See what models were found
-cat intelligent_scraper_summary.json  # Check stats
+# Check what models were found
+uv run scapo models list
 
-# For production, use respectful delays
-SCRAPING_DELAY_SECONDS=2 python -m src.cli scrape run --sources mycommunity:test
+# Check specific model info
+uv run scapo models info "Model-Name" --category text
+
+# For debugging, check the logs (JSON format by default)
+# Logs show progress and any issues
+
+# IMPORTANT: Never use delays shorter than 2 seconds!
+# Bad: SCRAPING_DELAY_SECONDS=0.5 (too aggressive)
+# Good: Use default 2s or increase for courtesy
 ```
 
 ### Test MCP Server
@@ -172,8 +188,14 @@ node index.js  # Manual testing
 
 ### Run All Tests
 ```bash
-make test  # Runs pytest
-make lint  # Checks code style
+# Run tests
+uv run pytest
+
+# Check code style
+uv run ruff check .
+
+# Format code
+uv run black .
 ```
 
 ## 📝 Pull Request Guidelines

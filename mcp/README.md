@@ -104,7 +104,7 @@ Example in Claude:
 
 ## Environment Variables
 
-- `SCAPO_MODELS_PATH`: Path to local models directory (required)
+- `SCAPO_MODELS_PATH`: Path to local models directory (defaults to `../models` relative to MCP server)
 - `SCAPO_API_URL`: Optional API endpoint (not needed for basic usage)
 
 ## Features
