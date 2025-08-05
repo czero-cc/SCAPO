@@ -145,6 +145,8 @@ reference
 # python
 .venv
 __pycache__
+*.egg-info
+*.egg
 
 # vibe code related
 CLAUDE.md

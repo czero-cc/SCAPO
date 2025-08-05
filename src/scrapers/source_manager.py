@@ -14,7 +14,10 @@ logger = get_logger(__name__)
 class SourceManager:
     """Manages all scraping sources and their configurations."""
     
-    def __init__(self, sources_file: Path = Path("src/scrapers/sources.yaml")):
+    def __init__(self, sources_file: Path = None):
+        if sources_file is None:
+            # Get the path relative to this file
+            sources_file = Path(__file__).parent / "sources.yaml"
         self.sources_file = sources_file
         self.sources_config = self._load_sources()
         self.last_scraped: Dict[str, datetime] = {}

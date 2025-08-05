@@ -104,7 +104,10 @@ See something wrong? Fix it! Common issues:
 ### Prerequisites
 - Python 3.12+
 - Node.js 18+ (for MCP)
-- Local LLM (LM Studio or Ollama)
+- An LLM provider (choose one):
+  - OpenRouter account (cloud)
+  - Ollama installed (local)
+  - LM Studio installed (local)
 - A calm mindset 🧘
 
 ### Quick Start
@@ -122,24 +125,41 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 uv pip install -r requirements.txt
 uv run playwright install
 
-# Configure your local LLM
+# Configure your LLM provider
 cp .env.example .env
-# Edit .env - point to LM Studio (localhost:1234)
 
-# Test scraping
-python test_lmstudio_browser.py
+# Edit .env and choose your provider:
+# Option 1: OpenRouter (cloud)
+# LLM_PROVIDER=openrouter
+# OPENROUTER_API_KEY=your_key_here
+
+# Option 2: Ollama (local)
+# LLM_PROVIDER=local
+# LOCAL_LLM_TYPE=ollama
+# LOCAL_LLM_URL=http://localhost:11434
+
+# Option 3: LM Studio (local)
+# LLM_PROVIDER=local
+# LOCAL_LLM_TYPE=lmstudio
+# LOCAL_LLM_URL=http://localhost:1234
+
+# Test the pipeline
+uv run python -m src.scrapers.intelligent_browser_scraper
 ```
 
 ## 🧪 Testing Your Changes
 
 ### Test New Scraper
 ```bash
-# Test with a few posts
-python -m src.cli scrape run --sources mycommunity:test --limit 5
+# Test with a few posts (fast mode for testing)
+SCRAPING_DELAY_SECONDS=0.5 python -m src.cli scrape run --sources mycommunity:test --limit 5
 
 # Check the output
 ls -la models/text/  # See what models were found
 cat intelligent_scraper_summary.json  # Check stats
+
+# For production, use respectful delays
+SCRAPING_DELAY_SECONDS=2 python -m src.cli scrape run --sources mycommunity:test
 ```
 
 ### Test MCP Server

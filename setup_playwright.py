@@ -79,7 +79,7 @@ def verify_installation():
 
 def main():
     """Main setup function."""
-    console.print("[bold green]Playwright Setup for SOTA Practices[/bold green]")
+    console.print("[bold green]Playwright Setup for SCAPO[/bold green]")
     console.print("=" * 50)
     
     # Install browsers

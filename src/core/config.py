@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
-from pydantic import Field, PostgresDsn, RedisDsn, field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -12,38 +12,12 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
-    # Reddit API
-    reddit_client_id: Optional[str] = Field(None, description="Reddit API client ID")
-    reddit_client_secret: Optional[str] = Field(None, description="Reddit API client secret")
-    reddit_user_agent: str = Field(
-        default="sota-practices-bot/1.0 by Fiefworks",
-        description="Reddit user agent",
-    )
+    # Browser scraping doesn't need API keys or database
 
-    # Discord
-    discord_bot_token: Optional[str] = Field(None, description="Discord bot token")
-    
-    # GitHub
-    github_token: Optional[str] = Field(None, description="GitHub personal access token")
-
-    # Database
-    database_url: str = Field(default="sqlite:///./sota_practices.db", description="Database connection URL")
-    redis_url: str = Field(default="redis://localhost:6379", description="Redis connection URL")
-
-    # API Configuration
+    # API Configuration (for future API server)
     api_host: str = Field(default="0.0.0.0", description="API host")
     api_port: int = Field(default=8000, description="API port")
     api_prefix: str = Field(default="/api/v1", description="API prefix")
-
-    # Security
-    api_key: str = Field(default="dev_api_key_change_in_production", description="API key for authentication")
-    secret_key: str = Field(default="dev_secret_key_change_in_production", description="Secret key for JWT")
-
-    # Monitoring
-    enable_metrics: bool = Field(default=True, description="Enable Prometheus metrics")
-    otel_exporter_otlp_endpoint: Optional[str] = Field(
-        None, description="OpenTelemetry exporter endpoint"
-    )
 
     # Scraping Configuration
     scraping_interval_hours: int = Field(
@@ -54,6 +28,9 @@ class Settings(BaseSettings):
     )
     min_upvote_ratio: float = Field(
         default=0.8, description="Minimum upvote ratio for posts"
+    )
+    scraping_delay_seconds: float = Field(
+        default=2.0, description="Delay between scraping pages/posts (be respectful to servers)"
     )
 
     # Logging
@@ -74,6 +51,7 @@ class Settings(BaseSettings):
     llm_processing_enabled: bool = Field(default=True, description="Enable LLM processing of content")
     llm_max_chars: int = Field(default=4000, description="Maximum characters to send to LLM (user-friendly)")
     llm_char_hard_limit: int = Field(default=50000, description="Absolute maximum characters (safety limit)")
+    llm_quality_threshold: float = Field(default=0.6, description="Minimum quality score for practices (0.0-1.0)")
 
     @field_validator("models_dir", "scrapers_dir")
     @classmethod

@@ -38,8 +38,8 @@ Fixes #(issue number)
 ## 🧪 Testing
 
 <!-- How did you test your changes? -->
-- [ ] Ran `make test`
-- [ ] Tested intelligent scraper with: `python -m src.cli scrape run --sources [source] --limit 5`
+- [ ] Ran `uv run pytest`
+- [ ] Tested intelligent scraper with: `scapo scrape run --sources [source] --limit 5`
 - [ ] Verified LLM processing worked correctly
 - [ ] Checked that only AI/ML content was processed
 - [ ] Other testing (please describe):

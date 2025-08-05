@@ -1,0 +1,86 @@
+[
+  {
+    "tip": "Utilize GGUF format models for efficient local inference.  Specifically, leverage Unslogth's GGUF models for models like Qwen3-Coder-30B-A3B-Instruct and Qwen3-Coder-30B-A3B-Instruct-1M.  These models are optimized for lower memory footprint.",
+    "confidence": 0.95,
+    "source": "reddit:LocalLLaMA",
+    "timestamp": "2025-08-05T13:56:34.961563",
+    "example": null
+  },
+  {
+    "tip": "Employ KV cache quantization, particularly when using long context lengths (256k-1M).  KV cache quantization significantly reduces memory requirements per token.  This is crucial for models like Qwen3-Coder-30B-A3B-Instruct-1M, where unquantized KV cache requires significant memory (96GB).",
+    "confidence": 0.9,
+    "source": "reddit:LocalLLaMA",
+    "timestamp": "2025-08-05T13:56:34.961563",
+    "example": null
+  },
+  {
+    "tip": "Download pre-quantized GGUF models from Unslogth.  Unslogth provides optimized GGUF versions of models like Qwen3-Coder-30B-A3B-Instruct and others, offering improved performance and reduced memory usage.",
+    "confidence": 0.9,
+    "source": "reddit:LocalLLaMA",
+    "timestamp": "2025-08-05T13:56:34.961563",
+    "example": null
+  },
+  {
+    "tip": "Utilize GGUF format for quantized models to reduce memory requirements.  Specifically, Dynamic Unshelth GGUF versions are available for Qwen3-Coder-30B-A3B-Instruct and 1M context length variants.",
+    "confidence": 0.95,
+    "source": "reddit:LocalLLaMA",
+    "timestamp": "2025-08-05T14:04:35.712749",
+    "example": null
+  },
+  {
+    "tip": "Implement KV cache quantization to handle long context lengths (256k-1M).  KV cache quantization significantly reduces memory footprint per token.",
+    "confidence": 0.9,
+    "source": "reddit:LocalLLaMA",
+    "timestamp": "2025-08-05T14:04:35.712749",
+    "example": null
+  },
+  {
+    "tip": "Ensure tool calling functionality is enabled and up-to-date.  Recent versions of Qwen3-Coder models have had tool calling fixes. Re-download the latest shard to benefit from these fixes.",
+    "confidence": 0.9,
+    "source": "reddit:LocalLLaMA",
+    "timestamp": "2025-08-05T14:04:35.712749",
+    "example": null
+  },
+  {
+    "tip": "Utilize GGUF format for efficient model storage and inference, enabling faster loading and reduced memory footprint. Dynamic Unslogth GGUF versions are available.",
+    "confidence": 0.95,
+    "source": "reddit:LocalLLaMA",
+    "timestamp": "2025-08-05T13:59:06.275408",
+    "example": null
+  },
+  {
+    "tip": "Employ KV cache quantization to reduce memory requirements when using long context lengths (256k to 1M tokens).  KV cache quantization significantly lowers the memory footprint per token.",
+    "confidence": 0.9,
+    "source": "reddit:LocalLLaMA",
+    "timestamp": "2025-08-05T13:59:06.275408",
+    "example": null
+  },
+  {
+    "tip": "Enable and utilize tool calling functionality for enhanced model capabilities.  This was fixed for the 480B and 30B models.",
+    "confidence": 0.85,
+    "source": "reddit:LocalLLaMA",
+    "timestamp": "2025-08-05T13:59:06.275408",
+    "example": null
+  },
+  {
+    "tip": "Utilize KV cache quantization to fit long context lengths (256k to 1M). This significantly reduces memory requirements per token.",
+    "confidence": 0.95,
+    "source": "reddit:LocalLLaMA",
+    "timestamp": "2025-08-05T14:16:20.490398",
+    "example": null
+  },
+  {
+    "tip": "Download Dynamic Uns\u043b\u043e\u0442h GGUF models for optimized performance and memory usage.",
+    "confidence": 0.9,
+    "source": "reddit:LocalLLaMA",
+    "timestamp": "2025-08-05T14:16:20.490398",
+    "example": null
+  },
+  {
+    "tip": "Re-download the latest model shards after fixes, such as tool calling and thinking improvements.",
+    "confidence": 0.85,
+    "source": "reddit:LocalLLaMA",
+    "timestamp": "2025-08-05T14:16:20.490398",
+    "example": null
+  }
+]

@@ -1,0 +1,16 @@
+[
+  {
+    "tip": "Utilize GGUF format for efficient model storage and inference, enabling faster loading and reduced memory footprint. Dynamic Unslogth GGUF versions are available.",
+    "confidence": 0.95,
+    "source": "reddit:LocalLLaMA",
+    "timestamp": "2025-08-05T13:59:06.275408",
+    "example": null
+  },
+  {
+    "tip": "Employ KV cache quantization to reduce memory requirements when using long context lengths (256k to 1M tokens).  KV cache quantization significantly lowers the memory footprint per token.",
+    "confidence": 0.9,
+    "source": "reddit:LocalLLaMA",
+    "timestamp": "2025-08-05T13:59:06.275408",
+    "example": null
+  }
+]

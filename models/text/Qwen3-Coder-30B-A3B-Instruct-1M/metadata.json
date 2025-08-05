@@ -1,7 +1,8 @@
 {
   "model_id": "Qwen3-Coder-30B-A3B-Instruct-1M",
-  "last_updated": "2025-08-05T00:58:59.135929",
-  "sources_count": 0,
-  "themes": [],
-  "total_practices": 0
+  "last_updated": "2025-08-05T14:18:15.976535",
+  "total_practices": 12,
+  "sources": [
+    "https://reddit.com/r/LocalLLaMA/comments/1me31d8/qwen3coderflash_released/"
+  ]
 }

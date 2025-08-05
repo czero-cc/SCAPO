@@ -2,7 +2,7 @@
 
 # Default target
 help:
-	@echo "SOTA Practices Commands:"
+	@echo "SCAPO Commands:"
 	@echo ""
 	@echo "Setup:"
 	@echo "  make install      - Install dependencies with uv"

@@ -14,14 +14,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Server configuration
-const API_BASE_URL = process.env.SOTA_API_URL || 'http://localhost:8000/api/v1';
-const LOCAL_MODELS_PATH = process.env.SOTA_MODELS_PATH || join(dirname(__dirname), 'models');
+const API_BASE_URL = process.env.SCAPO_API_URL || 'http://localhost:8000/api/v1';
+const LOCAL_MODELS_PATH = process.env.SCAPO_MODELS_PATH || join(dirname(__dirname), 'models');
 
-class SOTAPracticesServer {
+class SCAPOServer {
   constructor() {
     this.server = new Server(
       {
-        name: 'sota-practices-mcp',
+        name: 'scapo-mcp',
         version: '1.0.0',
       },
       {
@@ -436,10 +436,10 @@ class SOTAPracticesServer {
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.error('SOTA Practices MCP Server running on stdio');
+    console.error('SCAPO MCP Server running on stdio');
   }
 }
 
 // Run the server
-const server = new SOTAPracticesServer();
+const server = new SCAPOServer();
 server.run().catch(console.error);

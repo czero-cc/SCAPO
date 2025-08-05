@@ -97,15 +97,41 @@ elif source.startswith("mynewsource:"):
 
 ## ✅ Testing Your Source
 
-1. Test locally with LM Studio:
+1. Configure your LLM provider in `.env`:
 ```bash
-# Make sure LM Studio is running on localhost:1234
-python test_lmstudio_browser.py
+# For OpenRouter (cloud)
+LLM_PROVIDER=openrouter
+OPENROUTER_API_KEY=your_key_here
+
+# For Ollama (local)
+LLM_PROVIDER=local
+LOCAL_LLM_TYPE=ollama
+LOCAL_LLM_URL=http://localhost:11434
+
+# For LM Studio (local)
+LLM_PROVIDER=local
+LOCAL_LLM_TYPE=lmstudio
+LOCAL_LLM_URL=http://localhost:1234
 ```
 
-2. Run a small test scrape:
+2. Test the scraper directly:
 ```bash
-python -m src.cli scrape run --sources mynewsource:test --limit 5
+# Run the intelligent browser scraper
+uv run python -m src.scrapers.intelligent_browser_scraper
+```
+
+3. Run a small test scrape:
+```bash
+# Fast mode for testing (0.5s delays)
+SCRAPING_DELAY_SECONDS=0.5 python -m src.cli scrape run --sources mynewsource:test --limit 5
+
+# Or set in .env for permanent change
+```
+
+4. For production, use respectful delays:
+```bash
+# Default 2s delay is recommended
+SCRAPING_DELAY_SECONDS=2 python -m src.cli scrape run --sources mynewsource:live
 ```
 
 ## 🤝 Contributing

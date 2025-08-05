@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Don't Be This Guy](assets/guy_freaking_out1.png)
+![AI Prompting Challenges](assets/guy_freaking_out1.png)
 
 **The Zen Guide to AI Model Best Practices**
 
@@ -13,7 +13,7 @@
 [![MCP Ready](https://img.shields.io/badge/Claude-MCP%20Ready-purple.svg)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-### 🎯 Stop freaking out about prompts. We got you.
+### 🎯 Stop stressing about prompts. We got you.
 
 </div>
 
@@ -27,7 +27,7 @@ Ever found yourself like this when trying to get AI to work?
 
 ## ✨ Features That'll Make You Say "Finally!"
 
-- 🕷️ **Intelligent Browser Scraping** - No API keys. No BS. Just pure browser automation magic.
+- 🕷️ **Intelligent Browser Scraping** - No API keys needed. Just pure browser automation magic.
 - 🧠 **LLM-Powered Extraction** - Your selected LLMs read the internet so you don't have to.
 - 🎯 **Automatic Categorization** - Text, image, video, audio models all organized nicely.
 - 🔌 **Claude Desktop Integration** - MCP server that just works™️
@@ -40,26 +40,96 @@ Ever found yourself like this when trying to get AI to work?
 git clone https://github.com/czero-cc/scapo.git
 cd scapo
 curl -LsSf https://astral.sh/uv/install.sh | sh  # Install uv
-uv venv && source .venv/bin/activate
-uv pip install -r requirements.txt
-uv run playwright install
+uv venv && source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uv pip install -e .  # Install scapo and dependencies
+uv run playwright install  # Install browser automation
 ```
 
-### 2. Configure Your Local LLM
+### 2. Configure Your LLM Provider
+
+SCAPO supports **three LLM providers** for processing scraped content:
+
+#### Option A: OpenRouter (Recommended - Cloud)
 ```bash
 cp .env.example .env
-# Edit .env - just point to your LM Studio (localhost:1234)
+# Edit .env and set:
+# LLM_PROVIDER=openrouter
+# OPENROUTER_API_KEY=your_api_key_here
+# OPENROUTER_MODEL=anthropic/claude-3.5-haiku  # or any model from openrouter.ai
+```
+Get your API key from [openrouter.ai](https://openrouter.ai/)
+
+#### Option B: Ollama (Local)
+```bash
+# Install and start Ollama
+ollama serve
+ollama pull llama3  # or any model you prefer
+
+cp .env.example .env
+# Edit .env and set:
+# LLM_PROVIDER=local
+# LOCAL_LLM_TYPE=ollama
+# LOCAL_LLM_URL=http://localhost:11434
+# LOCAL_LLM_MODEL=llama3
 ```
 
-### 3. Scrape Some Wisdom
+#### Option C: LM Studio (Local)
 ```bash
-python -m src.cli scrape run --sources reddit:LocalLLaMA
-# Remember: Be respectful! Don't run too many requests at once.
+# Start LM Studio and load a model
+
+cp .env.example .env
+# Edit .env and set:
+# LLM_PROVIDER=local
+# LOCAL_LLM_TYPE=lmstudio
+# LOCAL_LLM_URL=http://localhost:1234
+# LOCAL_LLM_MODEL=any  # LM Studio ignores this
 ```
+
+> **⚠️ Important: LLM Model Requirements**  
+> SCAPO uses advanced LLM features for quality filtering and practice evaluation. For best results:
+> - **Recommended**: Models with 7B+ parameters (e.g., Llama 3 8B, Qwen 2.5 7B, Mistral 7B)
+> - **Minimum**: 3B+ parameters with good instruction following
+> - **Not Recommended**: Tiny models (<3B) may produce poor quality extractions
+> 
+> The LLM needs to:
+> - Understand context and nuance
+> - Evaluate if practices are model-specific vs generic
+> - Extract structured JSON reliably
+> - Make quality judgments about technical content
+
+### 3. Run the Scraping Pipeline
+```bash
+# Install the scapo CLI
+uv pip install -e .
+
+# Initialize SCAPO (check setup)
+scapo init
+
+# Scrape and process with your configured LLM
+scapo scrape run --sources reddit:LocalLLaMA --limit 10
+
+# Or with uv (if not installed globally)
+uv run scapo scrape run --sources reddit:LocalLLaMA --limit 10
+
+# Run scheduled scraping (every SCRAPING_INTERVAL_HOURS)
+scapo schedule
+
+# List available sources
+scapo sources
+
+# Remember: Be respectful! Adjust SCRAPING_DELAY_SECONDS in .env if needed.
+```
+
+The pipeline will:
+1. 🌐 Browse Reddit/HackerNews using Playwright (no API keys!)
+2. 🧠 Extract AI-related content using your LLM
+3. 📝 Extract best practices from relevant posts
+4. 💾 Save to organized model directories
+5. 🔧 Filter parameters to only include model-specific data
 
 ### 4. Use with Claude Desktop
 ```bash
-npx @sota-practices/mcp-server  # That's it. Seriously.
+npx @scapo/mcp-server  # That's it. Seriously.
 ```
 
 ## 🎨 The SCAPO Philosophy
@@ -81,16 +151,26 @@ We use Playwright to browse the web like a human (but faster):
 - GitHub repositories
 - Any public forum
 
-### 2. 🧠 Two-Stage LLM Processing
+### 2. 🧠 Three-Stage LLM Processing
 ```python
 # Stage 1: "Is this even about AI?"
 entities = extract_entities_with_llm(content)
 if not entities.is_ai_related:
-    return  # Skip the crypto shills
+    return  # Skip non-AI content
 
 # Stage 2: "What can we learn?"
 practices = extract_best_practices(content, entities)
+
+# Stage 3: "Is this actually useful?" (Quality Filter)
+for practice in practices:
+    quality_score = evaluate_practice_quality(practice, model_name)
+    if quality_score < 0.6:  # Configurable threshold
+        continue  # Skip generic "use clear prompts" advice
 ```
+
+This quality filtering ensures you only get **model-specific**, **actionable** practices - not generic AI tips that apply to everything.
+
+> **📊 Progress Tracking**: When using local LLMs, quality evaluation can take time. SCAPO shows progress messages with estimated time remaining. Consider using OpenRouter for faster processing or lowering `LLM_QUALITY_THRESHOLD` if needed.
 
 ### 3. 📁 Smart Organization
 ```
@@ -114,7 +194,7 @@ models/
   "mcpServers": {
     "scapo": {
       "command": "npx",
-      "args": ["@sota-practices/mcp-server"],
+      "args": ["@scapo/mcp-server"],
       "env": {
         "SOTA_MODELS_PATH": "/path/to/scapo/models"
       }
@@ -164,7 +244,87 @@ Source: reddit:LocalLLaMA
 - 📈 **Practices Extracted**: 1000+ actionable tips
 - ⚡ **Processing Time**: ~2s per post with local LLM
 
+## ⚙️ Configuration Details
+
+### Environment Variables (.env)
+
+```bash
+# LLM Provider Configuration
+LLM_PROVIDER=openrouter              # Options: openrouter, local
+LLM_PROCESSING_ENABLED=true          # Enable/disable LLM processing
+
+# OpenRouter (if using cloud)
+OPENROUTER_API_KEY=your_key_here     # Get from openrouter.ai
+OPENROUTER_MODEL=anthropic/claude-3.5-haiku  # Any model from openrouter.ai
+
+# Local LLM (if using Ollama or LM Studio)
+LOCAL_LLM_URL=http://localhost:11434 # Ollama: 11434, LM Studio: 1234
+LOCAL_LLM_MODEL=llama3               # Model name (ignored by LM Studio)
+LOCAL_LLM_TYPE=ollama                # Options: ollama, lmstudio
+
+# Processing Limits
+LLM_MAX_CHARS=4000                   # Max chars to send to LLM
+LLM_CHAR_HARD_LIMIT=50000           # Absolute safety limit
+LLM_QUALITY_THRESHOLD=0.6            # Min quality score (0.0-1.0) for practices
+
+# Scraping Configuration
+SCRAPING_INTERVAL_HOURS=6            # For scheduled/periodic scraping (not yet in CLI)
+MAX_POSTS_PER_SCRAPE=100            # Max posts per source
+MIN_UPVOTE_RATIO=0.8                # Quality filter for Reddit
+SCRAPING_DELAY_SECONDS=2            # Delay between pages (be respectful!)
+
+# Logging
+LOG_LEVEL=INFO                       # DEBUG, INFO, WARNING, ERROR
+LOG_FORMAT=json                      # json or text
+```
+
+### Supported Models
+
+#### OpenRouter Models (Cloud)
+- `anthropic/claude-opus-4` - World's best coding model (200K context)
+- `anthropic/claude-sonnet-4` - State-of-the-art performance
+- `anthropic/claude-3.5-haiku` - Fast and affordable
+- `anthropic/claude-3.7-sonnet:thinking` - Hybrid reasoning model
+- `openai/gpt-4-turbo` - High quality
+- `deepseek/deepseek-r1` - Reasoning model
+- `deepseek/deepseek-r1:free` - Free reasoning model!
+- `meta-llama/llama-3.1-70b-instruct` - Open source powerhouse
+- Any model listed on [openrouter.ai/models](https://openrouter.ai/models)
+
+#### Local Models (Ollama)
+Best for SCAPO (7B+ recommended for quality filtering):
+- `llama3:8b` - Excellent general purpose (Recommended)
+- `qwen2.5:7b` - Great for code and technical content
+- `mistral:7b` - Fast and reliable
+- `mixtral:8x7b` - High quality but needs more RAM
+- `gemma2:9b` - Google's powerful model
+
+Smaller models (may struggle with quality filtering):
+- `llama3:latest` - Smaller variant
+- `phi3:mini` - Very small, fast but limited
+- `qwen2.5:3b` - Compact but less accurate
+
+Any model from [ollama.com/library](https://ollama.com/library)
+
 ## 🚀 Advanced Usage
+
+### Source Configuration
+
+SCAPO uses a modular source configuration system via `src/scrapers/sources.yaml`:
+
+```yaml
+reddit:
+  sources:
+    - name: "r/LocalLLaMA"
+      url: "https://www.reddit.com/r/LocalLLaMA/"
+      priority: high  # high/medium/low
+      models: ["llama", "mistral", "general"]
+```
+
+**Default behavior**:
+- Without `--sources`: Uses high-priority sources from sources.yaml
+- With `--sources`: Scrapes only specified sources
+- Run `scapo sources` to see all available sources
 
 ### Custom Sources
 ```python
@@ -176,16 +336,29 @@ async def scrape_mycommunity_browser(self, page: Page):
 
 ### Batch Processing
 ```bash
-# Scrape multiple sources
-python -m src.cli scrape run \
-  --sources reddit:LocalLLaMA,reddit:OpenAI,hackernews \
+# List all available sources (loaded from sources.yaml)
+scapo sources
+
+# Scrape specific sources
+scapo scrape run \
+  --sources reddit:LocalLLaMA reddit:OpenAI hackernews \
   --limit 20
+
+# Use default high-priority sources (auto-selected from sources.yaml)
+scapo scrape run --limit 10
+
+# Or with uv
+uv run scapo scrape run \
+  --sources reddit:LocalLLaMA reddit:OpenAI hackernews \
+  --limit 20
+
+# Tip: Adjust SCRAPING_DELAY_SECONDS in .env for faster/slower scraping
 ```
 
 ### Export Practices
 ```bash
 # Coming soon: Export to your favorite format
-python -m src.cli export --format obsidian --model gpt-4
+scapo export --format obsidian --model gpt-4
 ```
 
 ## 🤝 Contributing
@@ -214,11 +387,41 @@ make scrape   # Test scraping
 - [ ] Chrome extension
 - [ ] VS Code integration
 
+## 🔧 Troubleshooting
+
+### OpenRouter Issues
+- **502 Bad Gateway**: Try a different model or check your API key
+- **Rate limits**: OpenRouter has generous limits, but space out requests
+- **No response**: Check your internet connection and API key
+
+### Local LLM Issues
+- **Ollama not responding**: Make sure `ollama serve` is running
+- **Model not found**: Run `ollama pull <model_name>` first
+- **LM Studio timeout**: Ensure a model is loaded in LM Studio
+- **Out of memory**: Try a smaller model or quantized version
+- **Poor quality extractions**: Small models (<7B) may struggle with quality evaluation
+  - Solution 1: Use a larger model (7B+ recommended)
+  - Solution 2: Lower `LLM_QUALITY_THRESHOLD` to 0.4 in `.env`
+  - Solution 3: Switch to OpenRouter for better quality
+
+### Scraping Issues
+- **No practices extracted**: The LLM might be too conservative. Try adjusting relevance thresholds
+- **Playwright errors**: Run `uv run playwright install` to reinstall browsers
+- **Timeout errors**: Some sites load slowly. Be patient!
+
+
+## 📚 Documentation
+
+- [Configuration Guide](docs/CONFIGURATION.md) - All settings and environment variables explained
+- [Quick Start Guide](QUICKSTART.md) - Get up and running in 5 minutes
+- [Contributing Guide](CONTRIBUTING.md) - How to add sources and contribute
+- [Add New Source Tutorial](docs/ADD_NEW_SOURCE.md) - Step-by-step guide
+
 ## 📜 License
 
 MIT - Because sharing is caring. 
 
-(Yeah, anyways our CZero engine needed similar stuff so we just created this. Enjoy! 🤷)
+Built as part of the CZero Engine project to improve AI application development.
 
 ## 🙏 Acknowledgments
 

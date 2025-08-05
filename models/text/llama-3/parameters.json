@@ -40,5 +40,14 @@
     "default_value": "0.7-0.95",
     "description": "Adjusting the top_p (nucleus sampling) parameter (typically between 0.7 and 0.95) to control the diversity of the generated text, focusing on the most probable tokens.",
     "recommended_range": "0.7-0.95"
+  },
+  {
+    "description": "In Mixture of Experts (MoE) models like Llama 2, the number of active parameters is not simply the total number of parameters divided by the number of experts. Shared components (attention, embeddings, layer norms) contribute to a higher effective parameter count.  This is crucial for accurate resource allocation and performance evaluation.",
+    "confidence": 0.9,
+    "source": "reddit:LocalLLaMA",
+    "timestamp": "2025-08-05T13:11:43.152187",
+    "extracted_values": {
+      "param": "MoE expert count, expert tokens per token, shared component architecture"
+    }
   }
 ]

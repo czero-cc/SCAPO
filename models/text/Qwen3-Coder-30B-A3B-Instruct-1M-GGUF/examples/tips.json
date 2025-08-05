@@ -1,0 +1,9 @@
+[
+  {
+    "tip": "Ensure tool calling functionality is enabled and functioning correctly for models like Qwen3-Coder, as it was recently fixed.",
+    "confidence": 0.85,
+    "source": "reddit:LocalLLaMA",
+    "timestamp": "2025-08-05T14:17:43.228112",
+    "example": null
+  }
+]

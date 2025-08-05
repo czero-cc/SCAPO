@@ -26,7 +26,7 @@ jobs:
       run: |
         uv venv
         source .venv/bin/activate
-        uv pip install -r requirements.txt
+        uv pip install -e .
     
     - name: Run ruff
       run: |
@@ -58,7 +58,7 @@ jobs:
       run: |
         uv venv
         source .venv/bin/activate
-        uv pip install -r requirements.txt
+        uv pip install -e .
         uv run playwright install
     
     - name: Run tests

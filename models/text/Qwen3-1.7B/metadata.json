@@ -1,7 +1,8 @@
 {
   "model_id": "Qwen3-1.7B",
-  "last_updated": "2025-08-05T01:14:37.614468",
-  "sources_count": 0,
-  "themes": [],
-  "total_practices": 0
+  "last_updated": "2025-08-05T14:18:39.635362",
+  "total_practices": 7,
+  "sources": [
+    "https://reddit.com/r/LocalLLaMA/comments/1me31d8/qwen3coderflash_released/"
+  ]
 }

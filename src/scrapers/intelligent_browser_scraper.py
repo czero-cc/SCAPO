@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Set
@@ -14,7 +15,6 @@ from src.core.logging import get_logger
 from src.core.models import ScrapedPost, SourceType
 from src.scrapers.browser_base import BrowserBaseScraper
 from src.services.llm_processor import LLMProcessorFactory
-from src.services.model_service import ModelService
 from src.core.config import settings
 
 
@@ -44,14 +44,35 @@ class ProcessedContent:
     timestamp: str = ""
 
 
+
+def sanitize_model_name(model_name: str) -> str:
+    """Clean up model names to be valid directory names."""
+    # Remove parenthetical references
+    model_name = re.sub(r'\s*\(.*?\)\s*', '', model_name)
+    
+    # Remove version numbers that aren't part of the model name
+    if 'release' in model_name.lower():
+        return None  # Skip generic release references
+    
+    # Clean up the name
+    model_name = model_name.strip()
+    
+    # Remove invalid characters for directory names
+    model_name = re.sub(r'[<>:"/\\|?*]', '', model_name)
+    
+    # Normalize common variations
+    if model_name.lower() == 'llama':
+        model_name = 'llama-3'  # Default to latest version
+    
+    return model_name if model_name else None
+
 class IntelligentBrowserScraper(BrowserBaseScraper):
     """Smart scraper that uses LLM for entity extraction and content processing."""
     
     def __init__(self):
         super().__init__(SourceType.FORUM, headless=True)
-        self.model_service = ModelService()
         self.processed_content: List[ProcessedContent] = []
-        self.scrape_delay = 2.0  # Default polite delay
+        self.scrape_delay = settings.scraping_delay_seconds  # Use config value for polite delay
         
     async def fetch_posts(self, subreddit: Optional[str] = None, limit: int = 100, time_filter: str = "week") -> List[ScrapedPost]:
         """Required abstract method - handled by scrape_sources instead."""
@@ -63,12 +84,22 @@ class IntelligentBrowserScraper(BrowserBaseScraper):
         
     async def extract_entities_with_llm(self, content: str, source: str) -> ExtractedEntities:
         """Use LLM to extract entities from content."""
-        processor = LLMProcessorFactory.create_processor(
-            provider=settings.llm_provider,
-            base_url=settings.local_llm_url,
-            api_type=settings.local_llm_type,
-            max_chars=2000  # Smaller for entity extraction
-        )
+        # Create processor with proper configuration
+        if settings.llm_provider == "openrouter":
+            processor = LLMProcessorFactory.create_processor(
+                provider="openrouter",
+                api_key=settings.openrouter_api_key,
+                model=settings.openrouter_model,
+                max_chars=2000  # Smaller for entity extraction
+            )
+        else:
+            processor = LLMProcessorFactory.create_processor(
+                provider="local",
+                base_url=settings.local_llm_url,
+                model=settings.local_llm_model,
+                api_type=settings.local_llm_type,
+                max_chars=2000  # Smaller for entity extraction
+            )
         
         try:
             # Create extraction prompt
@@ -90,8 +121,8 @@ Extract the following in JSON format:
 
 Be specific about model names and versions. Only mark as ai_related if it discusses AI/ML models or techniques."""
 
-            # Get LLM response
-            response = await processor._process_lmstudio(prompt)
+            # Get LLM response using the unified interface
+            response = await processor.process_raw_prompt(prompt)
             
             # Parse response (handle markdown-wrapped JSON)
             try:
@@ -133,12 +164,22 @@ Be specific about model names and versions. Only mark as ai_related if it discus
         if not entities.is_ai_related or entities.relevance_score < 0.3:
             return []
             
-        processor = LLMProcessorFactory.create_processor(
-            provider=settings.llm_provider,
-            base_url=settings.local_llm_url,
-            api_type=settings.local_llm_type,
-            max_chars=3000
-        )
+        # Create processor with proper configuration
+        if settings.llm_provider == "openrouter":
+            processor = LLMProcessorFactory.create_processor(
+                provider="openrouter",
+                api_key=settings.openrouter_api_key,
+                model=settings.openrouter_model,
+                max_chars=3000
+            )
+        else:
+            processor = LLMProcessorFactory.create_processor(
+                provider="local",
+                base_url=settings.local_llm_url,
+                model=settings.local_llm_model,
+                api_type=settings.local_llm_type,
+                max_chars=3000
+            )
         
         try:
             # Use entities to create focused prompt
@@ -169,7 +210,7 @@ Return a JSON array of practices:
 
 Only extract concrete, verifiable practices. Be specific about which models they apply to."""
 
-            response = await processor._process_lmstudio(prompt)
+            response = await processor.process_raw_prompt(prompt)
             
             # Parse response (handle markdown-wrapped JSON)
             try:
@@ -202,6 +243,98 @@ Only extract concrete, verifiable practices. Be specific about which models they
                     
             return practices
                 
+        finally:
+            await processor.close()
+    
+    def normalize_reddit_url(self, url: str) -> str:
+        """Convert old.reddit.com URLs to standard reddit.com URLs."""
+        if 'old.reddit.com' in url:
+            return url.replace('old.reddit.com', 'reddit.com')
+        return url
+    
+    async def evaluate_practice_quality(self, practice: Dict[str, Any], model_name: str, content_context: str) -> Dict[str, Any]:
+        """Use LLM to evaluate if a practice is actually useful and specific to the model."""
+        processor = LLMProcessorFactory.create_processor(
+            provider=settings.llm_provider,
+            api_key=settings.openrouter_api_key,
+            model=settings.openrouter_model if settings.llm_provider == "openrouter" else settings.local_llm_model,
+            base_url=settings.local_llm_url if settings.llm_provider == "local" else None,
+            api_type=settings.local_llm_type,
+            max_chars=2000
+        )
+        
+        try:
+            prompt = f"""Evaluate if this practice is actually useful, specific, and relevant to {model_name}.
+
+Practice to evaluate:
+- Type: {practice.get('practice_type', 'unknown')}
+- Content: {practice.get('content', '')}
+- Claims to apply to: {', '.join(practice.get('applicable_models', []))}
+
+Context (original discussion):
+{content_context[:500]}...
+
+Evaluate based on:
+1. Is this practice SPECIFIC to {model_name} or just generic AI advice?
+2. Does it provide ACTIONABLE guidance (not just observations)?
+3. Is it ACCURATE based on what you know about {model_name}?
+4. Does the original context actually discuss {model_name} specifically?
+
+Return JSON:
+{{
+  "is_relevant": true/false,
+  "is_specific": true/false,
+  "is_actionable": true/false,
+  "quality_score": 0.0-1.0,
+  "reason": "brief explanation",
+  "improved_content": "rewritten practice if needed, or null"
+}}
+
+Be strict - only high-quality, model-specific practices should pass."""
+
+            response = await processor.process_raw_prompt(prompt)
+            
+            # Parse response
+            try:
+                evaluation = json.loads(response)
+            except json.JSONDecodeError:
+                # Try to extract JSON from markdown
+                import re
+                json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response, re.DOTALL)
+                if not json_match:
+                    json_match = re.search(r'\{.*\}', response, re.DOTALL)
+                
+                if json_match:
+                    evaluation = json.loads(json_match.group(1) if '```' in response else json_match.group())
+                else:
+                    # Default to rejecting if can't parse
+                    evaluation = {
+                        "is_relevant": False,
+                        "is_specific": False,
+                        "is_actionable": False,
+                        "quality_score": 0.0,
+                        "reason": "Failed to parse evaluation"
+                    }
+            
+            # Update practice with quality info
+            practice['quality_score'] = evaluation.get('quality_score', 0.0)
+            practice['quality_evaluation'] = evaluation
+            
+            # Use improved content if provided
+            if evaluation.get('improved_content'):
+                practice['content'] = evaluation['improved_content']
+            
+            return practice
+            
+        except Exception as e:
+            logger.error(f"Quality evaluation failed: {e}")
+            # Default to original practice with low quality score
+            practice['quality_score'] = 0.3
+            practice['quality_evaluation'] = {
+                "is_relevant": False,
+                "reason": f"Evaluation failed: {str(e)}"
+            }
+            return practice
         finally:
             await processor.close()
     
@@ -268,7 +401,7 @@ Only extract concrete, verifiable practices. Be specific about which models they
                         original_text=content_data['fullContent'],
                         entities=entities,
                         best_practices=practices,
-                        source_url=post['url'],
+                        source_url=self.normalize_reddit_url(post['url']),
                         source_type=f"reddit:{subreddit}",
                         timestamp=datetime.now().isoformat()
                     ))
@@ -354,18 +487,81 @@ Only extract concrete, verifiable practices. Be specific about which models they
         return processed
     
     async def save_to_model_directories(self):
-        """Save processed content to appropriate model directories."""
+        """Save processed content to appropriate model directories WITHOUT overwriting existing content."""
         models_dir = Path("models")
         
         # Group practices by model
         model_practices = {}
         
+        # Use quality threshold from settings
+        quality_threshold = settings.llm_quality_threshold
+        
+        # Progress tracking
+        total_practices = sum(len(content.best_practices) for content in self.processed_content)
+        evaluated_count = 0
+        start_time = datetime.now()
+        
+        logger.info(f"Starting quality evaluation for {total_practices} practices...")
+        if quality_threshold > 0:
+            logger.info(f"Quality threshold: {quality_threshold} (practices below this score will be filtered)")
+            if settings.llm_provider == "local":
+                logger.info("Using local LLM - this may take several minutes. Consider:")
+                logger.info("  • Using a faster model (still, 7B+ recommended)")
+                logger.info("  • Switching to OpenRouter for faster processing")
+                logger.info("  • Lowering LLM_QUALITY_THRESHOLD in .env to speed up")
+        
         for content in self.processed_content:
             for practice in content.best_practices:
                 models = practice.get("applicable_models", ["general"])
+                
+                # Skip if all models are generic
+                non_generic_models = [m for m in models if m.lower() not in ["general", "unknown", "ai", "llm"]]
+                if not non_generic_models:
+                    logger.debug("Skipping practice with only generic models")
+                    continue
+                
+                # Progress update
+                evaluated_count += 1
+                if evaluated_count % 5 == 0 or evaluated_count == 1:
+                    elapsed = (datetime.now() - start_time).total_seconds()
+                    rate = evaluated_count / elapsed if elapsed > 0 else 0
+                    remaining = (total_practices - evaluated_count) / rate if rate > 0 else 0
+                    logger.info(
+                        f"Progress: {evaluated_count}/{total_practices} practices evaluated "
+                        f"({evaluated_count/total_practices*100:.1f}%) - "
+                        f"Est. time remaining: {remaining/60:.1f} minutes"
+                    )
+                
+                # Evaluate practice quality once for the first non-generic model
+                first_model = non_generic_models[0]
+                evaluated_practice = await self.evaluate_practice_quality(
+                    practice.copy(),  # Don't modify original
+                    first_model,
+                    content.original_text[:1000]  # Provide context
+                )
+                
+                # Check quality threshold
+                quality_score = evaluated_practice.get('quality_score', 0.0)
+                if quality_score < quality_threshold:
+                    logger.info(
+                        f"Filtered out low-quality practice: "
+                        f"score={quality_score:.2f}, models={models}, "
+                        f"reason={evaluated_practice.get('quality_evaluation', {}).get('reason', 'N/A')}"
+                    )
+                    continue
+                
+                logger.info(f"Keeping high-quality practice: score={quality_score:.2f}, models={models}")
+                
+                # Now add this practice to all applicable models
                 for model in models:
-                    if model not in model_practices:
-                        model_practices[model] = {
+                    # Sanitize model name
+                    clean_model = sanitize_model_name(model)
+                    if not clean_model:
+                        logger.warning(f"Skipping invalid model name: {model}")
+                        continue
+                    
+                    if clean_model not in model_practices:
+                        model_practices[clean_model] = {
                             "prompting": [],
                             "parameters": [],
                             "pitfalls": [],
@@ -373,21 +569,34 @@ Only extract concrete, verifiable practices. Be specific about which models they
                         }
                     
                     practice_data = {
-                        "content": practice["content"],
-                        "confidence": practice.get("confidence", 0.5),
+                        "content": evaluated_practice.get("content", practice["content"]),  # Use improved content if available
+                        "confidence": evaluated_practice.get("confidence", practice.get("confidence", 0.5)),
+                        "quality_score": quality_score,
                         "source": content.source_type,
+                        "source_url": content.source_url,
                         "timestamp": content.timestamp,
-                        "theme": content.entities.theme
+                        "theme": content.entities.theme,
+                        "extracted_parameters": practice.get("extracted_parameters"),
+                        "example_code": practice.get("example_code")
                     }
                     
+                    # Map singular practice types to plural storage keys
                     practice_type = practice.get("practice_type", "tip")
-                    if practice_type in model_practices[model]:
-                        model_practices[model][practice_type].append(practice_data)
+                    type_mapping = {
+                        "prompting": "prompting",
+                        "parameter": "parameters",
+                        "pitfall": "pitfalls",
+                        "tip": "tips"
+                    }
+                    storage_key = type_mapping.get(practice_type, "tips")
+                    
+                    model_practices[clean_model][storage_key].append(practice_data)
         
         # Save to files
         for model_name, practices in model_practices.items():
-            # Skip generic category names
-            if model_name.lower() in ['text-to-image models', 'vision models', 'all models', 'llms']:
+            # Skip if no practices
+            total_practices = sum(len(plist) for plist in practices.values())
+            if total_practices == 0:
                 continue
                 
             # Determine category based on model name
@@ -409,52 +618,160 @@ Only extract concrete, verifiable practices. Be specific about which models they
             model_dir = models_dir / category / model_name
             model_dir.mkdir(parents=True, exist_ok=True)
             
-            # Update or create files
             timestamp = datetime.now().isoformat()
             
-            # Prompting guide
+            # Append to prompting guide (don't overwrite)
             if practices["prompting"]:
                 prompting_file = model_dir / "prompting.md"
-                content = f"# {model_name.title()} Prompting Guide\n\n"
-                content += f"*Last updated: {timestamp}*\n\n"
                 
+                # Read existing content if file exists
+                existing_content = ""
+                if prompting_file.exists():
+                    existing_content = prompting_file.read_text()
+                
+                # Add new content
+                new_content = f"\n\n## Practices Added {timestamp}\n\n"
                 for p in practices["prompting"]:
-                    content += f"## {p['content']}\n"
-                    content += f"- Theme: {p['theme']}\n"
-                    content += f"- Confidence: {p['confidence']}\n"
-                    content += f"- Source: {p['source']}\n\n"
+                    new_content += f"### {p['content']}\n"
+                    new_content += f"- **Quality Score**: {p.get('quality_score', 'N/A')}\n"
+                    new_content += f"- **Confidence**: {p['confidence']}\n"
+                    new_content += f"- **Source**: [{p['source']}]({p.get('source_url', '#')})\n"
+                    new_content += f"- **Theme**: {p['theme']}\n"
+                    if p.get('example_code'):
+                        new_content += f"\n```\n{p['example_code']}\n```\n"
+                    new_content += "\n"
                 
-                prompting_file.write_text(content)
+                # Write combined content
+                if existing_content and not existing_content.endswith('\n'):
+                    existing_content += '\n'
+                prompting_file.write_text(existing_content + new_content)
             
-            # Parameters
+            # Merge parameters (don't overwrite)
             if practices["parameters"]:
                 params_file = model_dir / "parameters.json"
-                params_data = []
                 
+                # Load existing parameters
+                existing_params = []
+                if params_file.exists():
+                    with open(params_file, 'r') as f:
+                        existing_params = json.load(f)
+                
+                # Add new parameters
                 for p in practices["parameters"]:
-                    # Extract parameter name and value from content
-                    params_data.append({
-                        "name": "parameter",
-                        "description": p["content"],
+                    # Filter extracted parameters to only include this model's data
+                    extracted_params = p.get("extracted_parameters", {})
+                    filtered_params = {}
+                    
+                    # Check if parameters contain model-specific data
+                    for param_name, param_value in extracted_params.items():
+                        if isinstance(param_value, dict):
+                            # If it's a dict with model names as keys, extract only this model's data
+                            if model_name in param_value:
+                                filtered_params[param_name] = param_value[model_name]
+                            elif clean_model in param_value:
+                                filtered_params[param_name] = param_value[clean_model]
+                            # If neither exact match, skip this parameter for this model
+                        else:
+                            # If it's not a dict, include it as-is
+                            filtered_params[param_name] = param_value
+                    
+                    # Only add parameter entry if we have relevant data
+                    if filtered_params or not extracted_params:  # Include if no params or if we found relevant params
+                        param_entry = {
+                            "description": p["content"],
+                            "confidence": p["confidence"],
+                            "source": p["source"],
+                            "timestamp": p["timestamp"],
+                            "extracted_values": filtered_params
+                        }
+                        existing_params.append(param_entry)
+                
+                # Save merged parameters
+                with open(params_file, 'w') as f:
+                    json.dump(existing_params, f, indent=2)
+            
+            # Append to pitfalls (don't overwrite)
+            if practices["pitfalls"]:
+                pitfalls_file = model_dir / "pitfalls.md"
+                
+                # Read existing content if file exists
+                existing_content = ""
+                if pitfalls_file.exists():
+                    existing_content = pitfalls_file.read_text()
+                
+                # Add new content
+                new_content = f"\n\n## Pitfalls Added {timestamp}\n\n"
+                for p in practices["pitfalls"]:
+                    new_content += f"### {p['content']}\n"
+                    new_content += f"- **Confidence**: {p['confidence']}\n"
+                    new_content += f"- **Source**: [{p['source']}]({p.get('source_url', '#')})\n"
+                    if p.get('example_code'):
+                        new_content += f"\n```\n{p['example_code']}\n```\n"
+                    new_content += "\n"
+                
+                # Write combined content
+                if existing_content and not existing_content.endswith('\n'):
+                    existing_content += '\n'
+                pitfalls_file.write_text(existing_content + new_content)
+            
+            # Save tips to examples directory
+            if practices["tips"]:
+                examples_dir = model_dir / "examples"
+                examples_dir.mkdir(exist_ok=True)
+                
+                tips_file = examples_dir / "tips.json"
+                
+                # Load existing tips
+                existing_tips = []
+                if tips_file.exists():
+                    with open(tips_file, 'r') as f:
+                        existing_tips = json.load(f)
+                
+                # Add new tips
+                for p in practices["tips"]:
+                    existing_tips.append({
+                        "tip": p["content"],
                         "confidence": p["confidence"],
-                        "source": p["source"]
+                        "source": p["source"],
+                        "timestamp": p["timestamp"],
+                        "example": p.get("example_code")
                     })
                 
-                with open(params_file, 'w') as f:
-                    json.dump(params_data, f, indent=2)
+                # Save merged tips
+                with open(tips_file, 'w') as f:
+                    json.dump(existing_tips, f, indent=2)
             
-            # Save metadata
+            # Update metadata without overwriting
             metadata_file = model_dir / "metadata.json"
-            with open(metadata_file, 'w') as f:
-                json.dump({
-                    "model_id": model_name,
-                    "last_updated": timestamp,
-                    "sources_count": len(set(p["source"] for plist in practices.values() for p in plist)),
-                    "themes": list(set(p["theme"] for plist in practices.values() for p in plist)),
-                    "total_practices": sum(len(plist) for plist in practices.values())
-                }, f, indent=2)
+            metadata = {}
+            if metadata_file.exists():
+                with open(metadata_file, 'r') as f:
+                    metadata = json.load(f)
             
-            logger.info(f"Saved {sum(len(plist) for plist in practices.values())} practices for {model_name}")
+            # Update metadata
+            if "model_id" not in metadata:
+                metadata["model_id"] = model_name
+            metadata["last_updated"] = timestamp
+            metadata["total_practices"] = metadata.get("total_practices", 0) + total_practices
+            
+            # Add sources
+            if "sources" not in metadata:
+                metadata["sources"] = []
+            
+            for content in self.processed_content:
+                if content.source_url and content.source_url not in metadata["sources"]:
+                    metadata["sources"].append(content.source_url)
+            
+            with open(metadata_file, 'w') as f:
+                json.dump(metadata, f, indent=2)
+            
+            logger.info(f"Saved {total_practices} practices for {model_name}")
+        
+        # Final summary
+        if quality_threshold > 0:
+            total_time = (datetime.now() - start_time).total_seconds()
+            logger.info(f"Quality evaluation complete! Took {total_time/60:.1f} minutes")
+            logger.info(f"Evaluated {evaluated_count} practices, saved to {len(model_practices)} models")
     
     async def scrape_github_browser(self, page: Page, repo_path: str) -> List[ProcessedContent]:
         """Scrape GitHub repository for AI best practices."""

@@ -1,19 +1,19 @@
-# SOTA Practices MCP Server
+# SCAPO MCP Server
 
-A Model Context Protocol (MCP) server for querying AI/ML best practices from the SOTA Practices knowledge base.
+A Model Context Protocol (MCP) server for querying AI/ML best practices from the SCAPO (Stay Calm and Prompt On) knowledge base.
 
 ## Installation
 
 You can use this MCP server directly with `npx` (no Python required):
 
 ```bash
-npx @sota-practices/mcp-server
+npx @scapo/mcp-server
 ```
 
 Or install it globally:
 
 ```bash
-npm install -g @sota-practices/mcp-server
+npm install -g @scapo/mcp-server
 ```
 
 ## Usage with Claude Desktop
@@ -26,11 +26,11 @@ Edit `%APPDATA%\Claude\claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "sota-practices": {
+    "scapo": {
       "command": "npx",
-      "args": ["@sota-practices/mcp-server"],
+      "args": ["@scapo/mcp-server"],
       "env": {
-        "SOTA_MODELS_PATH": "C:\\path\\to\\sota-practices\\models"
+        "SCAPO_MODELS_PATH": "C:\\path\\to\\scapo\\models"
       }
     }
   }
@@ -43,11 +43,11 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "sota-practices": {
+    "scapo": {
       "command": "npx",
-      "args": ["@sota-practices/mcp-server"],
+      "args": ["@scapo/mcp-server"],
       "env": {
-        "SOTA_MODELS_PATH": "/path/to/sota-practices/models"
+        "SCAPO_MODELS_PATH": "/path/to/scapo/models"
       }
     }
   }
@@ -104,8 +104,8 @@ Example in Claude:
 
 ## Environment Variables
 
-- `SOTA_MODELS_PATH`: Path to local models directory (required)
-- `SOTA_API_URL`: Optional API endpoint (not needed for basic usage)
+- `SCAPO_MODELS_PATH`: Path to local models directory (required)
+- `SCAPO_API_URL`: Optional API endpoint (not needed for basic usage)
 
 ## Features
 
@@ -164,4 +164,4 @@ npm publish --access public
 
 ## License
 
-Same as the parent SOTA Practices repository.
+Same as the parent SCAPO repository.

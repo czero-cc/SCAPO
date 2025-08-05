@@ -1,4 +1,4 @@
-# SOTA Practices Scraping Sources Configuration
+# SCAPO Scraping Sources Configuration
 # This file contains all approved sources for automated scraping
 # Each source includes scraping method, rate limits, and content focus
 
@@ -54,7 +54,7 @@ reddit:
       url: "https://www.reddit.com/r/ClaudeAI/"
       focus: "Claude usage patterns and tips"
       priority: high
-      models: ["claude", "claude-3"]
+      models: ["claude-4", "claude-opus-4", "claude-sonnet-4"]
     
     - name: "r/generativeAI"
       url: "https://www.reddit.com/r/generativeAI/"
@@ -260,7 +260,7 @@ news_aggregators:
 
 # Scraping Configuration
 scraping_config:
-  user_agent: "Mozilla/5.0 (compatible; SOTAPracticesBot/1.0; +https://github.com/fiefworks/sota-practices)"
+  user_agent: "Mozilla/5.0 (compatible; SCAPOBot/1.0; +https://github.com/fiefworks/scapo)"
   respect_robots_txt: true
   concurrent_requests: 5
   timeout_seconds: 30

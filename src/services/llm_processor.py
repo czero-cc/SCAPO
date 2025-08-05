@@ -1,6 +1,7 @@
 """LLM processor for cleaning and structuring scraped content."""
 
 import json
+import asyncio
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime
@@ -38,6 +39,12 @@ class LLMProcessor(ABC):
     @abstractmethod
     async def process_content(self, content: str, content_type: str) -> List[ProcessedPractice]:
         """Process raw content and extract structured practices."""
+        pass
+    
+    @abstractmethod
+    async def process_raw_prompt(self, prompt: str) -> str:
+        """Process a raw prompt and return the response as a string.
+        This is used for entity extraction and other non-practice extraction tasks."""
         pass
     
     def truncate_to_limit(self, text: str) -> Tuple[str, bool]:
@@ -101,7 +108,7 @@ Focus on concrete, verifiable practices only. Ignore speculation and unverified 
 
 
 class OpenRouterProcessor(LLMProcessor):
-    """Process content using OpenRouter API."""
+    """Process content using OpenRouter API with rate limiting and retry logic."""
     
     def __init__(
         self,
@@ -116,13 +123,72 @@ class OpenRouterProcessor(LLMProcessor):
         self.client = httpx.AsyncClient(
             headers={
                 "Authorization": f"Bearer {api_key}",
-                "HTTP-Referer": "https://github.com/fiefworks/sota-practices",
-                "X-Title": "SOTA Practices",
-            }
+                "HTTP-Referer": "https://github.com/fiefworks/scapo",
+                "X-Title": "SCAPO - Stay Calm and Prompt On",
+            },
+            timeout=30.0
         )
+        
+        # Rate limiting settings
+        self.max_retries = 3
+        self.base_delay = 1.0  # Base delay in seconds
+        self.max_delay = 60.0  # Maximum delay in seconds
+        self.min_request_interval = 0.5  # Minimum time between requests
+        self.last_request_time = 0
     
+    async def _make_request_with_retry(self, json_data: dict) -> httpx.Response:
+        """Make HTTP request with exponential backoff retry logic."""
+        # Implement minimum interval between requests
+        import time
+        current_time = time.time()
+        time_since_last = current_time - self.last_request_time
+        if time_since_last < self.min_request_interval:
+            await asyncio.sleep(self.min_request_interval - time_since_last)
+        
+        for attempt in range(self.max_retries):
+            try:
+                self.last_request_time = time.time()
+                response = await self.client.post(
+                    f"{self.base_url}/chat/completions",
+                    json=json_data
+                )
+                
+                # If successful, return
+                if response.status_code == 200:
+                    return response
+                
+                # If rate limited, retry with backoff
+                if response.status_code == 429:
+                    if attempt < self.max_retries - 1:
+                        # Calculate delay with exponential backoff
+                        delay = min(self.base_delay * (2 ** attempt), self.max_delay)
+                        
+                        # Check if response has Retry-After header
+                        retry_after = response.headers.get('Retry-After')
+                        if retry_after:
+                            delay = float(retry_after)
+                        
+                        self.logger.warning(f"Rate limited. Retrying in {delay}s (attempt {attempt + 1}/{self.max_retries})")
+                        await asyncio.sleep(delay)
+                        continue
+                
+                # For other errors, raise immediately
+                response.raise_for_status()
+                
+            except httpx.TimeoutException:
+                if attempt < self.max_retries - 1:
+                    delay = min(self.base_delay * (2 ** attempt), self.max_delay)
+                    self.logger.warning(f"Request timeout. Retrying in {delay}s (attempt {attempt + 1}/{self.max_retries})")
+                    await asyncio.sleep(delay)
+                    continue
+                raise
+        
+        # If all retries failed, raise the last response error
+        response.raise_for_status()
+        return response
+
     async def process_content(self, content: str, content_type: str) -> List[ProcessedPractice]:
-        """Process content using OpenRouter."""
+        """Process content using OpenRouter with retry logic."""
         # Truncate if needed
         content, was_truncated = self.truncate_to_limit(content)
         if was_truncated:
@@ -131,23 +197,19 @@ class OpenRouterProcessor(LLMProcessor):
         prompt = self.create_extraction_prompt(content, content_type)
         
         try:
-            response = await self.client.post(
-                f"{self.base_url}/chat/completions",
-                json={
-                    "model": self.model_name,
-                    "messages": [
-                        {
-                            "role": "system",
-                            "content": "You are an expert at extracting actionable AI/LLM best practices from noisy community content. Be critical and only extract verified, useful practices."
-                        },
-                        {"role": "user", "content": prompt}
-                    ],
-                    "temperature": 0.3,
-                    "max_tokens": 2000,
-                    "response_format": {"type": "json_object"},
-                }
-            )
-            response.raise_for_status()
+            response = await self._make_request_with_retry({
+                "model": self.model_name,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are an expert at extracting actionable AI/LLM best practices from noisy community content. Be critical and only extract verified, useful practices."
+                    },
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": 0.3,
+                "max_tokens": 2000,
+                "response_format": {"type": "json_object"},
+            })
             
             result = response.json()
             content = result["choices"][0]["message"]["content"]
@@ -169,8 +231,27 @@ class OpenRouterProcessor(LLMProcessor):
             return practices
             
         except Exception as e:
-            self.logger.error(f"OpenRouter processing failed: {e}")
+            self.logger.error(f"OpenRouter processing failed: {str(e)}", exc_info=True)
             return []
+    
+    async def process_raw_prompt(self, prompt: str) -> str:
+        """Process a raw prompt and return the response as a string with retry logic."""
+        try:
+            response = await self._make_request_with_retry({
+                "model": self.model_name,
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": 0.3,
+                "max_tokens": 2000,
+            })
+            
+            result = response.json()
+            return result["choices"][0]["message"]["content"]
+            
+        except Exception as e:
+            self.logger.error(f"OpenRouter raw prompt processing failed after {self.max_retries} attempts: {str(e)}", exc_info=True)
+            return "{}"
         
     async def close(self):
         """Close HTTP client."""
@@ -355,6 +436,18 @@ class LocalLLMProcessor(LLMProcessor):
                     pass
         
         return practices
+    
+    async def process_raw_prompt(self, prompt: str) -> str:
+        """Process a raw prompt and return the response as a string."""
+        try:
+            if self.api_type == "ollama":
+                response = await self._process_ollama(prompt)
+            else:
+                response = await self._process_lmstudio(prompt)
+            return response
+        except Exception as e:
+            self.logger.error(f"Local LLM raw prompt processing failed: {e}")
+            return "{}"
     
     async def close(self):
         """Close HTTP client."""

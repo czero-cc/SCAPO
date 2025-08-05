@@ -1,4 +1,4 @@
-"""CLI for SOTA Practices."""
+"""CLI for SCAPO (Stay Calm and Prompt On)."""
 
 import asyncio
 import sys
@@ -9,34 +9,46 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from src.core.logging import setup_logging, get_logger
 from src.services.scraper_service import ScraperService
-from src.services.data_service import DataService
-from src.services.scheduler import SchedulerManager
-from src.services.model_service import ModelService
-from src.core.database import SessionLocal, engine, Base
 from src.core.config import settings
 
 console = Console()
+
+# Setup logging before CLI initialization
+setup_logging()
 logger = get_logger(__name__)
 
 
 @click.group()
 @click.version_option(version="0.1.0")
 def cli():
-    """SOTA Practices CLI - Manage AI/ML best practices scraping and processing."""
-    setup_logging()
+    """SCAPO CLI - Manage AI/ML best practices scraping and processing."""
+    pass
 
 
 @cli.command()
-@click.option("--drop", is_flag=True, help="Drop existing tables first")
-def init_db(drop):
-    """Initialize database tables."""
-    if drop:
-        console.print("[yellow]Dropping existing tables...[/yellow]")
-        Base.metadata.drop_all(bind=engine)
+def init():
+    """Initialize SCAPO environment."""
+    console.print("[blue]Checking SCAPO setup...[/blue]")
     
-    console.print("[blue]Creating database tables...[/blue]")
-    Base.metadata.create_all(bind=engine)
-    console.print("[green]✓[/green] Database initialized successfully")
+    # Check if .env exists
+    import os
+    if not os.path.exists(".env"):
+        console.print("[yellow]No .env file found. Creating from .env.example...[/yellow]")
+        import shutil
+        if os.path.exists(".env.example"):
+            shutil.copy(".env.example", ".env")
+            console.print("[green]✓[/green] Created .env file")
+            console.print("[yellow]→[/yellow] Please edit .env to configure your LLM provider")
+        else:
+            console.print("[red]✗[/red] .env.example not found")
+            return
+    
+    # Check models directory
+    if not os.path.exists("models"):
+        os.makedirs("models")
+        console.print("[green]✓[/green] Created models directory")
+    
+    console.print("[green]✓[/green] SCAPO is ready to use!")
 
 
 @cli.group()
@@ -45,18 +57,20 @@ def scrape():
     pass
 
 
-@scrape.command()
+@scrape.command(name="run")
 @click.option("--sources", "-s", multiple=True, 
               help="Sources to scrape (e.g., reddit:LocalLLaMA hackernews github:dair-ai/Prompt-Engineering-Guide)")
 @click.option("--limit", "-l", default=10, help="Maximum posts per source")
 @click.option("--llm-max-chars", "-c", type=int, help="Max characters for LLM processing")
-def run(sources, limit, llm_max_chars):
+def run_scraper(sources, limit, llm_max_chars):
     """Run intelligent scraper to collect AI/ML best practices.
     
     Examples:
-        sota scrape run -s reddit:LocalLLaMA -s hackernews
-        sota scrape run -s reddit:OpenAI -s reddit:StableDiffusion -l 5
-        sota scrape run  # Uses default sources
+        scapo scrape run -s reddit:LocalLLaMA -s hackernews
+        scapo scrape run -s reddit:OpenAI -s reddit:StableDiffusion -l 5
+        scapo scrape run  # Uses default sources
+    
+    Tip: Adjust SCRAPING_DELAY_SECONDS in .env to control scraping speed.
     """
     async def _run():
         service = ScraperService()
@@ -84,19 +98,14 @@ def run(sources, limit, llm_max_chars):
     asyncio.run(_run())
 
 
-@scrape.command()
-def status():
-    """Show scraper status and metrics."""
+@scrape.command(name="status")
+def scrape_status():
+    """Show scraper status."""
     async def _status():
-        db = SessionLocal()
-        data_service = DataService(db)
         scraper_service = ScraperService()
         
         # Get scraper status
         scraper_status = await scraper_service.get_status()
-        
-        # Get metrics
-        metrics = await data_service.get_scraper_metrics(hours=24)
         
         # Display scraper status
         console.print("\n[bold]Scraper Status[/bold]")
@@ -116,29 +125,25 @@ def status():
         
         console.print(status_table)
         
-        # Display scraper runs
-        console.print("\n[bold]Activity (Last 24 Hours)[/bold]")
-        table = Table()
-        table.add_column("Scraper", style="cyan")
-        table.add_column("Runs", style="yellow")
-        table.add_column("Posts", style="green")
-        table.add_column("Practices", style="blue")
-        table.add_column("Avg Duration", style="magenta")
-        table.add_column("Failure Rate", style="red")
+        # Check for recent results
+        import os
+        import json
+        from datetime import datetime
         
-        for run in metrics["scraper_runs"]:
-            table.add_row(
-                run["scraper"],
-                str(run["runs"]),
-                str(run["total_posts"]),
-                str(run["total_practices"]),
-                f"{run['avg_duration_seconds']:.1f}s",
-                f"{run['failure_rate']*100:.1f}%",
-            )
-        
-        console.print(table)
-        
-        db.close()
+        # Find recent pipeline results
+        result_files = [f for f in os.listdir(".") if f.startswith("pipeline_test_results_") and f.endswith(".json")]
+        if result_files:
+            # Sort by modification time
+            result_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+            latest_file = result_files[0]
+            
+            console.print(f"\n[bold]Latest Pipeline Results[/bold] ({latest_file})")
+            with open(latest_file, 'r') as f:
+                results = json.load(f)
+                console.print(f"  Total posts scraped: {results.get('total_posts_scraped', 0)}")
+                console.print(f"  Posts processed: {results.get('total_posts_processed', 0)}")
+                console.print(f"  Practices extracted: {results.get('total_practices_extracted', 0)}")
+                console.print(f"  Models found: {len(results.get('unique_models', []))}")
     
     asyncio.run(_status())
 
@@ -149,178 +154,190 @@ def models():
     pass
 
 
-@models.command()
+@models.command(name="list")
 @click.option("--category", "-c", help="Filter by category")
-def list(category):
+def list_models(category):
     """List all available models."""
-    async def _list():
-        service = ModelService()
-        all_models = await service.list_models(category=category)
-        
-        console.print("\n[bold]Available Models[/bold]")
-        
-        for cat, model_list in all_models.items():
+    import os
+    import json
+    
+    console.print("\n[bold]Available Models[/bold]")
+    
+    models_dir = "models"
+    if not os.path.exists(models_dir):
+        console.print("[yellow]No models directory found. Run 'sota scrape run' first.[/yellow]")
+        return
+    
+    categories = ["text", "image", "video", "audio", "multimodal"] if not category else [category]
+    
+    for cat in categories:
+        cat_dir = os.path.join(models_dir, cat)
+        if os.path.exists(cat_dir):
+            model_list = [d for d in os.listdir(cat_dir) if os.path.isdir(os.path.join(cat_dir, d))]
             if model_list:
                 console.print(f"\n[cyan]{cat.upper()}[/cyan]")
-                for model in model_list:
-                    # Get practice info
-                    practices = await service.get_model_practices(cat, model)
-                    if practices:
-                        stats = f"({len(practices.prompt_examples)} prompts, "
-                        stats += f"{len(practices.parameters)} params, "
-                        stats += f"{len(practices.tips)} tips)"
-                        console.print(f"  • {model} {stats}")
-                    else:
-                        console.print(f"  • {model}")
-    
-    asyncio.run(_list())
+                for model in sorted(model_list):
+                    model_path = os.path.join(cat_dir, model)
+                    # Count files
+                    files = os.listdir(model_path)
+                    prompts = len([f for f in files if f == "prompting.md"])
+                    params = len([f for f in files if f == "parameters.json"])
+                    tips = len([f for f in files if f == "tips.md"])
+                    stats = f"({prompts} prompts, {params} params, {tips} tips)"
+                    console.print(f"  • {model} {stats}")
 
 
-@models.command()
+@models.command(name="info")
 @click.argument("model_id")
 @click.option("--category", "-c", default="text", help="Model category")
-def info(model_id, category):
+def model_info(model_id, category):
     """Show detailed info for a specific model."""
-    async def _info():
-        service = ModelService()
-        practices = await service.get_model_practices(category, model_id)
-        
-        if not practices:
-            console.print(f"[red]Model {model_id} not found[/red]")
-            return
-        
-        console.print(f"\n[bold]{practices.model_name}[/bold]")
-        console.print(f"Category: {practices.category.value}")
-        console.print(f"Last Updated: {practices.last_updated.strftime('%Y-%m-%d')}")
-        
-        # Show statistics
-        console.print("\n[bold]Content Statistics:[/bold]")
-        console.print(f"  • Prompt Examples: {len(practices.prompt_examples)}")
-        console.print(f"  • Parameters: {len(practices.parameters)}")
-        console.print(f"  • Tips: {len(practices.tips)}")
-        console.print(f"  • Pitfalls: {len(practices.pitfalls)}")
-        console.print(f"  • Sources: {len(practices.sources)}")
-        
-        # Show sample content
-        if practices.prompt_examples:
-            console.print("\n[bold]Sample Prompt:[/bold]")
-            example = practices.prompt_examples[0]
-            console.print(f"Title: {example.title}")
-            console.print(f"```\n{example.prompt[:200]}...\n```")
-        
-        if practices.parameters:
-            console.print("\n[bold]Key Parameters:[/bold]")
-            for param in practices.parameters[:5]:
-                console.print(f"  • {param.name}: {param.recommended_value}")
+    import os
+    import json
     
-    asyncio.run(_info())
+    model_path = os.path.join("models", category, model_id)
+    if not os.path.exists(model_path):
+        console.print(f"[red]Model {model_id} not found in {category} category[/red]")
+        return
+    
+    console.print(f"\n[bold]{model_id}[/bold]")
+    console.print(f"Category: {category}")
+    
+    # Show files
+    console.print("\n[bold]Available Content:[/bold]")
+    files = os.listdir(model_path)
+    for file in sorted(files):
+        file_path = os.path.join(model_path, file)
+        size = os.path.getsize(file_path)
+        console.print(f"  • {file} ({size:,} bytes)")
+    
+    # Show sample content
+    prompting_file = os.path.join(model_path, "prompting.md")
+    if os.path.exists(prompting_file):
+        console.print("\n[bold]Sample Prompting Content:[/bold]")
+        with open(prompting_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+            preview = content[:300] + "..." if len(content) > 300 else content
+            console.print(preview)
+    
+    params_file = os.path.join(model_path, "parameters.json")
+    if os.path.exists(params_file):
+        console.print("\n[bold]Parameters:[/bold]")
+        with open(params_file, 'r', encoding='utf-8') as f:
+            params = json.load(f)
+            if isinstance(params, list) and len(params) > 0:
+                for param in params[:3]:  # Show first 3
+                    if isinstance(param, dict):
+                        desc = param.get('description', 'No description')
+                        console.print(f"  • {desc[:100]}...")
 
 
-@models.command()
+@models.command(name="search")
 @click.argument("query")
 @click.option("--limit", "-l", default=10, help="Maximum results")
-def search(query, limit):
+def search_models(query, limit):
     """Search for models."""
-    async def _search():
-        service = ModelService()
-        results = await service.search_models(query=query, limit=limit)
-        
-        if not results:
-            console.print(f"[yellow]No models found for query: {query}[/yellow]")
-            return
-        
-        table = Table(title=f"Search Results for '{query}'")
-        table.add_column("Model ID", style="cyan")
-        table.add_column("Category", style="green")
-        table.add_column("Match Type", style="yellow")
-        
-        for result in results:
-            table.add_row(
-                result["model_id"],
-                result["category"],
-                result["match_type"],
-            )
-        
-        console.print(table)
+    import os
     
-    asyncio.run(_search())
+    console.print(f"\n[bold]Searching for '{query}'...[/bold]")
+    
+    results = []
+    models_dir = "models"
+    if not os.path.exists(models_dir):
+        console.print("[yellow]No models directory found. Run 'sota scrape run' first.[/yellow]")
+        return
+    
+    # Search through all categories and models
+    for category in ["text", "image", "video", "audio", "multimodal"]:
+        cat_dir = os.path.join(models_dir, category)
+        if os.path.exists(cat_dir):
+            for model in os.listdir(cat_dir):
+                if query.lower() in model.lower():
+                    results.append({"model": model, "category": category})
+                    if len(results) >= limit:
+                        break
+    
+    if not results:
+        console.print(f"[yellow]No models found for query: {query}[/yellow]")
+        return
+    
+    table = Table(title=f"Search Results for '{query}'")
+    table.add_column("Model", style="cyan")
+    table.add_column("Category", style="green")
+    
+    for result in results:
+        table.add_row(result["model"], result["category"])
+    
+    console.print(table)
 
 
 @cli.command()
-@click.option("--worker", "-w", is_flag=True, help="Start Celery worker")
-@click.option("--beat", "-b", is_flag=True, help="Start Celery beat scheduler")
-@click.option("--both", is_flag=True, help="Start both worker and beat")
-def scheduler(worker, beat, both):
-    """Manage the scraping scheduler."""
-    if both or (not worker and not beat):
-        # Start both
-        console.print("[blue]Starting scheduler services...[/blue]")
-        manager = SchedulerManager()
-        manager.start()
-        console.print("[green]✓[/green] Scheduler services started")
-        console.print("\nPress Ctrl+C to stop")
+def schedule():
+    """Run periodic scraping based on SCRAPING_INTERVAL_HOURS setting."""
+    async def _schedule():
+        service = ScraperService()
+        
+        console.print(f"[blue]Starting scheduled scraping (every {settings.scraping_interval_hours} hours)...[/blue]")
+        console.print("[yellow]Press Ctrl+C to stop[/yellow]\n")
         
         try:
-            import signal
-            signal.pause()
+            await service.schedule_periodic_scraping()
         except KeyboardInterrupt:
-            manager.stop()
-    elif worker:
-        console.print("[blue]Starting Celery worker...[/blue]")
-        import subprocess
-        subprocess.run([
-            sys.executable, "-m", "celery",
-            "-A", "src.services.scheduler", "worker",
-            "--loglevel=info", "--concurrency=2"
-        ])
-    elif beat:
-        console.print("[blue]Starting Celery beat...[/blue]")
-        import subprocess
-        subprocess.run([
-            sys.executable, "-m", "celery",
-            "-A", "src.services.scheduler", "beat",
-            "--loglevel=info"
-        ])
+            console.print("\n[yellow]Scheduled scraping stopped[/yellow]")
+    
+    asyncio.run(_schedule())
 
 
 @cli.command()
-@click.option("--limit", "-l", default=50, help="Number of posts to process")
-def process_pending(limit):
-    """Process unprocessed posts through LLM."""
-    async def _process():
-        from src.services.scheduler import _process_pending_posts
+def sources():
+    """List available scraping sources."""
+    async def _sources():
+        service = ScraperService()
+        sources = await service.list_sources()
         
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            console=console,
-        ) as progress:
-            task = progress.add_task("Processing pending posts...", total=None)
-            
-            result = await _process_pending_posts()
-            
-            progress.stop()
-            
-        console.print(f"\n[green]✓[/green] Processed {result['processed']} posts")
-        console.print(f"[blue]→[/blue] Extracted {result['practices_extracted']} practices")
-        if result['errors'] > 0:
-            console.print(f"[red]✗[/red] {result['errors']} errors")
+        console.print("\n[bold]Available Sources[/bold]")
+        
+        for category, source_list in sources.items():
+            if source_list:
+                console.print(f"\n[cyan]{category.upper()}[/cyan]")
+                for source in source_list:
+                    console.print(f"  • {source}")
+        
+        console.print("\n[yellow]Usage:[/yellow]")
+        console.print("  scapo scrape run -s reddit:LocalLLaMA -s hackernews")
+        console.print("  scapo scrape run --sources reddit:OpenAI --limit 5")
     
-    asyncio.run(_process())
+    asyncio.run(_sources())
 
 
 @cli.command()
-def serve():
-    """Start the API server."""
-    import uvicorn
+def clean():
+    """Clean up temporary files and logs."""
+    import os
+    import glob
     
-    console.print("[bold green]Starting SOTA Practices API server...[/bold green]")
-    uvicorn.run(
-        "src.api.server:app",
-        host=settings.api_host,
-        port=settings.api_port,
-        reload=True,
-    )
+    console.print("[blue]Cleaning up temporary files...[/blue]")
+    
+    # Clean up result JSON files
+    result_files = glob.glob("pipeline_test_results_*.json")
+    for f in result_files:
+        os.remove(f)
+        console.print(f"  • Removed {f}")
+    
+    # Clean up log files
+    log_files = glob.glob("intelligent_scraper_*.log") + glob.glob("intelligent_scraper_*.json")
+    for f in log_files:
+        os.remove(f)
+        console.print(f"  • Removed {f}")
+    
+    # Clean up egg-info
+    egg_info = glob.glob("src/*.egg-info")
+    for d in egg_info:
+        import shutil
+        shutil.rmtree(d)
+        console.print(f"  • Removed {d}")
+    
+    console.print("[green]✓[/green] Cleanup complete")
 
 
 @cli.command()

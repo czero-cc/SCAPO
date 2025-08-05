@@ -6,14 +6,8 @@ from src.core.config import settings
 from src.core.logging import get_logger
 from src.core.models import SourceType
 from src.scrapers.intelligent_browser_scraper import IntelligentBrowserScraper
-from src.services.practice_updater import PracticeUpdater
-# Database imports removed - focusing on scraping pipeline
-from src.utils.metrics import (
-    scraper_last_run,
-    scraper_posts_processed,
-    scraper_practices_extracted,
-    scraper_runs_counter,
-)
+from src.scrapers.source_manager import SourceManager
+# Database and practice updater imports removed - focusing on scraping pipeline
 
 logger = get_logger(__name__)
 
@@ -23,6 +17,7 @@ class ScraperService:
 
     def __init__(self):
         self.intelligent_scraper = IntelligentBrowserScraper()
+        self.source_manager = SourceManager()
         self.scraper_status = {
             "intelligent": {
                 "last_run": None,
@@ -33,7 +28,35 @@ class ScraperService:
                 "error": None,
             }
         }
-        self.practice_updater = PracticeUpdater()
+        # Practice updater removed - data saved directly by intelligent scraper
+
+    def _get_default_sources(self, limit: int = 5) -> List[str]:
+        """Get default high-priority sources from sources.yaml."""
+        default_sources = []
+        
+        # Get high priority sources
+        high_priority = self.source_manager.get_sources_by_priority("high")
+        
+        # Convert to scraper format
+        for source in high_priority[:limit]:
+            source_type = source.get('source_type', '')
+            if source_type == 'reddit':
+                name = source['name'].split('/')[-1]
+                default_sources.append(f"reddit:{name}")
+            elif source_type == 'github':
+                url = source.get('url', '')
+                if 'github.com/' in url:
+                    repo_path = url.split('github.com/')[-1].rstrip('/')
+                    default_sources.append(f"github:{repo_path}")
+            elif source_type == 'news_aggregators':
+                default_sources.append("hackernews")
+        
+        # Fallback to hardcoded if no high priority sources
+        if not default_sources:
+            default_sources = ["reddit:LocalLLaMA", "reddit:OpenAI", "hackernews"]
+            
+        logger.info(f"Using default sources: {default_sources}")
+        return default_sources
 
     async def run_scrapers(
         self,
@@ -43,9 +66,9 @@ class ScraperService:
     ) -> Dict[str, Any]:
         """Run intelligent scraper on specified sources."""
         
-        # Default sources if not specified
+        # Default sources if not specified - use high priority sources from sources.yaml
         if sources is None:
-            sources = ["reddit:LocalLLaMA", "reddit:OpenAI", "hackernews"]
+            sources = self._get_default_sources()
         
         # Override LLM max chars if provided
         if llm_max_chars is not None:
@@ -61,9 +84,6 @@ class ScraperService:
         
         try:
             logger.info(f"Starting intelligent scraper", sources=sources, max_posts=max_posts_per_source)
-            scraper_runs_counter.labels(source="intelligent", status="started").inc()
-            
-            # Database operations removed - focusing on scraping pipeline
             
             # Run the intelligent scraper
             start_time = datetime.utcnow()
@@ -88,21 +108,13 @@ class ScraperService:
             
             # Database operations removed - data is saved directly to model directories
             
-            # Update metrics
-            scraper_posts_processed.labels(source="intelligent").inc(total_posts)
-            scraper_practices_extracted.labels(
-                source="intelligent",
-                type="all"
-            ).inc(total_practices)
-            
             # Update status
             status["status"] = "idle"
             status["last_success"] = datetime.utcnow()
             status["total_runs"] += 1
             status["total_posts"] += total_posts
             
-            scraper_runs_counter.labels(source="intelligent", status="success").inc()
-            scraper_last_run.labels(source="intelligent").set_to_current_time()
+            # Metrics removed - using direct file logging
             
             logger.info(
                 f"Completed intelligent scraper",
@@ -131,7 +143,7 @@ class ScraperService:
             status["status"] = "error"
             status["error"] = str(e)
             
-            scraper_runs_counter.labels(source="intelligent", status="failed").inc()
+            # Metrics removed - using direct file logging
             
             # Database operations removed
             
@@ -152,32 +164,36 @@ class ScraperService:
         }
 
     async def list_sources(self) -> Dict[str, List[str]]:
-        """List available scraping sources."""
-        return {
-            "reddit": [
-                "reddit:LocalLLaMA",
-                "reddit:OpenAI", 
-                "reddit:StableDiffusion",
-                "reddit:midjourney",
-                "reddit:ClaudeAI",
-                "reddit:singularity",
-                "reddit:MachineLearning",
-                "reddit:artificial",
-                "reddit:ArtificialIntelligence",
-                "reddit:deeplearning",
-                "reddit:PromptEngineering",
-                "reddit:LLMOps",
-                "reddit:LocalLLM",
-                "reddit:comfyui",
-            ],
-            "hackernews": ["hackernews"],
-            "github": [
-                "github:dair-ai/Prompt-Engineering-Guide",
-                "github:brexhq/prompt-engineering",
-                "github:openai/openai-cookbook",
-                "github:f/awesome-chatgpt-prompts",
-            ],
-        }
+        """List available scraping sources from sources.yaml."""
+        sources_dict = {}
+        
+        # Get Reddit sources
+        reddit_sources = self.source_manager.get_reddit_sources()
+        sources_dict["reddit"] = [f"reddit:{s['name'].split('/')[-1]}" for s in reddit_sources]
+        
+        # Get GitHub sources
+        github_sources = self.source_manager.get_github_sources()
+        sources_dict["github"] = []
+        for s in github_sources:
+            # Extract repo path from URL
+            url = s.get('url', '')
+            if 'github.com/' in url:
+                repo_path = url.split('github.com/')[-1].rstrip('/')
+                sources_dict["github"].append(f"github:{repo_path}")
+        
+        # Get other sources
+        sources_dict["hackernews"] = ["hackernews"]  # Still hardcoded as it's a special case
+        
+        # Forums (not yet implemented in scraper)
+        forum_sources = self.source_manager.get_forum_sources()
+        if forum_sources:
+            sources_dict["forums (coming soon)"] = [s['name'] for s in forum_sources]
+        
+        # Get summary
+        summary = self.source_manager.get_all_sources_summary()
+        sources_dict["_summary"] = summary
+        
+        return sources_dict
 
     async def schedule_periodic_scraping(self):
         """Schedule periodic scraping based on configuration."""

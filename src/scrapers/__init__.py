@@ -1,4 +1,4 @@
-"""Scrapers package for SOTA Practices."""
+"""Scrapers package for SCAPO."""
 
 from src.scrapers.base import BaseScraper
 from src.scrapers.browser_base import BrowserBaseScraper

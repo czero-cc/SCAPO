@@ -40,10 +40,10 @@ echo '[
 
 ```bash
 # Set the models path
-export SOTA_MODELS_PATH=/path/to/your/models
+export SCAPO_MODELS_PATH=/path/to/your/models
 
 # Run with npx (no installation needed!)
-npx @sota-practices/mcp-server
+npx @scapo/mcp-server
 ```
 
 ### 3. Use in Claude Desktop

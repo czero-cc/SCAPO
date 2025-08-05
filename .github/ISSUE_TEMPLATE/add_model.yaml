@@ -1,12 +1,12 @@
-name: "🤖 Add New Model"
-description: Request support for a new AI model
+name: "🤖 Track New Model"
+description: Request SCAPO to start tracking a new AI model
 title: "[Model]: "
-labels: ["new-model", "good first issue"]
+labels: ["new-model", "enhancement"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for suggesting a new model! We're always looking to expand our coverage.
+        Request SCAPO to start tracking a new model. Once added, SCAPO will automatically extract practices from our sources when this model is mentioned.
 
   - type: input
     id: model-name
@@ -30,12 +30,13 @@ body:
     id: category
     attributes:
       label: Model Category
+      description: Where it belongs in models/ directory
       options:
-        - Text Generation
-        - Image Generation
-        - Video Generation
-        - Audio/Speech
-        - Multimodal
+        - text (Language models)
+        - image (Image generation)
+        - video (Video generation)
+        - audio (Audio/Speech)
+        - multimodal (Multi-modal models)
     validations:
       required: true
 
@@ -71,18 +72,19 @@ body:
         - Community forum: https://forum.example.com
 
   - type: textarea
-    id: initial-practices
+    id: model-directory
     attributes:
-      label: Initial Best Practices (Optional)
-      description: If you already know some best practices, share them!
-      placeholder: |
-        Prompting tips:
-        - Use XML tags for structure
-        - Temperature 0.7 works well for creative tasks
+      label: Expected Directory Structure
+      description: This model will be tracked at models/{category}/{model-id}/
+      value: |
+        Once added, SCAPO will create:
+        - models/{category}/{model-id}/prompting.md
+        - models/{category}/{model-id}/parameters.json
+        - models/{category}/{model-id}/pitfalls.md
+        - models/{category}/{model-id}/examples/tips.json
+        - models/{category}/{model-id}/metadata.json
         
-        Common parameters:
-        - max_tokens: 4096
-        - temperature: 0.7
+        And automatically populate these from scraped sources.
 
   - type: dropdown
     id: urgency

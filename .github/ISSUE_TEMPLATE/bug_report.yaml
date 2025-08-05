@@ -28,8 +28,8 @@ body:
       description: How can we reproduce this issue?
       placeholder: |
         1. Clone the repository
-        2. Run `make quickstart`
-        3. Execute `python -m src.scrapers.run reddit`
+        2. Run `uv pip install -e .`
+        3. Execute `scapo scrape run --sources reddit:LocalLLaMA`
         4. See error
     validations:
       required: true
@@ -47,9 +47,9 @@ body:
       label: Which component is affected?
       options:
         - Scrapers
-        - API Server
+        - LLM Processing
         - MCP Server
-        - Database/Models
+        - Model Organization
         - CLI
         - Documentation
         - Other

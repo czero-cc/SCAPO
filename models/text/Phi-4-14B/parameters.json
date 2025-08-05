@@ -1,0 +1,20 @@
+[
+  {
+    "description": "Utilize GGUF format for efficient model storage and inference, especially for quantized models.",
+    "confidence": 0.95,
+    "source": "reddit:LocalLLaMA",
+    "timestamp": "2025-08-05T14:17:43.228112",
+    "extracted_values": {
+      "format": "GGUF"
+    }
+  },
+  {
+    "description": "Employ KV cache quantization (e.g., 256k to 1M) to reduce memory footprint and improve performance, particularly when using long context lengths.",
+    "confidence": 0.9,
+    "source": "reddit:LocalLLaMA",
+    "timestamp": "2025-08-05T14:17:43.228112",
+    "extracted_values": {
+      "cache_quantization": "KV Cache Quantization (256k to 1M)"
+    }
+  }
+]
