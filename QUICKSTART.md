@@ -91,6 +91,9 @@ LLM_QUALITY_THRESHOLD=0.8   # Higher (only best practices)
 # List all available models
 uv run scapo models list
 
+# Interactive exploration (recommended!)
+uv run scapo tui
+
 # See what was found
 ls models/text/
 

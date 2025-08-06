@@ -21,6 +21,7 @@ dependencies = [
     "ruff>=0.7.0",
     "mypy>=1.13.0",
     "rich>=13.9.0",
+    "textual>=0.52.1",
     "click>=8.1.7",
     "tenacity>=9.0.0",
     "structlog>=24.4.0",

@@ -427,7 +427,30 @@ uv run scapo models search "llama"
 
 # Get detailed info about a model
 uv run scapo models info llama-3 --category text
+
+# Interactive TUI for exploring model content
+uv run scapo tui
 ```
+
+### Interactive TUI Explorer
+```bash
+# Launch the interactive model explorer
+uv run scapo tui
+```
+
+The TUI provides:
+- 📁 **Tree Navigation**: Browse models by category
+- 📝 **Markdown Rendering**: View prompting guides and best practices
+- ⚙️ **JSON Tables**: Explore parameters and metadata in table format
+- 🔍 **File Information**: See file sizes and types
+- ⌨️ **Keyboard Navigation**: Use arrow keys and Enter to explore
+
+**Keyboard Shortcuts:**
+- `q` - Quit the TUI
+- `h` - Show help
+- `r` - Refresh model tree
+- Arrow keys - Navigate
+- Enter - Select item
 
 ### Export Practices
 ```bash

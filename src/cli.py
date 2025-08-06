@@ -556,6 +556,19 @@ def schedule():
 
 
 @cli.command()
+def tui():
+    """Launch interactive TUI for exploring model content."""
+    try:
+        from .tui import run_tui
+        run_tui()
+    except ImportError as e:
+        console.print(f"[red]Error: Could not import TUI module: {e}[/red]")
+        console.print("[yellow]Make sure textual is installed: uv pip install textual[/yellow]")
+    except Exception as e:
+        console.print(f"[red]Error launching TUI: {e}[/red]")
+
+
+@cli.command()
 def sources():
     """List available scraping sources."""
     async def _sources():
