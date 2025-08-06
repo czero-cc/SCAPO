@@ -38,6 +38,7 @@ class ModelExplorer(App):
     #content {
         width: 60%;
         padding: 1;
+        layout: vertical;
     }
 
     #model-tree {
@@ -45,22 +46,21 @@ class ModelExplorer(App):
     }
 
     #welcome {
-        height: 1fr;
-        text-align: center;
-        color: cyan;
+        height: 30%;
         border: solid blue;
         padding: 1;
+        overflow-y: auto;
     }
 
     #content-viewer {
-        height: 1fr;
+        height: 30%;
         border: solid green;
         padding: 1;
         overflow-y: auto;
     }
 
     #json-table {
-        height: 1fr;
+        height: 70%;
         border: solid yellow;
         padding: 1;
     }
@@ -123,6 +123,7 @@ class ModelExplorer(App):
         Binding("h", "help", "Help"),
         Binding("r", "refresh", "Refresh"),
         Binding("s", "search", "Search"),
+        Binding("space", "toggle_expand", "Toggle Expand"),
     ]
     
     def __init__(self):
@@ -131,6 +132,17 @@ class ModelExplorer(App):
         self.current_model_path: Optional[Path] = None
         self.current_file_path: Optional[Path] = None
         self.search_term = ""
+    
+    def get_welcome_message(self) -> str:
+        """Generate welcome message with command recap."""
+        return """🧘 SCAPO Model Explorer
+
+Navigation:          Commands:
+↑/↓ - Navigate tree  q - Quit
+Enter - Select item  h - Help
+Space - Expand       r - Refresh
+
+Select a model from the tree to view content."""
         
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
@@ -141,7 +153,7 @@ class ModelExplorer(App):
                 yield Tree("📚 SCAPO Models", id="model-tree")
                 
             with Vertical(id="content"):
-                yield Static("Select a model from the tree to view its content", id="welcome")
+                yield Static(self.get_welcome_message(), id="welcome")
                 yield Markdown(id="content-viewer")
                 yield DataTable(id="json-table")
                 
@@ -152,6 +164,9 @@ class ModelExplorer(App):
         self.title = "SCAPO Model Explorer"
         self.sub_title = "Interactive Model Content Browser"
         self.load_model_tree()
+        # Focus the tree for better navigation
+        tree = self.query_one("#model-tree", Tree)
+        tree.focus()
     
     def load_model_tree(self) -> None:
         """Load the model directory structure into the tree."""
@@ -231,6 +246,8 @@ class ModelExplorer(App):
             self.query_one("#content-viewer").display = False
             table = self.query_one("#json-table")
             table.display = True
+            # When only table is visible, it can use more space
+            table.styles.height = "90%"
             table.clear(columns=True)
             
             if isinstance(data, list) and len(data) > 0:
@@ -267,6 +284,8 @@ class ModelExplorer(App):
             self.query_one("#json-table").display = False
             viewer = self.query_one("#content-viewer")
             viewer.display = True
+            # When only markdown viewer is visible, it can use more space
+            viewer.styles.height = "90%"
             viewer.update(content)
             
         except Exception as e:
@@ -295,6 +314,8 @@ class ModelExplorer(App):
         self.query_one("#json-table").display = False
         viewer = self.query_one("#content-viewer")
         viewer.display = True
+        # When only markdown viewer is visible, it can use more space
+        viewer.styles.height = "90%"
         
         info = f"""# {model_path.name}
 
@@ -330,10 +351,12 @@ class ModelExplorer(App):
         help_text = """# SCAPO Model Explorer Help
 
 ## Navigation
-- Use arrow keys to navigate the tree
-- Press Enter to select a file or model
-- Press 'q' to quit
-- Press 'r' to refresh the model tree
+- ↑/↓ - Navigate through the tree
+- Enter - Select a file or model
+- Space - Expand/collapse tree nodes
+- q - Quit the TUI
+- h - Show this help
+- r - Refresh the model tree
 
 ## File Types
 - 📝 Markdown files (.md) - Best practices and guides
@@ -361,6 +384,15 @@ class ModelExplorer(App):
         """Search functionality (placeholder)."""
         # TODO: Implement search
         self.show_error("Search functionality coming soon!")
+    
+    def action_toggle_expand(self) -> None:
+        """Toggle expansion of the currently selected tree node."""
+        tree = self.query_one("#model-tree", Tree)
+        if tree.cursor_node:
+            if tree.cursor_node.is_expanded:
+                tree.cursor_node.collapse()
+            else:
+                tree.cursor_node.expand()
 
 
 def run_tui():

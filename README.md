@@ -32,7 +32,7 @@ Ever found yourself like this when trying to get AI to work?
 - 🎯 **Automatic Categorization** - Text, image, video, audio models all organized nicely.
 - 🔌 **Claude Desktop Integration** - MCP server that just works™️
 - 🚀 **Zero Config** - Literally just run it. We're not kidding.
-- 🖥️ **Interactive TUI** - Navigate commands with arrow keys in a beautiful terminal interface.
+- 🖥️ **Interactive TUI** - Navigate content with arrow keys in a beautiful terminal interface.
 
 ## 🏃‍♂️ Quick Start (60 Seconds or Less)
 
@@ -46,13 +46,13 @@ uv pip install -e .  # Install scapo and dependencies
 uv run playwright install  # Install browser automation
 ```
 
-### 2. Try the Interactive TUI (New!)
+### 2. Explore Your Collected Content
 ```bash
-# Just run scapo without any arguments to launch the interactive menu
-uv run scapo
+# Launch the interactive model explorer to browse collected best practices
+uv run scapo tui
 
-# Navigate with arrow keys, press Enter to execute commands
-# Press 'q' to quit, '?' for help
+# Navigate with arrow keys, press Enter to view content
+# Press 'q' to quit, 'h' for help
 ```
 
 ### 3. Configure Your LLM Provider
@@ -196,52 +196,47 @@ models/
     └── runway-gen3/
 ```
 
-## 🖥️ Interactive TUI Menu
+## 🖥️ Interactive Model Explorer (TUI)
 
-When you run `scapo` without any arguments, you'll get an interactive terminal menu:
+The `scapo tui` command launches an interactive terminal interface for exploring and reading the model content collected by SCAPO:
 
 ```bash
-uv run scapo
+uv run scapo tui
 ```
+
+### What You Can Explore
+- **📁 Model Categories**: Browse text, image, video, audio, and multimodal models
+- **📝 Best Practices**: Read prompting guides and tips for each model
+- **⚙️ Parameters**: View recommended settings and configurations
+- **⚠️ Pitfalls**: Learn what to avoid when using specific models
+- **📊 Metadata**: Explore model information and file statistics
 
 ### Navigation
-- **↑/↓** - Move up/down through commands
-- **→/Enter** - Open submenus or configure parameters
-- **←** - Go back to parent menu
-- **q** - Quit the application
-- **?** - Show help information
+- **↑/↓** - Navigate through the model tree
+- **→/Enter** - Expand categories or select items
+- **←** - Collapse categories or go back
+- **q** - Quit the TUI
+- **h** - Show help
+- **r** - Refresh the model tree
+
+### Content Display
+- **Markdown Rendering**: Full formatting for prompting guides and best practices
+- **JSON Tables**: Structured table view for parameters and metadata
+- **File Information**: See file sizes, types, and available content
+- **Model Overview**: Summary of all available files for each model
 
 ### Features
-- **Command Tree** - All SCAPO commands organized in a navigable tree
-- **Command Descriptions** - See what each command does before running it
-- **Parameter Input** - Interactive forms for configuring command parameters
-- **Result Display** - View command output within the TUI interface
-- **Smart Execution** - Commands without parameters execute immediately
-- **Keyboard Shortcuts** - Full keyboard navigation support
-- **Fallback Support** - If TUI isn't available, falls back to help message
+- **Tree Navigation**: Hierarchical view of all collected models
+- **Rich Content Viewing**: Proper rendering of markdown and structured data
+- **File Type Icons**: Visual indicators for different content types
+- **Responsive Layout**: Adapts to terminal size and content type
+- **Keyboard Shortcuts**: Full keyboard navigation support
 
-### Parameter Input Workflow
-1. **Navigate** to a command in the tree
-2. **Press Enter** to select the command
-3. **If the command has parameters**: A form appears to configure them
-   - Fill in the required fields
-   - Use Tab to move between inputs
-   - Press "Run Command" to execute
-   - Press "Cancel" to go back
-4. **If the command has no parameters**: It executes immediately
-
-### Result Display
-- **Command output** is displayed in a dedicated screen within the TUI
-- **STDOUT and STDERR** are clearly separated and formatted
-- **Back to Menu** button returns to the command tree
-- **Run Again** button re-executes the same command
-- **5-minute timeout** prevents hanging on long-running commands
-
-### Installation
-The TUI is included by default, but if you need to install it separately:
-```bash
-pip install 'scapo[tui]'
-```
+### Content Types
+- **📝 Markdown (.md)**: Best practices, prompting guides, pitfalls
+- **⚙️ JSON (.json)**: Parameters, metadata, examples
+- **📋 YAML (.yml/.yaml)**: Configuration files
+- **📄 Other**: Raw content with syntax highlighting
 
 ## 🎮 MCP Server for Claude Desktop
 
