@@ -27,6 +27,8 @@ Ever found yourself like this when trying to get AI to work?
 
 ## ✨ Features That'll Make You Say "Finally!"
 
+**SCAPO** automatically scrapes reliable sources like Reddit, HackerNews, and GitHub to extract AI model best practices, prompting wisdom, and community insights from across the internet. Using intelligent browser automation and LLM-powered extraction, it organizes this knowledge into actionable, model-specific practices - so you don't have to manually hunt through forums and discussions for that perfect prompt or parameter setting.
+
 - 🕷️ **Intelligent Browser Scraping** - No API keys needed. Just pure browser automation magic.
 - 🧠 **LLM-Powered Extraction** - Your selected LLMs read the internet so you don't have to.
 - 🎯 **Automatic Categorization** - Text, image, video, audio models all organized nicely.
@@ -46,16 +48,7 @@ uv pip install -e .  # Install scapo and dependencies
 uv run playwright install  # Install browser automation
 ```
 
-### 2. Explore Your Collected Content
-```bash
-# Launch the interactive model explorer to browse collected best practices
-uv run scapo tui
-
-# Navigate with arrow keys, press Enter to view content
-# Press 'q' to quit, 'h' for help, 'c' to copy, 'o' to open location
-```
-
-### 3. Configure Your LLM Provider
+### 2. Configure Your LLM Provider
 
 SCAPO supports **three LLM providers** for processing scraped content:
 
@@ -106,6 +99,15 @@ cp .env.example .env
 > - Evaluate if practices are model-specific vs generic
 > - Extract structured JSON reliably
 > - Make quality judgments about technical content
+
+### 3. Explore Your Collected Content
+```bash
+# Launch the interactive model explorer to browse collected best practices
+uv run scapo tui
+
+# Navigate with arrow keys, press Enter to view content
+# Press 'q' to quit, 'h' for help, 'c' to copy, 'o' to open location
+```
 
 ### 4. Run the Scraping Pipeline
 ```bash
