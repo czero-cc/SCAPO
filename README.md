@@ -106,7 +106,7 @@ uv pip install -e .
 uv run scapo init
 
 # Scrape and process with your configured LLM
-uv run scapo scrape run --sources reddit:LocalLLaMA --limit 10
+scapo scrape run --sources reddit:LocalLLaMA --limit 10
 
 # Or with uv (if not installed globally)
 uv run scapo scrape run --sources reddit:LocalLLaMA --limit 10
