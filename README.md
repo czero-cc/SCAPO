@@ -52,7 +52,7 @@ uv run playwright install  # Install browser automation
 uv run scapo tui
 
 # Navigate with arrow keys, press Enter to view content
-# Press 'q' to quit, 'h' for help
+# Press 'q' to quit, 'h' for help, 'c' to copy, 'o' to open location
 ```
 
 ### 3. Configure Your LLM Provider
@@ -213,17 +213,20 @@ uv run scapo tui
 
 ### Navigation
 - **↑/↓** - Navigate through the model tree
-- **→/Enter** - Expand categories or select items
-- **←** - Collapse categories or go back
+- **Enter** - Select items
+- **Space** - Expand/collapse tree nodes
 - **q** - Quit the TUI
 - **h** - Show help
-- **r** - Refresh the model tree
+- **c** - Copy content to clipboard
+- **o** - Open file/model location in Finder
 
 ### Content Display
 - **Markdown Rendering**: Full formatting for prompting guides and best practices
 - **JSON Tables**: Structured table view for parameters and metadata
 - **File Information**: See file sizes, types, and available content
 - **Model Overview**: Summary of all available files for each model
+- **Scrollable Content**: Navigate through large files with scrollbars
+- **File Location Access**: Quick access to open file locations in system file manager
 
 ### Features
 - **Tree Navigation**: Hierarchical view of all collected models
@@ -231,6 +234,10 @@ uv run scapo tui
 - **File Type Icons**: Visual indicators for different content types
 - **Responsive Layout**: Adapts to terminal size and content type
 - **Keyboard Shortcuts**: Full keyboard navigation support
+- **Copy to Clipboard**: Copy file content, model info, or welcome message
+- **Open in Finder**: Quick access to file locations in system file manager
+- **Scrollable Content**: Navigate through large files with scrollbars
+- **SCAPO Branding**: Consistent cyan color scheme matching the CLI
 
 ### Content Types
 - **📝 Markdown (.md)**: Best practices, prompting guides, pitfalls
@@ -443,7 +450,9 @@ The TUI provides:
 **Keyboard Shortcuts:**
 - `q` - Quit the TUI
 - `h` - Show help
-- `r` - Refresh model tree
+- `c` - Copy content to clipboard
+- `o` - Open file/model location in Finder
+- `Space` - Expand/collapse tree nodes
 - Arrow keys - Navigate
 - Enter - Select item
 

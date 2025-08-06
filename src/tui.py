@@ -31,7 +31,7 @@ class ModelExplorer(App):
 
     #sidebar {
         width: 40%;
-        border-right: solid green;
+        border-right: solid cyan;
         padding: 1;
     }
 
@@ -43,26 +43,40 @@ class ModelExplorer(App):
 
     #model-tree {
         height: 1fr;
+        overflow-y: scroll;
+        overflow-x: scroll;
     }
 
     #welcome {
-        height: 30%;
-        border: solid blue;
+        height: auto;
+        min-height: 6;
+        border: solid cyan;
         padding: 1;
         overflow-y: auto;
+        background: $surface;
+        color: $text;
     }
 
     #content-viewer {
-        height: 30%;
-        border: solid green;
+        height: 1fr;
+        border: solid cyan;
         padding: 1;
-        overflow-y: auto;
+        overflow-y: scroll;
+        overflow-x: scroll;
+        background: $surface;
+        color: $text;
     }
 
     #json-table {
-        height: 70%;
-        border: solid yellow;
+        height: 1fr;
+        border: solid cyan;
         padding: 1;
+        overflow-y: scroll;
+        overflow-x: scroll;
+        background: $surface;
+        color: $text;
+        scrollbar-gutter: stable;
+        scrollbar-size: 1 1;
     }
 
     /* Hide elements by default */
@@ -77,6 +91,7 @@ class ModelExplorer(App):
     /* Tree styling */
     Tree {
         background: $surface;
+        color: $text;
     }
 
     TreeNode {
@@ -84,12 +99,13 @@ class ModelExplorer(App):
     }
 
     TreeNode:hover {
-        background: $accent;
+        background: cyan;
+        color: black;
     }
 
     TreeNode.selected {
-        background: $accent;
-        color: $text;
+        background: cyan;
+        color: black;
     }
 
     /* Markdown styling */
@@ -102,28 +118,52 @@ class ModelExplorer(App):
     DataTable {
         background: $surface;
         color: $text;
+        overflow-y: scroll;
+        overflow-x: scroll;
+        scrollbar-gutter: stable;
+        scrollbar-size: 1 1;
+    }
+
+    /* Scrollbar styling */
+    ScrollBar {
+        background: cyan;
+        color: black;
+    }
+
+    ScrollBar.vertical {
+        background: cyan;
+        color: black;
+    }
+
+    ScrollBar.horizontal {
+        background: cyan;
+        color: black;
     }
 
     /* Header and Footer */
     Header {
-        background: $accent;
-        color: $text;
+        background: cyan;
+        color: black;
         text-align: center;
+        text-style: bold;
     }
 
-    Footer {
-        background: $accent;
-        color: $text;
+    #footer {
+        background: cyan;
+        color: black;
         text-align: center;
+        text-style: bold;
+        height: 1;
+        padding: 0 1;
     }
     """
     
     BINDINGS = [
         Binding("q", "quit", "Quit"),
         Binding("h", "help", "Help"),
-        Binding("r", "refresh", "Refresh"),
-        Binding("s", "search", "Search"),
         Binding("space", "toggle_expand", "Toggle Expand"),
+        Binding("c", "copy_content", "Copy Content"),
+        Binding("o", "open_location", "Open Location"),
     ]
     
     def __init__(self):
@@ -131,16 +171,12 @@ class ModelExplorer(App):
         self.models_dir = Path("models")
         self.current_model_path: Optional[Path] = None
         self.current_file_path: Optional[Path] = None
-        self.search_term = ""
     
     def get_welcome_message(self) -> str:
         """Generate welcome message with command recap."""
         return """🧘 SCAPO Model Explorer
-
-Navigation:          Commands:
-↑/↓ - Navigate tree  q - Quit
-Enter - Select item  h - Help
-Space - Expand       r - Refresh
+Navigation: ↑/↓ - Navigate tree, Enter - Select item, Space - Expand
+Commands: q - Quit, h - Help, c - Copy content, o - Open location
 
 Select a model from the tree to view content."""
         
@@ -150,19 +186,19 @@ Select a model from the tree to view content."""
         
         with Container(id="main"):
             with Horizontal(id="sidebar"):
-                yield Tree("📚 SCAPO Models", id="model-tree")
+                yield Tree("📚 Models", id="model-tree")
                 
             with Vertical(id="content"):
                 yield Static(self.get_welcome_message(), id="welcome")
                 yield Markdown(id="content-viewer")
                 yield DataTable(id="json-table")
                 
-        yield Footer()
+        yield Static("q Quit  h Help  space Toggle Expand  c Copy Content  o Open Location", id="footer", classes="scapo-footer")
     
     def on_mount(self) -> None:
         """Set up the app when it starts."""
-        self.title = "SCAPO Model Explorer"
-        self.sub_title = "Interactive Model Content Browser"
+        self.title = "SCAPO"
+        self.sub_title = "Stay Calm and Prompt On - Model Explorer"
         self.load_model_tree()
         # Focus the tree for better navigation
         tree = self.query_one("#model-tree", Tree)
@@ -246,9 +282,11 @@ Select a model from the tree to view content."""
             self.query_one("#content-viewer").display = False
             table = self.query_one("#json-table")
             table.display = True
-            # When only table is visible, it can use more space
-            table.styles.height = "90%"
             table.clear(columns=True)
+            
+            # Add a header row with file info and open location button
+            table.add_columns("File Info")
+            table.add_row(f"📄 {file_path.name} | Press 'o' to open location in Finder")
             
             if isinstance(data, list) and len(data) > 0:
                 # Display as table
@@ -284,9 +322,10 @@ Select a model from the tree to view content."""
             self.query_one("#json-table").display = False
             viewer = self.query_one("#content-viewer")
             viewer.display = True
-            # When only markdown viewer is visible, it can use more space
-            viewer.styles.height = "90%"
-            viewer.update(content)
+            
+            # Add file info header
+            header = f"# 📄 {file_path.name}\n\n*Press 'o' to open location in Finder*\n\n---\n\n"
+            viewer.update(header + content)
             
         except Exception as e:
             self.show_error(f"Error loading markdown: {e}")
@@ -301,7 +340,10 @@ Select a model from the tree to view content."""
             self.query_one("#json-table").display = False
             viewer = self.query_one("#content-viewer")
             viewer.display = True
-            viewer.update(f"```\n{content}\n```")
+            
+            # Add file info header
+            header = f"# 📄 {file_path.name}\n\n*Press 'o' to open location in Finder*\n\n---\n\n"
+            viewer.update(header + f"```\n{content}\n```")
             
         except Exception as e:
             self.show_error(f"Error loading file: {e}")
@@ -314,8 +356,6 @@ Select a model from the tree to view content."""
         self.query_one("#json-table").display = False
         viewer = self.query_one("#content-viewer")
         viewer.display = True
-        # When only markdown viewer is visible, it can use more space
-        viewer.styles.height = "90%"
         
         info = f"""# {model_path.name}
 
@@ -356,7 +396,8 @@ Select a model from the tree to view content."""
 - Space - Expand/collapse tree nodes
 - q - Quit the TUI
 - h - Show this help
-- r - Refresh the model tree
+- c - Copy current content to clipboard
+- o - Open file/model location in Finder
 
 ## File Types
 - 📝 Markdown files (.md) - Best practices and guides
@@ -369,21 +410,16 @@ Select a model from the tree to view content."""
 - Markdown rendering
 - JSON table view
 - File size information
-- Search functionality (coming soon)
+- Copy content to clipboard
 """
         self.query_one("#json-table").display = False
         viewer = self.query_one("#content-viewer")
         viewer.display = True
         viewer.update(help_text)
     
-    def action_refresh(self) -> None:
-        """Refresh the model tree."""
-        self.load_model_tree()
+
     
-    def action_search(self) -> None:
-        """Search functionality (placeholder)."""
-        # TODO: Implement search
-        self.show_error("Search functionality coming soon!")
+
     
     def action_toggle_expand(self) -> None:
         """Toggle expansion of the currently selected tree node."""
@@ -393,6 +429,88 @@ Select a model from the tree to view content."""
                 tree.cursor_node.collapse()
             else:
                 tree.cursor_node.expand()
+    
+    def action_copy_content(self) -> None:
+        """Copy current content to clipboard."""
+        try:
+            import pyperclip
+            
+            # Determine what content to copy
+            if self.current_file_path:
+                # Copy file content
+                with open(self.current_file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # Add file info header
+                copy_text = f"# {self.current_file_path.name}\n\n{content}"
+                
+                pyperclip.copy(copy_text)
+                self.notify(f"Copied {self.current_file_path.name} to clipboard", severity="information")
+                
+            elif self.current_model_path:
+                # Copy model info
+                info = f"Model: {self.current_model_path.name}\nPath: {self.current_model_path}\n\nFiles:\n"
+                
+                for file_path in sorted(self.current_model_path.iterdir()):
+                    if file_path.is_file():
+                        size = file_path.stat().st_size
+                        icon = self.get_file_icon(file_path.name)
+                        info += f"- {icon} {file_path.name} ({size:,} bytes)\n"
+                
+                pyperclip.copy(info)
+                self.notify(f"Copied {self.current_model_path.name} info to clipboard", severity="information")
+                
+            else:
+                # Copy welcome message
+                welcome_text = self.get_welcome_message()
+                pyperclip.copy(welcome_text)
+                self.notify("Copied welcome message to clipboard", severity="information")
+                
+        except ImportError:
+            self.notify("Copy functionality requires pyperclip. Install with: pip install pyperclip", severity="warning")
+        except Exception as e:
+            self.notify(f"Copy failed: {e}", severity="error")
+
+    def action_open_location(self) -> None:
+        """Open the current file or model location in Finder."""
+        try:
+            import subprocess
+            import platform
+            
+            if self.current_file_path:
+                # Open file location
+                path = self.current_file_path.parent
+                self._open_in_finder(path)
+                self.notify(f"Opened location of {self.current_file_path.name}", severity="information")
+                
+            elif self.current_model_path:
+                # Open model location
+                self._open_in_finder(self.current_model_path)
+                self.notify(f"Opened location of {self.current_model_path.name}", severity="information")
+                
+            else:
+                # Open models directory
+                self._open_in_finder(self.models_dir)
+                self.notify("Opened models directory", severity="information")
+                
+        except Exception as e:
+            self.notify(f"Failed to open location: {e}", severity="error")
+    
+    def _open_in_finder(self, path: Path) -> None:
+        """Open a path in the system file manager."""
+        import subprocess
+        import platform
+        
+        system = platform.system()
+        
+        if system == "Darwin":  # macOS
+            subprocess.run(["open", str(path)])
+        elif system == "Windows":
+            subprocess.run(["explorer", str(path)])
+        elif system == "Linux":
+            subprocess.run(["xdg-open", str(path)])
+        else:
+            raise OSError(f"Unsupported operating system: {system}")
 
 
 def run_tui():

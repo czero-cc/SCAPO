@@ -94,6 +94,17 @@ uv run scapo models list
 # Interactive exploration (recommended!)
 uv run scapo tui
 
+# Navigate with arrow keys, press Enter to view content
+# Press 'q' to quit, 'h' for help, 'c' to copy, 'o' to open location
+
+# TUI Features:
+# - Browse models by category (text, image, video, audio)
+# - View markdown files with full formatting
+# - Explore JSON data in table format
+# - Copy content to clipboard
+# - Open file locations in Finder/Explorer
+# - Scrollable content for large files
+
 # See what was found
 ls models/text/
 
