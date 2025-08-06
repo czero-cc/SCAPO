@@ -410,11 +410,11 @@ uv run scapo scrape run \
 
 ### Browse Models
 ```bash
-# List all models (default card view)
+# List all models (default simple view - one per line)
 uv run scapo models list
 
-# List all models one per line (simple view)
-uv run scapo models list --simple
+# List all models in card view (limited to 8 per category)
+uv run scapo models list --cards
 
 # List models by category
 uv run scapo models list --category text

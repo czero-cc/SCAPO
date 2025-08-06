@@ -340,8 +340,8 @@ def models():
 @models.command(name="list")
 @click.option("--category", "-c", help="Filter by category")
 @click.option("--tree", "-t", is_flag=True, help="Display as tree")
-@click.option("--simple", "-s", is_flag=True, help="Display as simple list (one per line)")
-def list_models(category, tree, simple):
+@click.option("--cards", is_flag=True, help="Display as card view (limited to 8 per category)")
+def list_models(category, tree, cards):
     """List models with enhanced display."""
     import os
     import json
@@ -377,8 +377,49 @@ def list_models(category, tree, simple):
                     model_node = cat_node.add(f"[green]{model}[/green] [dim]({file_count} files)[/dim]")
         
         console.print(tree_view)
-    elif simple:
-        # Simple list view - one model per line
+    elif cards:
+        # Card view (original behavior)
+        total_models = 0
+        for cat in categories:
+            cat_dir = os.path.join(models_dir, cat)
+            if os.path.exists(cat_dir):
+                model_list = [d for d in os.listdir(cat_dir) if os.path.isdir(os.path.join(cat_dir, d))]
+                if model_list:
+                    total_models += len(model_list)
+                    
+                    # Category header
+                    console.print(f"\n[bold cyan]{'🔤' if cat == 'text' else '🎨' if cat == 'image' else '🎬' if cat == 'video' else '🔊' if cat == 'audio' else '🌐'} {cat.upper()}[/bold cyan]")
+                    
+                    # Model cards
+                    cards_list = []
+                    for model in sorted(model_list)[:8]:  # Show max 8 per category
+                        model_path = os.path.join(cat_dir, model)
+                        files = os.listdir(model_path)
+                        
+                        card_text = f"[bold]{model}[/bold]\n"
+                        if "prompting.md" in files:
+                            card_text += "📝 "
+                        if "parameters.json" in files:
+                            card_text += "⚙️ "
+                        if "tips.md" in files:
+                            card_text += "💡"
+                        
+                        cards_list.append(card_text)
+                    
+                    # Display in columns
+                    if len(cards_list) > 4:
+                        console.print(Columns(cards_list[:4], padding=(0, 2)))
+                        console.print(Columns(cards_list[4:], padding=(0, 2)))
+                    else:
+                        console.print(Columns(cards_list, padding=(0, 2)))
+                    
+                    if len(model_list) > 8:
+                        console.print(f"[dim]... and {len(model_list) - 8} more[/dim]")
+        
+        # Summary
+        console.print(f"\n[bold]Total models: [cyan]{total_models}[/cyan][/bold]")
+    else:
+        # Simple list view - one model per line (default behavior)
         total_models = 0
         for cat in categories:
             cat_dir = os.path.join(models_dir, cat)
@@ -408,47 +449,6 @@ def list_models(category, tree, simple):
                         
                         indicators_str = " ".join(indicators) if indicators else ""
                         console.print(f"  • [bold]{model}[/bold] {indicators_str}")
-        
-        # Summary
-        console.print(f"\n[bold]Total models: [cyan]{total_models}[/cyan][/bold]")
-    else:
-        # Card view (original behavior)
-        total_models = 0
-        for cat in categories:
-            cat_dir = os.path.join(models_dir, cat)
-            if os.path.exists(cat_dir):
-                model_list = [d for d in os.listdir(cat_dir) if os.path.isdir(os.path.join(cat_dir, d))]
-                if model_list:
-                    total_models += len(model_list)
-                    
-                    # Category header
-                    console.print(f"\n[bold cyan]{'🔤' if cat == 'text' else '🎨' if cat == 'image' else '🎬' if cat == 'video' else '🔊' if cat == 'audio' else '🌐'} {cat.upper()}[/bold cyan]")
-                    
-                    # Model cards
-                    cards = []
-                    for model in sorted(model_list)[:8]:  # Show max 8 per category
-                        model_path = os.path.join(cat_dir, model)
-                        files = os.listdir(model_path)
-                        
-                        card_text = f"[bold]{model}[/bold]\n"
-                        if "prompting.md" in files:
-                            card_text += "📝 "
-                        if "parameters.json" in files:
-                            card_text += "⚙️ "
-                        if "tips.md" in files:
-                            card_text += "💡"
-                        
-                        cards.append(card_text)
-                    
-                    # Display in columns
-                    if len(cards) > 4:
-                        console.print(Columns(cards[:4], padding=(0, 2)))
-                        console.print(Columns(cards[4:], padding=(0, 2)))
-                    else:
-                        console.print(Columns(cards, padding=(0, 2)))
-                    
-                    if len(model_list) > 8:
-                        console.print(f"[dim]... and {len(model_list) - 8} more[/dim]")
         
         # Summary
         console.print(f"\n[bold]Total models: [cyan]{total_models}[/cyan][/bold]")
