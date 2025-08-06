@@ -88,6 +88,9 @@ LLM_QUALITY_THRESHOLD=0.8   # Higher (only best practices)
 
 ### 4. Check Results
 ```bash
+# List all available models
+uv run scapo models list --simple
+
 # See what was found
 ls models/text/
 

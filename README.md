@@ -32,6 +32,7 @@ Ever found yourself like this when trying to get AI to work?
 - 🎯 **Automatic Categorization** - Text, image, video, audio models all organized nicely.
 - 🔌 **Claude Desktop Integration** - MCP server that just works™️
 - 🚀 **Zero Config** - Literally just run it. We're not kidding.
+- 🖥️ **Interactive TUI** - Navigate commands with arrow keys in a beautiful terminal interface.
 
 ## 🏃‍♂️ Quick Start (60 Seconds or Less)
 
@@ -45,7 +46,16 @@ uv pip install -e .  # Install scapo and dependencies
 uv run playwright install  # Install browser automation
 ```
 
-### 2. Configure Your LLM Provider
+### 2. Try the Interactive TUI (New!)
+```bash
+# Just run scapo without any arguments to launch the interactive menu
+uv run scapo
+
+# Navigate with arrow keys, press Enter to execute commands
+# Press 'q' to quit, '?' for help
+```
+
+### 3. Configure Your LLM Provider
 
 SCAPO supports **three LLM providers** for processing scraped content:
 
@@ -97,7 +107,7 @@ cp .env.example .env
 > - Extract structured JSON reliably
 > - Make quality judgments about technical content
 
-### 3. Run the Scraping Pipeline
+### 4. Run the Scraping Pipeline
 ```bash
 # Install the scapo CLI
 uv pip install -e .
@@ -127,7 +137,7 @@ The pipeline will:
 4. 💾 Save to organized model directories
 5. 🔧 Filter parameters to only include model-specific data
 
-### 4. Use with Claude Desktop
+### 5. Use with Claude Desktop
 ```bash
 npx @scapo/mcp-server  # That's it. Seriously.
 ```
@@ -184,6 +194,53 @@ models/
 │   └── stable-diffusion-xl/
 └── video/
     └── runway-gen3/
+```
+
+## 🖥️ Interactive TUI Menu
+
+When you run `scapo` without any arguments, you'll get an interactive terminal menu:
+
+```bash
+uv run scapo
+```
+
+### Navigation
+- **↑/↓** - Move up/down through commands
+- **→/Enter** - Open submenus or configure parameters
+- **←** - Go back to parent menu
+- **q** - Quit the application
+- **?** - Show help information
+
+### Features
+- **Command Tree** - All SCAPO commands organized in a navigable tree
+- **Command Descriptions** - See what each command does before running it
+- **Parameter Input** - Interactive forms for configuring command parameters
+- **Result Display** - View command output within the TUI interface
+- **Smart Execution** - Commands without parameters execute immediately
+- **Keyboard Shortcuts** - Full keyboard navigation support
+- **Fallback Support** - If TUI isn't available, falls back to help message
+
+### Parameter Input Workflow
+1. **Navigate** to a command in the tree
+2. **Press Enter** to select the command
+3. **If the command has parameters**: A form appears to configure them
+   - Fill in the required fields
+   - Use Tab to move between inputs
+   - Press "Run Command" to execute
+   - Press "Cancel" to go back
+4. **If the command has no parameters**: It executes immediately
+
+### Result Display
+- **Command output** is displayed in a dedicated screen within the TUI
+- **STDOUT and STDERR** are clearly separated and formatted
+- **Back to Menu** button returns to the command tree
+- **Run Again** button re-executes the same command
+- **5-minute timeout** prevents hanging on long-running commands
+
+### Installation
+The TUI is included by default, but if you need to install it separately:
+```bash
+pip install 'scapo[tui]'
 ```
 
 ## 🎮 MCP Server for Claude Desktop
@@ -349,6 +406,27 @@ uv run scapo scrape run \
   --limit 20
 
 # Tip: Adjust SCRAPING_DELAY_SECONDS in .env for faster/slower scraping
+```
+
+### Browse Models
+```bash
+# List all models (default card view)
+uv run scapo models list
+
+# List all models one per line (simple view)
+uv run scapo models list --simple
+
+# List models by category
+uv run scapo models list --category text
+
+# Display as tree structure
+uv run scapo models list --tree
+
+# Search for specific models
+uv run scapo models search "llama"
+
+# Get detailed info about a model
+uv run scapo models info llama-3 --category text
 ```
 
 ### Export Practices

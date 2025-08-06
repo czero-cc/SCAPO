@@ -340,7 +340,8 @@ def models():
 @models.command(name="list")
 @click.option("--category", "-c", help="Filter by category")
 @click.option("--tree", "-t", is_flag=True, help="Display as tree")
-def list_models(category, tree):
+@click.option("--simple", "-s", is_flag=True, help="Display as simple list (one per line)")
+def list_models(category, tree, simple):
     """List models with enhanced display."""
     import os
     import json
@@ -376,8 +377,42 @@ def list_models(category, tree):
                     model_node = cat_node.add(f"[green]{model}[/green] [dim]({file_count} files)[/dim]")
         
         console.print(tree_view)
+    elif simple:
+        # Simple list view - one model per line
+        total_models = 0
+        for cat in categories:
+            cat_dir = os.path.join(models_dir, cat)
+            if os.path.exists(cat_dir):
+                model_list = [d for d in os.listdir(cat_dir) if os.path.isdir(os.path.join(cat_dir, d))]
+                if model_list:
+                    total_models += len(model_list)
+                    
+                    # Category header
+                    console.print(f"\n[bold cyan]{'🔤' if cat == 'text' else '🎨' if cat == 'image' else '🎬' if cat == 'video' else '🔊' if cat == 'audio' else '🌐'} {cat.upper()}[/bold cyan]")
+                    
+                    # List all models one per line
+                    for model in sorted(model_list):
+                        model_path = os.path.join(cat_dir, model)
+                        files = os.listdir(model_path)
+                        
+                        # Build indicators string
+                        indicators = []
+                        if "prompting.md" in files:
+                            indicators.append("📝")
+                        if "parameters.json" in files:
+                            indicators.append("⚙️")
+                        if "tips.md" in files:
+                            indicators.append("💡")
+                        if "pitfalls.md" in files:
+                            indicators.append("⚠️")
+                        
+                        indicators_str = " ".join(indicators) if indicators else ""
+                        console.print(f"  • [bold]{model}[/bold] {indicators_str}")
+        
+        # Summary
+        console.print(f"\n[bold]Total models: [cyan]{total_models}[/cyan][/bold]")
     else:
-        # Card view
+        # Card view (original behavior)
         total_models = 0
         for cat in categories:
             cat_dir = os.path.join(models_dir, cat)
