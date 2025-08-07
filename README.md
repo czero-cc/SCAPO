@@ -27,11 +27,14 @@ Ever found yourself like this when trying to get AI to work?
 
 ## ✨ Features That'll Make You Say "Finally!"
 
+**SCAPO** automatically scrapes reliable sources like Reddit, HackerNews, and GitHub to extract AI model best practices, prompting wisdom, and community insights from across the internet. Using intelligent browser automation and LLM-powered extraction, it organizes this knowledge into actionable, model-specific practices - so you don't have to manually hunt through forums and discussions for that perfect prompt or parameter setting.
+
 - 🕷️ **Intelligent Browser Scraping** - No API keys needed. Just pure browser automation magic.
 - 🧠 **LLM-Powered Extraction** - Your selected LLMs read the internet so you don't have to.
 - 🎯 **Automatic Categorization** - Text, image, video, audio models all organized nicely.
 - 🔌 **Claude Desktop Integration** - MCP server that just works™️
 - 🚀 **Zero Config** - Literally just run it. We're not kidding.
+- 🖥️ **Interactive TUI** - Navigate content with arrow keys in a beautiful terminal interface.
 
 ## 🏃‍♂️ Quick Start (60 Seconds or Less)
 
@@ -97,7 +100,16 @@ cp .env.example .env
 > - Extract structured JSON reliably
 > - Make quality judgments about technical content
 
-### 3. Run the Scraping Pipeline
+### 3. Explore Your Collected Content
+```bash
+# Launch the interactive model explorer to browse collected best practices
+uv run scapo tui
+
+# Navigate with arrow keys, press Enter to view content
+# Press 'q' to quit, 'h' for help, 'c' to copy, 'o' to open location
+```
+
+### 4. Run the Scraping Pipeline
 ```bash
 # Install the scapo CLI
 uv pip install -e .
@@ -127,7 +139,7 @@ The pipeline will:
 4. 💾 Save to organized model directories
 5. 🔧 Filter parameters to only include model-specific data
 
-### 4. Use with Claude Desktop
+### 5. Use with Claude Desktop
 ```bash
 npx @scapo/mcp-server  # That's it. Seriously.
 ```
@@ -185,6 +197,55 @@ models/
 └── video/
     └── runway-gen3/
 ```
+
+## 🖥️ Interactive Model Explorer (TUI)
+
+The `scapo tui` command launches an interactive terminal interface for exploring and reading the model content collected by SCAPO:
+
+```bash
+uv run scapo tui
+```
+
+### What You Can Explore
+- **📁 Model Categories**: Browse text, image, video, audio, and multimodal models
+- **📝 Best Practices**: Read prompting guides and tips for each model
+- **⚙️ Parameters**: View recommended settings and configurations
+- **⚠️ Pitfalls**: Learn what to avoid when using specific models
+- **📊 Metadata**: Explore model information and file statistics
+
+### Navigation
+- **↑/↓** - Navigate through the model tree
+- **Enter** - Select items
+- **Space** - Expand/collapse tree nodes
+- **q** - Quit the TUI
+- **h** - Show help
+- **c** - Copy content to clipboard
+- **o** - Open file/model location in Finder
+
+### Content Display
+- **Markdown Rendering**: Full formatting for prompting guides and best practices
+- **JSON Tables**: Structured table view for parameters and metadata
+- **File Information**: See file sizes, types, and available content
+- **Model Overview**: Summary of all available files for each model
+- **Scrollable Content**: Navigate through large files with scrollbars
+- **File Location Access**: Quick access to open file locations in system file manager
+
+### Features
+- **Tree Navigation**: Hierarchical view of all collected models
+- **Rich Content Viewing**: Proper rendering of markdown and structured data
+- **File Type Icons**: Visual indicators for different content types
+- **Responsive Layout**: Adapts to terminal size and content type
+- **Keyboard Shortcuts**: Full keyboard navigation support
+- **Copy to Clipboard**: Copy file content, model info, or welcome message
+- **Open in Finder**: Quick access to file locations in system file manager
+- **Scrollable Content**: Navigate through large files with scrollbars
+- **SCAPO Branding**: Consistent cyan color scheme matching the CLI
+
+### Content Types
+- **📝 Markdown (.md)**: Best practices, prompting guides, pitfalls
+- **⚙️ JSON (.json)**: Parameters, metadata, examples
+- **📋 YAML (.yml/.yaml)**: Configuration files
+- **📄 Other**: Raw content with syntax highlighting
 
 ## 🎮 MCP Server for Claude Desktop
 
@@ -350,6 +411,52 @@ uv run scapo scrape run \
 
 # Tip: Adjust SCRAPING_DELAY_SECONDS in .env for faster/slower scraping
 ```
+
+### Browse Models
+```bash
+# List all models (default simple view - one per line)
+uv run scapo models list
+
+# List all models in card view (limited to 8 per category)
+uv run scapo models list --cards
+
+# List models by category
+uv run scapo models list --category text
+
+# Display as tree structure
+uv run scapo models list --tree
+
+# Search for specific models
+uv run scapo models search "llama"
+
+# Get detailed info about a model
+uv run scapo models info llama-3 --category text
+
+# Interactive TUI for exploring model content
+uv run scapo tui
+```
+
+### Interactive TUI Explorer
+```bash
+# Launch the interactive model explorer
+uv run scapo tui
+```
+
+The TUI provides:
+- 📁 **Tree Navigation**: Browse models by category
+- 📝 **Markdown Rendering**: View prompting guides and best practices
+- ⚙️ **JSON Tables**: Explore parameters and metadata in table format
+- 🔍 **File Information**: See file sizes and types
+- ⌨️ **Keyboard Navigation**: Use arrow keys and Enter to explore
+
+**Keyboard Shortcuts:**
+- `q` - Quit the TUI
+- `h` - Show help
+- `c` - Copy content to clipboard
+- `o` - Open file/model location in Finder
+- `Space` - Expand/collapse tree nodes
+- Arrow keys - Navigate
+- Enter - Select item
 
 ### Export Practices
 ```bash

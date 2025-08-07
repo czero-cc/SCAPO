@@ -88,12 +88,26 @@ LLM_QUALITY_THRESHOLD=0.8   # Higher (only best practices)
 
 ### 4. Check Results
 ```bash
+# List all available models
+uv run scapo models list
+
 # See what was found
 ls models/text/
 
 # Check a specific model
 cat models/text/llama-3/prompting.md
+
+# Interactive exploration 
+uv run scapo tui
 ```
+
+In the TUI, you can:
+- navigate with `arrow keys`, 
+- press `Enter` to view content,
+- `q` to quit, 
+- `h` for help,
+- `c` to copy,
+- `o` to open location
 
 ## Common Issues
 
