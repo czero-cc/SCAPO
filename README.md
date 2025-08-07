@@ -100,16 +100,8 @@ cp .env.example .env
 > - Extract structured JSON reliably
 > - Make quality judgments about technical content
 
-### 3. Explore Your Collected Content
-```bash
-# Launch the interactive model explorer to browse collected best practices
-uv run scapo tui
 
-# Navigate with arrow keys, press Enter to view content
-# Press 'q' to quit, 'h' for help, 'c' to copy, 'o' to open location
-```
-
-### 4. Run the Scraping Pipeline
+### 3. Run the Scraping Pipeline
 ```bash
 # Install the scapo CLI
 uv pip install -e .
@@ -139,9 +131,18 @@ The pipeline will:
 4. 💾 Save to organized model directories
 5. 🔧 Filter parameters to only include model-specific data
 
-### 5. Use with Claude Desktop
+### 4. Use with Claude Desktop
 ```bash
 npx @scapo/mcp-server  # That's it. Seriously.
+```
+
+### 5. Explore Your Collected Content
+```bash
+# Launch the interactive model explorer to browse collected best practices
+uv run scapo tui
+
+# Navigate with arrow keys, press Enter to view content
+# Press 'q' to quit, 'h' for help, 'c' to copy, 'o' to open location
 ```
 
 ## 🎨 The SCAPO Philosophy
@@ -431,10 +432,6 @@ uv run scapo models search "llama"
 
 # Get detailed info about a model
 uv run scapo models info llama-3 --category text
-
-# Interactive TUI for exploring model content
-uv run scapo tui
-```
 
 ### Interactive TUI Explorer
 ```bash
