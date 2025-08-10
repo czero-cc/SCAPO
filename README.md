@@ -25,7 +25,7 @@ Ever found yourself like this when trying to get AI to work?
 
 **SCAPO** (Stay Calm and Prompt On) is your zen master for AI model best practices. We automatically scrape, analyze, and organize prompting wisdom from across the internet - so you don't have to.
 
-## ✨ Features That'll Make You Say "Finally!"
+## ✨ Features (bit wordy)"
 
 **SCAPO** automatically scrapes reliable sources like Reddit, HackerNews, and GitHub to extract AI model best practices, prompting wisdom, and community insights from across the internet. Using intelligent browser automation and LLM-powered extraction, it organizes this knowledge into actionable, model-specific practices - so you don't have to manually hunt through forums and discussions for that perfect prompt or parameter setting.
 
@@ -470,13 +470,6 @@ We're building the Wikipedia of AI prompting. Join us!
 2. 💡 **Share a Practice** - Found a killer prompt? Share it!
 3. 🐛 **Report Issues** - Something broken? Let us know!
 4. ⭐ **Star the Repo** - Spread the calm!
-
-### Dev Setup
-```bash
-make install  # Set everything up
-make test     # Run tests
-make scrape   # Test scraping
-```
 
 ## 🎯 Things We Might Do Later
 

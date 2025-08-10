@@ -9,6 +9,7 @@ import fetch from 'node-fetch';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
+import { FuzzyModelMatcher } from './fuzzyMatcher.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -31,6 +32,7 @@ class SCAPOServer {
       }
     );
 
+    this.fuzzyMatcher = new FuzzyModelMatcher(LOCAL_MODELS_PATH);
     this.setupHandlers();
   }
 
@@ -146,15 +148,58 @@ class SCAPOServer {
   async getBestPractices(args) {
     const { model_name, practice_type = 'all' } = args;
     
-    // Only use local files
-    const practices = this.getLocalPractices(model_name, practice_type);
+    // Try fuzzy matching first
+    const match = this.fuzzyMatcher.findBestMatch(model_name);
     
-    if (practices) {
+    if (match) {
+      // Check if it's a service (e.g., heygen in services folder)
+      if (match.isService) {
+        const servicePath = join(dirname(LOCAL_MODELS_PATH), 'services', match.category, match.name);
+        const serviceInfo = this.getServiceInfo(servicePath, match.name);
+        if (serviceInfo) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: serviceInfo,
+              },
+            ],
+          };
+        }
+      }
+      
+      // Use the matched model name for local practices
+      const practices = this.getLocalPractices(match.name, practice_type);
+      
+      if (practices) {
+        let resultText = practices;
+        
+        // Add match information if it wasn't exact
+        if (match.matchType !== 'exact') {
+          resultText = `*Note: Showing results for "${match.name}" (${match.matchType} match for "${model_name}")*\n\n${practices}`;
+        }
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: resultText,
+            },
+          ],
+        };
+      }
+    }
+    
+    // Try to provide suggestions if no match found
+    const suggestions = this.fuzzyMatcher.getSuggestions(model_name);
+    
+    if (suggestions.length > 0) {
+      const suggestionText = suggestions.map(s => `- ${s.model} (${s.category}) - ${s.confidence}% match`).join('\n');
       return {
         content: [
           {
             type: 'text',
-            text: practices,
+            text: `No exact match found for "${model_name}".\n\nDid you mean one of these?\n${suggestionText}\n\nTip: Try searching with 'search_models' tool or run the scraper to populate more model data.`,
           },
         ],
       };
@@ -168,6 +213,35 @@ class SCAPOServer {
         },
       ],
     };
+  }
+
+  getServiceInfo(servicePath, serviceName) {
+    // For services like HeyGen, provide available information
+    const info = [];
+    info.push(`# ${serviceName} Service Information\n`);
+    
+    // Check for README or documentation
+    const readmePath = join(servicePath, 'README.md');
+    if (existsSync(readmePath)) {
+      info.push(readFileSync(readmePath, 'utf-8'));
+    }
+    
+    // Check for configuration files
+    const configPath = join(servicePath, 'config.json');
+    if (existsSync(configPath)) {
+      const config = JSON.parse(readFileSync(configPath, 'utf-8'));
+      info.push(`## Configuration\n\n${JSON.stringify(config, null, 2)}`);
+    }
+    
+    // List available files in the service directory
+    if (existsSync(servicePath)) {
+      const files = readdirSync(servicePath);
+      if (files.length > 0) {
+        info.push(`## Available Resources\n\n${files.map(f => `- ${f}`).join('\n')}`);
+      }
+    }
+    
+    return info.length > 1 ? info.join('\n\n') : null;
   }
 
   getLocalPractices(modelName, practiceType) {
@@ -249,25 +323,26 @@ class SCAPOServer {
   async searchModels(args) {
     const { query, limit = 10 } = args;
     
-    // Search locally first
-    const localResults = this.searchLocalModels(query, limit);
+    // Use fuzzy matcher for search
+    const matches = this.fuzzyMatcher.findMatches(query, limit);
     
-    if (localResults.length > 0) {
-      const formatted = localResults.map(
-        (r) => `- ${r.model} (${r.category})`
-      ).join('\n');
+    if (matches.length > 0) {
+      const formatted = matches.map(m => {
+        const confidence = Math.round(m.similarity * 100);
+        return `- ${m.name} (${m.category}) - ${confidence}% match [${m.matchType}]`;
+      }).join('\n');
       
       return {
         content: [
           {
             type: 'text',
-            text: `Found ${localResults.length} models:\n\n${formatted}`,
+            text: `Found ${matches.length} models matching "${query}":\n\n${formatted}`,
           },
         ],
       };
     }
     
-    // Try API as fallback
+    // Try API as fallback if no local matches
     try {
       const response = await fetch(
         `${API_BASE_URL}/models/search?q=${encodeURIComponent(query)}&limit=${limit}`
@@ -280,11 +355,25 @@ class SCAPOServer {
       const results = await response.json();
       
       if (results.length === 0) {
+        // Provide suggestions even when no matches
+        const suggestions = this.fuzzyMatcher.getSuggestions(query, 5);
+        if (suggestions.length > 0) {
+          const suggestionText = suggestions.map(s => `- ${s.model} (${s.category})`).join('\n');
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `No models found matching: ${query}\n\nDid you mean:\n${suggestionText}`,
+              },
+            ],
+          };
+        }
+        
         return {
           content: [
             {
               type: 'text',
-            text: `No models found matching: ${query}`,
+              text: `No models found matching: ${query}`,
             },
           ],
         };
@@ -303,6 +392,20 @@ class SCAPOServer {
         ],
       };
     } catch (error) {
+      // Provide suggestions on error
+      const suggestions = this.fuzzyMatcher.getSuggestions(query, 3);
+      if (suggestions.length > 0) {
+        const suggestionText = suggestions.map(s => `- ${s.model} (${s.category})`).join('\n');
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Search failed for: ${query}\n\nSuggestions:\n${suggestionText}`,
+            },
+          ],
+        };
+      }
+      
       return {
         content: [
           {

@@ -1,6 +1,10 @@
 # SCAPO MCP Server
 
-A Model Context Protocol (MCP) server for querying AI/ML best practices from the SCAPO (Stay Calm and Prompt On) knowledge base.
+A Model Context Protocol (MCP) server for querying AI/ML best practices from the SCAPO (Stay Calm and Prompt On) knowledge base. Features intelligent fuzzy matching for improved user experience when querying model information.
+
+## Documentation
+
+For comprehensive usage instructions, examples, and technical details, please see the **[Usage Guide](usage-guide.md)**.
 
 ## Installation
 
@@ -109,12 +113,14 @@ Example in Claude:
 
 ## Features
 
+- **Intelligent Fuzzy Matching**: Handles typos, partial names, and variations automatically
 - **No Python Required**: Pure Node.js implementation using npx
 - **Fully Standalone**: Works without any API server running
 - **Direct File Access**: Reads from local model files
-- **Smart Search**: Searches models by name locally
+- **Smart Search**: Advanced search with similarity scoring
 - **Smart Recommendations**: Suggests models based on use case
 - **Easy Integration**: Works seamlessly with Claude Desktop
+- **Helpful Suggestions**: Provides alternatives when exact matches aren't found
 
 ## Use Cases
 

@@ -1,0 +1,16 @@
+{
+  "timestamp": "2025-08-10T21:54:12.916885",
+  "sources": [
+    "reddit:AvatarCosts"
+  ],
+  "posts_processed": 2,
+  "total_practices": 3,
+  "models_found": [
+    "ChatGPT",
+    "GPT-5"
+  ],
+  "themes": [
+    "general"
+  ],
+  "average_relevance": 0.55
+}

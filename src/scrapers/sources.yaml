@@ -48,7 +48,180 @@ reddit:
       url: "https://www.reddit.com/r/OpenAI/"
       focus: "GPT best practices, API usage"
       priority: high
-      models: ["gpt-4", "gpt-3.5", "dalle"]
+      models: ["gpt-4", "gpt-3.5", "chatgpt"]
+    
+    # AI Video Generation Discussion
+    - name: "r/ArtificialIntelligence"
+      url: "https://www.reddit.com/r/ArtificialIntelligence/"
+      focus: "General AI discussions including video generation services"
+      priority: critical
+      models: ["heygen", "synthesia", "runway", "ai-video", "general"]
+    
+    - name: "r/Synthesia"  
+      url: "https://www.reddit.com/r/artificial/"
+      focus: "AI discussions including Synthesia and video generation"
+      priority: critical
+      models: ["synthesia", "ai-video", "artificial-intelligence"]
+    
+    - name: "r/RunwayML"
+      url: "https://www.reddit.com/r/MediaSynthesis/"
+      focus: "Media synthesis discussions including Runway and AI video"
+      priority: critical
+      models: ["runway", "gen-3", "gen-4", "video-generation"]
+    
+    - name: "r/DID"
+      url: "https://www.reddit.com/search/?q=d-id+tips+OR+d-id+tricks+OR+\"d-id+tutorial\"+OR+\"d-id+prompt\"+OR+\"d-id+best+practices\"+OR+\"d-id+settings\""
+      focus: "Talking head generation, credit management, API optimization"
+      priority: high
+      models: ["d-id", "talking-head"]
+    
+    - name: "r/LumaAI"
+      url: "https://www.reddit.com/search/?q=luma+ai+tips+OR+luma+ai+tricks+OR+\"luma+ai+tutorial\"+OR+\"luma+ai+prompt\"+OR+\"luma+ai+best+practices\"+OR+\"dream+machine+tips\""
+      focus: "Dream Machine optimization, 3D generation tips"
+      priority: high
+      models: ["luma-ai", "dream-machine"]
+    
+    - name: "r/PikaLabs"
+      url: "https://www.reddit.com/search/?q=pika+labs+tips+OR+pika+labs+tricks+OR+\"pika+labs+prompt\"+OR+\"pika+labs+tutorial\"+OR+\"pika+labs+best+practices\"+OR+\"pika+settings\""
+      focus: "Video generation prompting, parameter optimization"
+      priority: high  
+      models: ["pika-labs", "pika-2"]
+    
+    # AI Voice Generation Services
+    - name: "r/ElevenLabs"
+      url: "https://www.reddit.com/r/ElevenLabs/"
+      focus: "Voice cloning optimization, character management, batch processing"
+      priority: critical
+      models: ["elevenlabs", "voice-cloning"]
+    
+    - name: "r/MurfAI"
+      url: "https://www.reddit.com/search/?q=murf+ai+tips+OR+murf+ai+tricks+OR+\"murf+ai+tutorial\"+OR+\"murf+ai+prompt\"+OR+\"murf+ai+best+practices\"+OR+\"murf+settings\""
+      focus: "Professional voiceover optimization, cost management"
+      priority: high
+      models: ["murf", "voiceover"]
+    
+    - name: "r/PlayHT"
+      url: "https://www.reddit.com/search/?q=play.ht+tips+OR+\"play ht\"+optimization"
+      focus: "Voice synthesis optimization, API usage"
+      priority: medium
+      models: ["play-ht", "voice-synthesis"]
+    
+    # AI Image Generation Services
+    - name: "r/LeonardoAI"
+      url: "https://www.reddit.com/search/?q=leonardo+ai+tips+OR+\"leonardo ai\"+optimization"
+      focus: "Credit optimization, model selection, batch generation"
+      priority: high
+      models: ["leonardo-ai", "image-generation"]
+    
+    - name: "r/Ideogram"
+      url: "https://www.reddit.com/search/?q=ideogram+tips+OR+ideogram+optimization"
+      focus: "Text rendering optimization, prompt engineering"
+      priority: medium
+      models: ["ideogram", "text-image"]
+    
+    # AI Coding Services
+    - name: "r/GitHubCopilot"
+      url: "https://www.reddit.com/search/?q=github+copilot+tips+OR+copilot+optimization"
+      focus: "Code completion optimization, productivity tips, shortcuts"
+      priority: high
+      models: ["github-copilot", "copilot"]
+    
+    - name: "r/Cursor"
+      url: "https://www.reddit.com/search/?q=cursor+ai+tips+OR+cursor+optimization"
+      focus: "AI-first IDE optimization, workflow tips"
+      priority: high
+      models: ["cursor", "ai-ide"]
+    
+    - name: "r/Codeium"
+      url: "https://www.reddit.com/search/?q=codeium+tips+OR+codeium+optimization"
+      focus: "Code completion, refactoring, cost optimization"
+      priority: medium
+      models: ["codeium", "code-assistant"]
+    
+    # Virtual Influencer Services  
+    - name: "r/CharacterAI"
+      url: "https://www.reddit.com/r/CharacterAI/"
+      focus: "Character creation optimization, prompt engineering, memory management"
+      priority: high
+      models: ["character-ai", "ai-character"]
+    
+    - name: "r/Replika"
+      url: "https://www.reddit.com/r/replika/"
+      focus: "AI companion optimization, conversation flow, subscription tips"
+      priority: medium
+      models: ["replika", "ai-companion"]
+    
+    # Enterprise AI Services
+    - name: "r/ScaleAI"
+      url: "https://www.reddit.com/search/?q=scale+ai+tips+OR+\"scale ai\"+optimization"
+      focus: "Data labeling optimization, model training efficiency"
+      priority: medium
+      models: ["scale-ai", "data-labeling"]
+    
+    # Virtual Influencer Business Optimization
+    - name: "r/VirtualInfluencerBusiness"
+      url: "https://www.reddit.com/search/?q=(subreddit:entrepreneur+OR+subreddit:marketing+OR+subreddit:OnlyFansAdvice+OR+subreddit:passive_income)+AND+(\"virtual+influencer+profit\"+OR+\"AI+model+income\"+OR+\"digital+persona+monetization\"+OR+\"avatar+business+model\"+OR+\"AI+girlfriend+revenue\")"
+      focus: "Monetization strategies and ROI optimization for virtual influencers"
+      priority: ultra
+      models: ["glambase", "ai-influencer", "virtual-persona"]
+    
+    - name: "r/AIInfluencerTech" 
+      url: "https://www.reddit.com/search/?q=(subreddit:MachineLearning+OR+subreddit:artificial+OR+subreddit:ChatGPT)+AND+(\"virtual+influencer\"+OR+\"AI+persona\"+OR+\"digital+human+business\"+OR+\"avatar+automation\")"
+      focus: "Technical optimization for AI influencer platforms"
+      priority: ultra
+      models: ["virtual-influencer", "ai-persona", "digital-human"]
+    
+    # Persistent World Services
+    - name: "r/SpatialOS"
+      url: "https://www.reddit.com/search/?q=spatialos+tips+OR+spatialos+tricks+OR+\"spatialos+tutorial\"+OR+\"spatialos+best+practices\"+OR+\"spatial+os+tips\"+OR+\"improbable+tips\""
+      focus: "SpatialOS cost optimization, deployment strategies, enterprise usage"
+      priority: ultra
+      models: ["spatialos", "improbable"]
+    
+    - name: "r/UnityCloud"
+      url: "https://www.reddit.com/search/?q=unity+cloud+pricing+OR+multiplay+hosting+costs"
+      focus: "Unity Cloud cost management, server optimization, multiplayer scaling"
+      priority: ultra
+      models: ["unity-cloud", "multiplay"]
+    
+    # AI Companion Enterprise Services
+    - name: "r/ReplicaBusiness"
+      url: "https://www.reddit.com/search/?q=replika+business+OR+\"ai companion\"+enterprise"
+      focus: "Enterprise AI companion deployment, B2B optimization"
+      priority: ultra
+      models: ["replika-enterprise", "ai-companion-b2b"]
+    
+    - name: "r/CharacterAIBusiness"
+      url: "https://www.reddit.com/search/?q=character.ai+business+OR+\"character ai\"+enterprise"
+      focus: "Character.AI enterprise features, scaling, cost management"
+      priority: ultra
+      models: ["character-ai-enterprise", "c-ai-business"]
+    
+    # Digital Human/Avatar Discussion
+    - name: "r/AvatarCosts"
+      url: "https://www.reddit.com/r/ChatGPT/"
+      focus: "AI service discussions including avatars and digital humans"
+      priority: ultra
+      models: ["soul-machines", "digital-human", "ai-avatar", "heygen", "synthesia"]
+    
+    - name: "r/DigitalHuman"
+      url: "https://www.reddit.com/search/?q=\"digital+human\"+tips+OR+\"digital+human\"+tricks+OR+\"digital+human\"+tutorial+OR+\"avatar+tips\"+OR+\"avatar+best+practices\""
+      focus: "Enterprise digital human solutions, deployment optimization"
+      priority: ultra
+      models: ["digital-human-enterprise", "avatar-enterprise"]
+    
+    # Latest AI Models
+    - name: "r/GPT5"
+      url: "https://www.reddit.com/search/?q=gpt-5+tips+OR+gpt5+tricks+OR+\"gpt+5\"+tips+OR+\"gpt-5\"+tutorial+OR+\"gpt-5\"+prompt+OR+\"gpt-5\"+best+practices"
+      focus: "GPT-5 optimization, cost management, advanced features"
+      priority: critical
+      models: ["gpt-5", "gpt5"]
+    
+    - name: "r/Claude4"
+      url: "https://www.reddit.com/search/?q=claude+4+tips+OR+\"claude 4\"+optimization"
+      focus: "Claude 4 advanced features, cost optimization, prompt engineering"
+      priority: critical
+      models: ["claude-4", "claude4"]
     
     - name: "r/ClaudeAI"
       url: "https://www.reddit.com/r/ClaudeAI/"

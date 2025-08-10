@@ -11,6 +11,8 @@ from litellm import acompletion, RateLimitError, AuthenticationError
 
 from src.core.logging import get_logger
 from src.core.config import settings
+from src.services.adaptive_processor import LLMCapabilities
+from src.services.content_processor import ContentChunker
 
 logger = get_logger(__name__)
 
@@ -111,6 +113,15 @@ class UnifiedLLMProcessor(BaseLLMProcessor):
         
         # Set up provider-specific configuration
         self.provider = provider or settings.llm_provider
+        self.model_name = model or (settings.openrouter_model if self.provider == "openrouter" else settings.local_llm_model)
+        
+        # Initialize smart processors
+        self.capabilities = LLMCapabilities.detect_capabilities(self.provider, self.model_name)
+        self.content_processor = ContentChunker(
+            chunk_size=self.capabilities.optimal_chunk_size,
+            overlap_size=200,
+            min_chunk_size=500
+        )
         
         if self.provider == "openrouter":
             self.model = f"openrouter/{model or settings.openrouter_model}"
@@ -133,6 +144,10 @@ class UnifiedLLMProcessor(BaseLLMProcessor):
             raise ValueError(f"Unknown provider: {self.provider}")
         
         self.logger.info(f"Initialized LLM processor with model: {self.model}")
+    
+    def _supports_json_mode(self) -> bool:
+        """Check if model supports structured JSON mode."""
+        return False  # Disabled for now - using system prompts only
     
     async def _make_completion(self, messages: List[Dict[str, str]], 
                              temperature: float = 0.3,
@@ -185,39 +200,48 @@ class UnifiedLLMProcessor(BaseLLMProcessor):
                 else:
                     raise
     
-    def _supports_json_mode(self) -> bool:
-        """Check if the current model supports JSON mode."""
-        # Models that support JSON mode
-        json_mode_models = [
-            "gpt-4", "gpt-3.5", "claude", "gemini", 
-            "deepseek", "openai/", "anthropic/"
-        ]
-        return any(model in self.model.lower() for model in json_mode_models)
     
     async def process_content(self, content: str, content_type: str) -> List[ProcessedPractice]:
-        """Process content using LiteLLM."""
-        # Truncate if needed
-        content, was_truncated = self.truncate_to_limit(content)
-        if was_truncated:
-            self.logger.info(f"Content truncated to {self.max_chars} characters for {content_type}")
-        
-        prompt = self.create_extraction_prompt(content, content_type)
+        """Process content using smart chunking and LiteLLM."""
+        # Use smart content processor instead of basic truncation
+        all_practices = []
         
         try:
-            # Try with JSON mode if supported
-            response_format = {"type": "json_object"} if self._supports_json_mode() else None
+            chunks = self.content_processor.chunk_with_overlap(content)
+            self.logger.info(f"Content split into {len(chunks)} chunks for processing")
             
+            for chunk in chunks:
+                prompt = self.create_extraction_prompt(chunk.text, content_type)
+                practices = await self._extract_practices_from_chunk(prompt, content_type)
+                all_practices.extend(practices)
+                
+        except Exception as e:
+            self.logger.error(f"Smart processing failed, falling back to basic truncation: {e}")
+            # Fallback to basic truncation
+            content, was_truncated = self.truncate_to_limit(content)
+            if was_truncated:
+                self.logger.info(f"Content truncated to {self.max_chars} characters for {content_type}")
+            
+            prompt = self.create_extraction_prompt(content, content_type)
+            practices = await self._extract_practices_from_chunk(prompt, content_type)
+            all_practices.extend(practices)
+        
+        return all_practices
+    
+    async def _extract_practices_from_chunk(self, prompt: str, content_type: str) -> List[ProcessedPractice]:
+        """Extract practices from a single chunk."""
+        
+        try:
             response = await self._make_completion(
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are an expert at extracting actionable AI/LLM best practices from noisy community content. Be critical and only extract verified, useful practices. Always respond with valid JSON."
+                        "content": "You MUST respond with valid JSON only. Start with { and end with }. No explanations before or after the JSON."
                     },
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.3,
-                max_tokens=2000,
-                response_format=response_format
+                temperature=0.1,
+                max_tokens=2000
             )
             
             # Parse JSON response with multiple strategies
@@ -255,9 +279,26 @@ class UnifiedLLMProcessor(BaseLLMProcessor):
                 
                 if not practices_data:
                     # Last resort: try to construct minimal valid response
-                    self.logger.error(f"No valid JSON found in LLM response. Raw: {response[:500]}...")
-                    # Return empty list but continue processing
-                    return []
+                    self.logger.warning(f"No valid JSON found in LLM response. Attempting text extraction fallback...")
+                    self.logger.debug(f"Raw response: {response[:500]}...")
+                    
+                    # Try to extract useful information from plain text
+                    if any(keyword in response.lower() for keyword in ['tip', 'practice', 'recommend', 'use', 'avoid', 'setting', 'parameter']):
+                        # Create a basic practice from the text
+                        practices_data = {
+                            "practices": [{
+                                "practice_type": "tip",
+                                "content": response[:200] + "..." if len(response) > 200 else response,
+                                "model_name": "general",
+                                "confidence": 0.3,
+                                "source": content_type,
+                                "category": "general"
+                            }]
+                        }
+                        self.logger.info("Created fallback practice from non-JSON response")
+                    else:
+                        # Return empty list but continue processing
+                        return []
             
             # Extract practices list
             if isinstance(practices_data, dict) and "practices" in practices_data:

@@ -349,24 +349,61 @@ IMPORTANT: Start with {{ and end with }}. Be strict - only high-quality, model-s
             # Don't close the processor - we're reusing it
             pass
     
-    async def scrape_reddit_browser(self, page: Page, subreddit: str, max_posts: int = 10) -> List[ProcessedContent]:
+    async def scrape_reddit_browser(self, page: Page, source_name: str, max_posts: int = 10) -> List[ProcessedContent]:
         """Scrape Reddit using browser and process with LLM."""
-        logger.info(f"Scraping r/{subreddit} with browser")
+        logger.info(f"Scraping {source_name} with browser")
         
-        url = f"https://old.reddit.com/r/{subreddit}/top/?t=week"
+        # Get the actual URL from sources.yaml
+        from src.scrapers.source_manager import SourceManager
+        source_manager = SourceManager()
+        reddit_sources = source_manager.get_reddit_sources()
+        
+        # Find the source by name
+        source_config = None
+        for source in reddit_sources:
+            if source.get('name', '').replace('r/', '') == source_name:
+                source_config = source
+                break
+        
+        if not source_config:
+            logger.error(f"Source {source_name} not found in sources.yaml")
+            return []
+            
+        url = source_config.get('url', '')
+        if not url:
+            logger.error(f"No URL found for source {source_name}")
+            return []
+            
+        # Convert to old.reddit.com for better scraping
+        if 'reddit.com' in url and 'old.reddit.com' not in url:
+            if 'www.reddit.com' in url:
+                url = url.replace('www.reddit.com', 'old.reddit.com')
+            else:
+                url = url.replace('reddit.com', 'old.reddit.com')
+            
+        logger.info(f"Navigating to: {url}")
         await page.goto(url, wait_until='domcontentloaded')
         await asyncio.sleep(self.scrape_delay)
         
         processed = []
         
-        # Get post links
-        post_links = await page.evaluate(f'''
-            Array.from(document.querySelectorAll('.thing.link')).slice(0, {max_posts}).map(post => ({{
-                title: post.querySelector('a.title')?.innerText || '',
-                url: post.querySelector('.comments')?.href || '',
-                score: post.querySelector('.score.unvoted')?.innerText || '0'
-            }})).filter(p => p.url)
-        ''')
+        # Get post links - handle both subreddit pages and search results
+        post_links = await page.evaluate('''
+            (maxPosts) => {
+                // Try both regular subreddit selectors and search result selectors
+                let posts = Array.from(document.querySelectorAll('.thing.link'));
+                if (posts.length === 0) {
+                    // Try search result selectors
+                    posts = Array.from(document.querySelectorAll('.search-result-link'));
+                }
+                
+                return posts.slice(0, maxPosts).map(post => ({
+                    title: post.querySelector('a.title')?.innerText || post.querySelector('.search-title a')?.innerText || '',
+                    url: post.querySelector('.comments')?.href || post.querySelector('a.comments')?.href || '',
+                    score: post.querySelector('.score.unvoted')?.innerText || post.querySelector('.search-score')?.innerText || '0'
+                })).filter(p => p.url && p.title);
+            }
+        ''', max_posts)
         
         for i, post in enumerate(post_links):
             if i >= max_posts:
@@ -401,7 +438,7 @@ IMPORTANT: Start with {{ and end with }}. Be strict - only high-quality, model-s
                 
                 # Process with LLM - Step 1: Entity extraction
                 logger.info(f"Extracting entities from: {content_data['title'][:60]}...")
-                entities = await self.extract_entities_with_llm(content_data['fullContent'], f"reddit:{subreddit}")
+                entities = await self.extract_entities_with_llm(content_data['fullContent'], f"reddit:{source_name}")
                 
                 if entities.is_ai_related:
                     # Step 2: Extract best practices
@@ -413,7 +450,7 @@ IMPORTANT: Start with {{ and end with }}. Be strict - only high-quality, model-s
                         entities=entities,
                         best_practices=practices,
                         source_url=self.normalize_reddit_url(post['url']),
-                        source_type=f"reddit:{subreddit}",
+                        source_type=f"reddit:{source_name}",
                         timestamp=datetime.now().isoformat()
                     ))
                     
