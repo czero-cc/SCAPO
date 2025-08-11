@@ -1,9 +1,0 @@
-[
-  {
-    "tip": "Use Google's Agent Development Kit with Bright Data MCP for agent-driven web search in Gemini CLI: Install the Bright Data MCP server, configure it with your credentials in Gemini CLI's settings, then use the '@web_search' function in your prompts to perform real-time web searches. Example prompt: 'What are the latest developments in AI? @web_search'",
-    "confidence": 0.8,
-    "source": "reddit:LocalLLaMA",
-    "timestamp": "2025-08-05T15:29:33.131291",
-    "example": null
-  }
-]

@@ -32,7 +32,7 @@ class SourceValidator:
         "focus", "license", "update_frequency", "raw_url", "api",
         "endpoints", "rate_limit", "auth", "sdk", "example_endpoint",
         "specific_datasets", "invite", "size", "note", "format",
-        "tags_to_track"
+        "tags_to_track", "search_patterns"
     }
     
     def __init__(self, sources_file: Path):

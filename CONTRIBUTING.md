@@ -1,210 +1,186 @@
 # Contributing to SCAPO (Stay Calm and Prompt On) 🧘
 
-Welcome to the zen garden of AI prompting! We're building the most chill knowledge base for AI best practices, and we need your help.
+Welcome to the zen garden of AI service optimization! We're building the community's go-to knowledge base for extracting specific, actionable optimization techniques for AI services.
 
-## 🌟 The SCAPO Way
+## 🌟 The SCAPO Philosophy
 
-Before contributing, remember our philosophy:
-1. **No API keys required for web search** - If it needs keys, we don't want it (we support LMstudio and Ollama!)
-2. **Community wisdom > Corporate docs** - Real users know best
-3. **Automation is key** - Manual work is so 2023
-4. **Keep it simple** - Complexity kills calm
+Before contributing, remember our core mission:
+1. **Specific > Generic** - Extract concrete techniques, not "write better prompts"
+2. **Community wisdom > Corporate docs** - Reddit knows the real tricks
+3. **Optimization focus** - Help users save resources and improve performance
+4. **Automation is key** - 381+ services discovered automatically
 
 ## 🚀 Quick Contribution Guide
 
-### 1. Adding New Sources (Most Needed!) 
+### 1. Add Priority Services (Most Needed!)
 
-**Time required: 10 minutes** ⏱️
+**Time required: 5 minutes** ⏱️
 
-Add a new scraping method to `src/scrapers/intelligent_browser_scraper.py`:
+Add high-value services to `src/scrapers/targeted_search_generator.py`:
 
 ```python
-async def scrape_mycommunity_browser(self, page: Page, **kwargs):
-    """Scrape MyCommunity using browser."""
-    logger.info("Scraping MyCommunity")
-    
-    # Navigate to the source
-    await page.goto("https://mycommunity.com/ai-discussions")
-    
-    # Extract content (example)
-    posts = await page.evaluate('''
-        Array.from(document.querySelectorAll('.post')).map(p => ({
-            title: p.querySelector('.title')?.innerText || '',
-            content: p.querySelector('.content')?.innerText || ''
-        }))
-    ''')
-    
-    # Process with LLM (automatic!)
-    processed = []
-    for post in posts:
-        entities = await self.extract_entities_with_llm(
-            post['content'], 
-            "mycommunity"
-        )
-        if entities.is_ai_related:
-            # Magic happens here
-            practices = await self.extract_best_practices_with_llm(
-                post['content'], 
-                entities
-            )
-            processed.append(...)
-    
-    return processed
+self.priority_services = {
+    'ultra': [
+        'Your-New-Service',  # Add expensive/popular services here
+        'Another-Service',
+    ],
+    'high': [...],
+    'medium': [...]
+}
 ```
 
-Then update `scrape_sources` to handle it:
+Services in 'ultra' get the most comprehensive searches.
+
+### 2. Improve Search Patterns
+
+Enhance search queries in `targeted_search_generator.py`:
+
 ```python
-elif source.startswith("mycommunity:"):
-    content = await self.scrape_mycommunity_browser(page)
+self.problem_patterns = {
+    'cost': [
+        '"{service}" credits per dollar',  # Add new patterns
+        '"{service}" free tier limits',
+    ],
+    'optimization': [
+        '"{service}" batch processing',
+        '"{service}" cache settings',
+    ],
+    'technical': [
+        '"{service}" webhook setup',
+        '"{service}" async API',
+    ]
+}
 ```
 
-### 2. Share a Killer Prompt
+### 3. Add Service Discovery Sources
 
-Found an amazing prompt? Create a file in the models directory:
+Extend `src/scrapers/service_discovery.py` with new GitHub lists:
 
-```bash
-models/text/gpt-4/examples/your-awesome-prompt.md
+```python
+self.sources = [
+    GitHubAwesomeSource(
+        "your-username/awesome-new-ai-services",
+        "New AI Services"
+    ),
+    # Add more curated lists
+]
 ```
 
-Include:
-- The actual prompt
-- Why it works
-- Example output
-- Any gotchas
+### 4. Improve Service Aliasing
 
-### 3. Fix Something Broken
+Add name variations to `src/services/service_alias_manager.py`:
 
-See something wrong? Fix it! Common issues:
-- Scraper timing out → Adjust delays
-- LLM not extracting properly → Improve prompts
-- Model categorization wrong → Update logic
+```python
+VARIATION_PATTERNS = [
+    ('yourservice', ['your-service', 'Your Service', 'YourService']),
+    # Handle different naming conventions
+]
+```
 
 ## 📋 What We Really Need
 
 ### 🔥 High Priority
-1. **More sources** - Forums, blogs, Discord servers (via browser)
-2. **YouTube scraping** - Transcript extraction for tutorials
-3. **Better LLM prompts** - For entity/practice extraction
-4. **Model categorization** - Improve auto-detection
+1. **More priority services** - Add services that burn through credits
+2. **Better search patterns** - Find specific configuration tips
+3. **Service discovery sources** - More GitHub awesome lists
+4. **Extraction prompt tuning** - Filter out generic advice better
 
 ### 🎯 Medium Priority
-1. **Export features** - Obsidian, Notion formats
-2. ~~**Practice deduplication**~~ - ✅ Already implemented!
-3. **Confidence scoring** - Better quality metrics
-4. **Browser anti-detection** - Stay stealthy
+1. **HackerNews integration** - Mine discussions for tips
+2. **Forum scrapers** - OpenAI forums, Hugging Face forums
+3. **Service metadata** - Pricing tiers, API limits
+4. **Quality scoring improvements** - Better tip validation
 
 ### 🌟 Nice to Have
-1. **Real-time monitoring** - WebSocket scrapers
-2. **Community voting** - Upvote best practices
-3. **Chrome extension** - Direct browser integration
-4. **VS Code plugin** - IDE integration
+1. **Real-time monitoring** - Track new Reddit posts
+2. **Discord integration** - Extract tips from Discord servers
+3. **Twitter/X scraping** - AI researcher threads
+4. **Automatic PR creation** - When new tips are found
 
 ## 🛠️ Development Setup
 
 ### Prerequisites
-- Python 3.12+
-- Node.js 18+ (for MCP)
+- Python 3.10+
+- uv (fast package manager)
 - An LLM provider (choose one):
-  - OpenRouter account (cloud)
+  - OpenRouter account (FREE model available!)
   - Ollama installed (local)
   - LM Studio installed (local)
-- A calm mindset 🧘
 
 ### Quick Start
 ```bash
-# Clone & enter zen mode
+# Clone the repo
 git clone https://github.com/czero-cc/scapo.git
 cd scapo
 
-# Install uv (the fast package manager)
+# Install uv
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Create environment & install
 uv venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
-uv pip install -r requirements.txt
+uv pip install -e .
 uv run playwright install
 
-# Configure your LLM provider
+# Configure LLM
 cp .env.example .env
-
-# Edit .env and choose your provider:
-# Option 1: OpenRouter (cloud)
+# Edit .env:
 # LLM_PROVIDER=openrouter
-# OPENROUTER_API_KEY=your_key_here
+# OPENROUTER_API_KEY=your_key
+# OPENROUTER_MODEL=your_model
 
-# Option 2: Ollama (local)
-# LLM_PROVIDER=local
-# LOCAL_LLM_TYPE=ollama
-# LOCAL_LLM_URL=http://localhost:11434
+# Test service discovery
+uv run scapo scrape discover --update
 
-# Option 3: LM Studio (local)
-# LLM_PROVIDER=local
-# LOCAL_LLM_TYPE=lmstudio
-# LOCAL_LLM_URL=http://localhost:1234
-
-# Test SCAPO is working
-uv run scapo init
-
-# Run a test scrape (respects default 2-second delay)
-uv run scapo scrape run --sources reddit:LocalLLaMA --limit 2
+# Extract tips for a service
+uv run scapo scrape targeted --service "Eleven Labs" --limit 20
 ```
 
-## 🧪 Testing Your Changes
+## 🧪 Testing Your Contributions
 
-### Important Notes on Current Implementation
-- The CLI uses `uv run scapo` commands (not `python -m`)
-- Default scraping delay is 2 seconds (configured in .env)
-- LiteLLM is used for all LLM providers (OpenRouter, Ollama, LM Studio)
-- Deduplication is already implemented for all content types
-- Quality filtering threshold is 0.6 by default
-
-### Test New Scraper
+### Test New Search Patterns
 ```bash
-# Test with a few posts (default 2-second delay is respectful)
-uv run scapo scrape run --sources mycommunity:test --limit 3
+# Dry run to see what searches would be generated
+uv run scapo scrape targeted --service "YourService" --dry-run
 
-# Check what models were found
-uv run scapo models list
+# Run actual extraction
+uv run scapo scrape targeted --service "YourService" --limit 20
 
-# Check specific model info
-uv run scapo models info "Model-Name" --category text
-
-# For debugging, check the logs (JSON format by default)
-# Logs show progress and any issues
-
-# IMPORTANT: Never use delays shorter than 2 seconds!
-# Bad: SCRAPING_DELAY_SECONDS=0.5 (too aggressive)
-# Good: Use default 2s or increase for courtesy
+# Check results
+cat models/category/your-service/cost_optimization.md
 ```
 
-### Test MCP Server
+### Test Service Discovery
 ```bash
-cd mcp
-npm install
-npm test  # If we had tests...
-node index.js  # Manual testing
+# Update service list
+uv run scapo scrape discover --update
+
+# Check discovered services
+uv run scapo scrape discover --show-all | grep -i "your-service"
 ```
 
-### Run All Tests
+### Verify Extraction Quality
 ```bash
-# Run tests
-uv run pytest
+# Use TUI to browse results
+uv run scapo tui
 
-# Check code style
-uv run ruff check .
-
-# Format code
-uv run black .
+# Or check specific files
+ls -la models/*/your-service/
 ```
+
+### Important Settings
+- **Minimum posts**: 15-20 for good extraction
+- **Quality threshold**: 0.6 (in .env)
+- **Delay between requests**: 2 seconds minimum
+- **Batch size**: 3-5 services at once
 
 ## 📝 Pull Request Guidelines
 
 ### Title Format
 ✅ Good:
-- "Add scraper for dev.to blog posts"
-- "Fix LLM timeout for long posts"
-- "Add YouTube transcript extraction"
+- "Add priority services: Runway, Pika Labs"
+- "Improve search patterns for API configuration"
+- "Add Hugging Face forum discovery source"
 
 ❌ Bad:
 - "Update code"
@@ -217,87 +193,87 @@ uv run black .
 Brief description of changes
 
 ## Why
-Why this improves SCAPO
+How this helps users optimize AI service usage
 
 ## Testing
-How you tested it:
-- [ ] Ran scraper locally
-- [ ] Verified output quality
-- [ ] No API keys needed
+- [ ] Ran service discovery
+- [ ] Tested extraction with 15+ posts
+- [ ] Verified tips are specific, not generic
+- [ ] Checked service name variations work
 
-## Screenshots (if UI changes)
+## Results
+Example of extracted tips (if applicable)
 ```
 
 ### Code Style
-- Use async/await for scrapers
-- Add logging with `logger.info()`
-- Handle errors gracefully
-- Comment tricky browser automation
+- Focus on specific extraction patterns
+- Add service aliases for name variations
+- Log extraction statistics
+- Handle Reddit rate limits gracefully
 
 ## 🌟 Recognition System
 
-We track contributions in our Hall of Calm:
+We track contributions in our Hall of Optimization:
 
-### 🕷️ Web Scrapers
-Added new sources to scrape
+### 🎯 Service Hunters
+Added priority services to track
 
-### 🧠 Prompt Engineers  
-Improved LLM extraction prompts
+### 🔍 Pattern Designers
+Improved search queries for better tips
 
-### 📚 Knowledge Curators
-Added/verified best practices
+### 📊 Extraction Engineers
+Enhanced tip extraction and filtering
 
-### 🔧 Code Mechanics
-Fixed bugs, improved performance
+### 🔧 Pipeline Builders
+Improved the discovery/extraction pipeline
 
 ## 💡 Contribution Ideas
 
 ### 5-Minute Fixes
-- Fix a typo
-- Add logging to a function
-- Update documentation
-- Report a detailed bug
+- Add a priority service to the list
+- Add service name variations
+- Improve a search pattern
+- Report services with low extraction rates
 
 ### 30-Minute Projects
-- Add a simple forum scraper
-- Improve error messages
-- Add progress indicators
-- Write test cases
+- Add new GitHub awesome lists
+- Improve extraction prompts
+- Add service category detection
+- Enhance quality scoring
 
 ### Weekend Warriors
-- YouTube transcript scraper
-- Discord browser automation
-- Export to Obsidian format
-- Real-time monitoring
+- HackerNews integration
+- Forum discovery sources
+- Service pricing tracker
+- Auto-update scheduler
 
 ## 🚫 What NOT to Do
 
-- ❌ Don't add anything requiring API keys
-- ❌ Don't make scrapers that hammer servers
-- ❌ Don't commit credentials (even test ones)
-- ❌ Don't overcomplicate simple things
-- ❌ Don't forget to test with local LLM
+- ❌ Don't extract generic advice ("be patient", "read docs")
+- ❌ Don't make requests faster than 2 second intervals
+- ❌ Don't hardcode service lists - use discovery
+- ❌ Don't process posts one at a time - batch them
 
 ## 🤝 Getting Help
 
-- **Issues**: Use GitHub issues for bugs/features
-- **Discussions**: GitHub discussions for questions
+- **Issues**: Report services that need coverage
+- **Discussions**: Share extraction techniques
 - **Email**: info@czero.cc for direct contact
 
-## 📈 Roadmap Alignment
+## 📈 Current Focus Areas
 
-Check our README roadmap before starting big features:
-- YouTube transcripts (high priority!)
-- Discord monitoring (needs investigation)
-- Export formats (community request)
+Based on user needs:
+- Services that consume credits quickly
+- Configuration tips that save resources
+- API limits and workarounds
+- Batch processing techniques
 
-## 🎁 Perks for Contributors
+## 🎁 Why Contribute?
 
-- Get credited in the README
-- Shape the project direction  
-- Learn browser automation
-- Master LLM prompting
-- Achieve inner peace 🧘
+- Help the community save on AI services
+- Learn advanced Reddit scraping
+- Master prompt engineering for extraction
+- Build the go-to resource for AI optimization
 
 ## 📜 License Note
 
@@ -305,8 +281,8 @@ By contributing, you agree your code is MIT licensed.
 
 ---
 
-**Ready to stay calm and contribute on?** 
+**Ready to help the community optimize their AI usage?**
 
-Start by picking a website you visit for AI tips and write a scraper for it. The LLM will handle the hard parts - you just need to grab the content!
+Start by adding services you use that burn through credits quickly. Our pipeline will automatically find and extract optimization tips!
 
-Remember: **We're building this together. Every contribution makes AI prompting a little less stressful for someone out there.** 🌟
+Remember: **Every specific tip you help extract saves someone real money and frustration.** 🚀

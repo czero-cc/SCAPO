@@ -1609,6 +1609,7 @@ dependencies = [
     { name = "structlog" },
     { name = "tenacity" },
     { name = "textual" },
+    { name = "tiktoken" },
 ]
 
 [package.optional-dependencies]
@@ -1648,6 +1649,7 @@ requires-dist = [
     { name = "structlog", specifier = ">=24.4.0" },
     { name = "tenacity", specifier = ">=9.0.0" },
     { name = "textual", specifier = ">=0.52.1" },
+    { name = "tiktoken", specifier = ">=0.11.0" },
 ]
 
 [[package]]

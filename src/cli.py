@@ -261,6 +261,493 @@ def run_scraper(sources, limit, llm_max_chars, interactive):
     asyncio.run(_run())
 
 
+@scrape.command(name="discover")
+@click.option("--update", is_flag=True, help="Update service list from sources")
+@click.option("--show-all", is_flag=True, help="Show all discovered services")
+def discover_services(update, show_all):
+    """Discover AI services from GitHub Awesome lists and other sources."""
+    show_banner()
+    
+    async def _discover():
+        from src.scrapers.service_discovery import ServiceDiscoveryPipeline, GitHubAwesomeListSource
+        from pathlib import Path
+        import json
+        
+        if update:
+            with console.status("[bold blue]Discovering AI services from sources...[/bold blue]", spinner="dots"):
+                pipeline = ServiceDiscoveryPipeline()
+                pipeline.add_source(GitHubAwesomeListSource())
+                registry = await pipeline.run()
+                
+            console.print(f"[green]✓[/green] Discovered [cyan]{len(registry.get_all_services())}[/cyan] AI services")
+        
+        # Load and display services
+        services_path = Path("data/cache/services.json")
+        if services_path.exists():
+            with open(services_path) as f:
+                data = json.load(f)
+                services = data.get('services', {})
+            
+            # Group by category
+            by_category = {}
+            for service in services.values():
+                cat = service['category']
+                if cat not in by_category:
+                    by_category[cat] = []
+                by_category[cat].append(service['display_name'])
+            
+            # Display summary
+            table = Table(title="Discovered AI Services", box=box.ROUNDED)
+            table.add_column("Category", style="cyan")
+            table.add_column("Count", style="green")
+            table.add_column("Examples", style="yellow")
+            
+            for cat in sorted(by_category.keys()):
+                services_list = by_category[cat]
+                examples = ", ".join(services_list[:3])
+                if len(services_list) > 3:
+                    examples += f" ... (+{len(services_list)-3})"
+                table.add_row(cat, str(len(services_list)), examples)
+            
+            console.print(table)
+            
+            if show_all:
+                console.print("\n[bold]All Services:[/bold]")
+                for cat in sorted(by_category.keys()):
+                    console.print(f"\n[cyan]{cat.upper()}:[/cyan]")
+                    for service in sorted(by_category[cat]):
+                        console.print(f"  • {service}")
+        else:
+            console.print("[yellow]No services discovered yet. Run with --update flag.[/yellow]")
+    
+    asyncio.run(_discover())
+
+
+@scrape.command(name="targeted")
+@click.option("--service", "-s", help="Target specific service")
+@click.option("--category", "-c", help="Target services by category (video, audio, etc)")
+@click.option("--limit", "-l", default=20, help="Max posts per search")
+@click.option("--batch-size", "-b", default=50, help="Posts per LLM batch")
+@click.option("--dry-run", is_flag=True, help="Show queries without running")
+@click.option("--all", "run_all", is_flag=True, help="Run all generated queries")
+@click.option("--max-queries", "-m", default=10, help="Maximum queries to run (default: 10)")
+@click.option("--parallel", "-p", default=3, help="Number of parallel scraping tasks")
+def targeted_scrape(service, category, limit, batch_size, dry_run, run_all, max_queries, parallel):
+    """Run targeted searches for specific AI services."""
+    show_banner()
+    
+    async def _targeted():
+        from src.scrapers.targeted_search_generator import TargetedSearchGenerator
+        from src.scrapers.intelligent_browser_scraper import IntelligentBrowserScraper
+        from src.services.batch_llm_processor import BatchLLMProcessor
+        from src.services.llm_processor import LLMProcessorFactory
+        from pathlib import Path
+        import json
+        import asyncio
+        from datetime import datetime
+        
+        # Access outer scope variables
+        nonlocal service, category, limit, batch_size, dry_run, run_all, max_queries, parallel
+        
+        # Generate targeted searches
+        generator = TargetedSearchGenerator()
+        all_queries = generator.generate_queries(
+            max_queries=100 if run_all else max_queries,
+            category_filter=category if category and not service else None
+        )
+        
+        # Filter queries by service name if specified
+        queries = all_queries
+        if service and not category:
+            # Use alias manager for better matching
+            from src.services.service_alias_manager import ServiceAliasManager
+            alias_manager = ServiceAliasManager()
+            
+            # Get canonical name and all variations
+            service_match = alias_manager.match_service(service)
+            if service_match:
+                service_variations = service_match['all_variations']
+                # Filter queries matching any variation
+                queries = [q for q in all_queries 
+                          if any(var.lower() in q['service'].lower() or q['service'].lower() in var.lower() 
+                                for var in service_variations)]
+            else:
+                # Fallback to simple matching
+                queries = [q for q in all_queries if service.lower() in q['service'].lower()]
+            
+            if not queries:
+                # Try regenerating with all services if no match
+                all_queries = generator.generate_queries(max_queries=100)
+                if service_match:
+                    queries = [q for q in all_queries 
+                              if any(var.lower() in q['service'].lower() or q['service'].lower() in var.lower() 
+                                    for var in service_variations)]
+                else:
+                    queries = [q for q in all_queries if service.lower() in q['service'].lower()]
+        
+        if not queries and service:
+            # Generate queries specifically for this service
+            console.print(f"[yellow]Service '{service}' not in priority list. Generating custom queries...[/yellow]")
+            display_name = service_match['display_name'] if service_match else service
+            queries = generator.generate_queries_for_service(display_name, max_queries)
+        
+        if not queries:
+            console.print("[yellow]No matching queries found[/yellow]")
+            return
+        
+        # Limit queries if not running all
+        if not run_all and len(queries) > max_queries:
+            queries = queries[:max_queries]
+        
+        console.print(f"[cyan]Generated {len(queries)} targeted searches[/cyan]")
+        
+        if dry_run:
+            # Show queries without running
+            table = Table(title="Targeted Search Queries", box=box.ROUNDED)
+            table.add_column("#", style="dim")
+            table.add_column("Service", style="cyan")
+            table.add_column("Pattern", style="green")
+            table.add_column("Priority", style="yellow")
+            
+            for i, q in enumerate(queries[:30], 1):  # Show first 30
+                table.add_row(str(i), q['service'], q['pattern_type'], q['priority'])
+            
+            console.print(table)
+            if len(queries) > 30:
+                console.print(f"[dim]... and {len(queries)-30} more queries[/dim]")
+            return
+        
+        # Confirm before running many queries
+        if len(queries) > 20:
+            from rich.prompt import Confirm as RichConfirm
+            if not RichConfirm.ask(f"\n[yellow]Run {len(queries)} search queries?[/yellow]", default=False):
+                console.print("[red]Cancelled[/red]")
+                return
+        
+        # Parallel scraping function
+        async def process_query(query, scraper, batch_processor, llm, semaphore):
+            async with semaphore:
+                try:
+                    posts = await scraper.scrape(query['query_url'], max_posts=limit)
+                    
+                    if posts:
+                        # Batch process with LLM
+                        batches = batch_processor.batch_posts_by_tokens(posts, query['service'])
+                        
+                        results = []
+                        for batch in batches:
+                            result = await batch_processor.process_batch(batch, query['service'], llm)
+                            results.append(result)
+                        
+                        return {
+                            'query': query,
+                            'posts_found': len(posts),
+                            'results': results
+                        }
+                    else:
+                        return {
+                            'query': query,
+                            'posts_found': 0,
+                            'results': []
+                        }
+                except Exception as e:
+                    logger.error(f"Failed to process {query['service']}: {e}")
+                    return {
+                        'query': query,
+                        'error': str(e),
+                        'results': []
+                    }
+        
+        # Initialize processors
+        scraper = IntelligentBrowserScraper()
+        batch_processor = BatchLLMProcessor(settings.openrouter_model if settings.llm_provider == "openrouter" else "gpt-3.5-turbo")
+        llm = LLMProcessorFactory.create_processor()
+        
+        # Semaphore for parallel control
+        semaphore = asyncio.Semaphore(parallel)
+        
+        # Run with progress tracking
+        all_results = []
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+            TextColumn("{task.completed}/{task.total}"),
+            TimeElapsedColumn(),
+            console=console,
+        ) as progress:
+            task = progress.add_task(f"Running {len(queries)} targeted searches...", total=len(queries))
+            
+            # Process in batches for better progress tracking
+            batch_size = parallel * 2
+            for i in range(0, len(queries), batch_size):
+                batch_queries = queries[i:i+batch_size]
+                
+                # Run batch of queries in parallel
+                tasks = [
+                    process_query(q, scraper, batch_processor, llm, semaphore)
+                    for q in batch_queries
+                ]
+                
+                batch_results = await asyncio.gather(*tasks)
+                all_results.extend(batch_results)
+                
+                # Update progress
+                progress.update(task, advance=len(batch_queries))
+                
+                # Update description with current service
+                if batch_results:
+                    current_service = batch_results[-1]['query']['service']
+                    progress.update(task, description=f"Processing: {current_service}")
+        
+        # Aggregate results
+        successful_queries = [r for r in all_results if r.get('posts_found', 0) > 0]
+        failed_queries = [r for r in all_results if 'error' in r]
+        
+        # Flatten all LLM results
+        all_llm_results = []
+        for r in all_results:
+            all_llm_results.extend(r.get('results', []))
+        
+        # Save results
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        output_file = Path(f"data/intermediate/targeted_results_{timestamp}.json")
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_file, 'w') as f:
+            json.dump({
+                'timestamp': datetime.now().isoformat(),
+                'queries_run': len(queries),
+                'successful_queries': len(successful_queries),
+                'failed_queries': len(failed_queries),
+                'total_posts_scraped': sum(r.get('posts_found', 0) for r in all_results),
+                'results': all_llm_results,
+                'query_details': all_results
+            }, f, indent=2)
+        
+        # Calculate statistics
+        total_problems = sum(len(r.get('problems', [])) for r in all_llm_results)
+        total_tips = sum(len(r.get('tips', [])) for r in all_llm_results)
+        total_cost_info = sum(len(r.get('cost_info', [])) for r in all_llm_results)
+        total_posts = sum(r.get('posts_found', 0) for r in all_results)
+        
+        # Display detailed summary
+        console.print("\n")
+        console.print(Panel(
+            f"[bold green]🎯 Targeted Scraping Complete![/bold green]\n\n"
+            f"[bold]Query Statistics:[/bold]\n"
+            f"  Total queries: [cyan]{len(queries)}[/cyan]\n"
+            f"  Successful: [green]{len(successful_queries)}[/green]\n"
+            f"  Failed: [red]{len(failed_queries)}[/red]\n\n"
+            f"[bold]Content Found:[/bold]\n"
+            f"  Posts scraped: [cyan]{total_posts}[/cyan]\n"
+            f"  Problems identified: [cyan]{total_problems}[/cyan]\n"
+            f"  Tips found: [cyan]{total_tips}[/cyan]\n"
+            f"  Cost info extracted: [cyan]{total_cost_info}[/cyan]\n\n"
+            f"[bold]Output:[/bold]\n"
+            f"  Results saved to: [yellow]{output_file}[/yellow]",
+            border_style="green",
+            title="Results Summary"
+        ))
+        
+        # Generate model entries
+        from src.services.model_entry_generator import ModelEntryGenerator
+        generator = ModelEntryGenerator()
+        entries_created = generator.process_extraction_results(output_file)
+        
+        if entries_created > 0:
+            console.print(f"\n[green]✓[/green] Generated [cyan]{entries_created}[/cyan] model entries in the models/ folder")
+        else:
+            console.print("\n[yellow]No model entries generated (insufficient data)[/yellow]")
+        
+        # Show top services with findings
+        if successful_queries:
+            console.print("\n[bold]Top Services with Findings:[/bold]")
+            service_stats = {}
+            for r in successful_queries:
+                service = r['query']['service']
+                if service not in service_stats:
+                    service_stats[service] = 0
+                service_stats[service] += r.get('posts_found', 0)
+            
+            top_services = sorted(service_stats.items(), key=lambda x: x[1], reverse=True)[:5]
+            for service, count in top_services:
+                console.print(f"  • {service}: [cyan]{count}[/cyan] posts")
+        
+        await scraper.close()
+        await llm.close()
+    
+    asyncio.run(_targeted())
+
+
+@scrape.command(name="batch")
+@click.option("--category", "-c", help="Target services by category (video, audio, etc)")
+@click.option("--limit", "-l", default=15, help="Max posts per search (default: 15)")
+@click.option("--max-services", "-m", default=3, help="Maximum number of services to process (default: 3)")
+@click.option("--priority", "-p", type=click.Choice(['ultra', 'critical', 'high', 'all']), default='ultra', help="Service priority level")
+def batch_scrape(category, limit, max_services, priority):
+    """Batch process multiple high-priority services."""
+    show_banner()
+    
+    async def _batch():
+        from src.scrapers.targeted_search_generator import TargetedSearchGenerator
+        from src.scrapers.intelligent_browser_scraper import IntelligentBrowserScraper
+        from src.services.batch_llm_processor import BatchLLMProcessor
+        from src.services.llm_processor import LLMProcessorFactory
+        from src.services.model_entry_generator import ModelEntryGenerator
+        from src.services.service_alias_manager import ServiceAliasManager
+        from pathlib import Path
+        import json
+        import asyncio
+        from datetime import datetime
+        
+        # Initialize components
+        generator = TargetedSearchGenerator()
+        alias_manager = ServiceAliasManager()
+        
+        # Generate queries for multiple services
+        all_queries = generator.generate_queries(
+            max_queries=max_services * 5,  # 5 query types per service
+            category_filter=category
+        )
+        
+        # Filter by priority if specified
+        if priority != 'all':
+            all_queries = [q for q in all_queries if q.get('priority') == priority]
+        
+        # Group queries by service
+        queries_by_service = {}
+        for query in all_queries:
+            service = query['service']
+            if service not in queries_by_service:
+                queries_by_service[service] = []
+            queries_by_service[service].append(query)
+        
+        # Limit to max_services
+        services_to_process = list(queries_by_service.keys())[:max_services]
+        
+        console.print(f"[cyan]Processing {len(services_to_process)} services:[/cyan]")
+        for service in services_to_process:
+            console.print(f"  • {service} ({len(queries_by_service[service])} queries)")
+        
+        if not Confirm.ask(f"\n[yellow]Process {len(services_to_process)} services?[/yellow]", default=True):
+            console.print("[red]Cancelled[/red]")
+            return
+        
+        # Initialize processors
+        scraper = IntelligentBrowserScraper()
+        batch_processor = BatchLLMProcessor(settings.openrouter_model if settings.llm_provider == "openrouter" else "gpt-3.5-turbo")
+        llm = LLMProcessorFactory.create_processor()
+        
+        all_results = []
+        
+        # Process each service
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+            TimeElapsedColumn(),
+            console=console,
+        ) as progress:
+            total_queries = sum(len(queries_by_service[s]) for s in services_to_process)
+            task = progress.add_task(f"Processing {len(services_to_process)} services...", total=total_queries)
+            
+            for service in services_to_process:
+                service_queries = queries_by_service[service]
+                progress.update(task, description=f"Processing {service}...")
+                
+                for query in service_queries:
+                    try:
+                        posts = await scraper.scrape(query['query_url'], max_posts=limit)
+                        
+                        if posts:
+                            # Batch process with LLM
+                            batches = batch_processor.batch_posts_by_tokens(posts, service)
+                            
+                            for batch in batches:
+                                result = await batch_processor.process_batch(batch, service, llm)
+                                all_results.append(result)
+                        
+                        progress.update(task, advance=1)
+                        await asyncio.sleep(1)  # Rate limiting
+                        
+                    except Exception as e:
+                        logger.error(f"Failed to process {service}: {e}")
+                        progress.update(task, advance=1)
+        
+        # Save results
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        output_file = Path(f"data/intermediate/batch_results_{timestamp}.json")
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        with open(output_file, 'w') as f:
+            json.dump({
+                'timestamp': datetime.now().isoformat(),
+                'services_processed': services_to_process,
+                'total_queries': sum(len(queries_by_service[s]) for s in services_to_process),
+                'results': all_results
+            }, f, indent=2)
+        
+        # Generate model entries
+        generator = ModelEntryGenerator()
+        entries_created = generator.process_extraction_results(output_file)
+        
+        # Display summary
+        console.print("\n")
+        console.print(Panel(
+            f"[bold green]🎯 Batch Processing Complete![/bold green]\n\n"
+            f"[bold]Services Processed:[/bold] [cyan]{len(services_to_process)}[/cyan]\n"
+            f"[bold]Total Queries:[/bold] [cyan]{sum(len(queries_by_service[s]) for s in services_to_process)}[/cyan]\n"
+            f"[bold]Model Entries Created:[/bold] [cyan]{entries_created}[/cyan]\n\n"
+            f"[bold]Results saved to:[/bold] [yellow]{output_file}[/yellow]",
+            border_style="green",
+            title="Batch Results"
+        ))
+        
+        await scraper.close()
+        await llm.close()
+    
+    asyncio.run(_batch())
+
+
+@scrape.command(name="update-status")
+def update_status():
+    """Show which services need updating."""
+    show_banner()
+    
+    from src.services.update_manager import UpdateManager
+    manager = UpdateManager()
+    status = manager.get_update_status()
+    
+    # Display update status
+    console.print(Panel(
+        f"[bold]Update Status[/bold]\n\n"
+        f"Total services tracked: [cyan]{status['total_services']}[/cyan]\n"
+        f"Last update: [yellow]{status.get('last_update', 'Never')}[/yellow]\n"
+        f"Update frequency: {status.get('update_frequency', 'N/A')}\n",
+        border_style="blue",
+        title="SCAPO Update Tracker"
+    ))
+    
+    if status['recent_updates']:
+        console.print("\n[green]Recently Updated:[/green]")
+        for service in status['recent_updates'][:10]:
+            console.print(f"  ✓ {service}")
+    
+    if status['stale_services']:
+        console.print("\n[yellow]Needs Update (>30 days old):[/yellow]")
+        for service in status['stale_services'][:10]:
+            console.print(f"  ⚠ {service}")
+        
+        if len(status['stale_services']) > 10:
+            console.print(f"  ... and {len(status['stale_services']) - 10} more")
+    
+    # Suggest next action
+    if status['stale_services']:
+        console.print(f"\n[dim]Tip: Run 'scapo scrape batch --max-services {min(3, len(status['stale_services']))}' to update stale services[/dim]")
+
+
 @scrape.command(name="status")
 def scrape_status():
     """Show detailed scraper status with visual elements."""
@@ -357,7 +844,14 @@ def list_models(category, tree, cards):
         ))
         return
     
-    categories = ["text", "image", "video", "audio", "multimodal"] if not category else [category]
+    # Get all existing categories from the models directory
+    all_categories = []
+    if os.path.exists(models_dir):
+        all_categories = [d for d in os.listdir(models_dir) 
+                         if os.path.isdir(os.path.join(models_dir, d))]
+    
+    # Use specified category or all found categories
+    categories = all_categories if not category else [category]
     
     if tree:
         # Tree view
@@ -387,8 +881,17 @@ def list_models(category, tree, cards):
                 if model_list:
                     total_models += len(model_list)
                     
-                    # Category header
-                    console.print(f"\n[bold cyan]{'🔤' if cat == 'text' else '🎨' if cat == 'image' else '🎬' if cat == 'video' else '🔊' if cat == 'audio' else '🌐'} {cat.upper()}[/bold cyan]")
+                    # Category header with emoji mapping
+                    emoji_map = {
+                        'text': '🔤',
+                        'image': '🎨',
+                        'video': '🎬',
+                        'audio': '🔊',
+                        'multimodal': '🌐',
+                        'code': '💻'
+                    }
+                    emoji = emoji_map.get(cat, '📁')  # Default emoji for unknown categories
+                    console.print(f"\n[bold cyan]{emoji} {cat.upper()}[/bold cyan]")
                     
                     # Model cards
                     cards_list = []
@@ -428,8 +931,17 @@ def list_models(category, tree, cards):
                 if model_list:
                     total_models += len(model_list)
                     
-                    # Category header
-                    console.print(f"\n[bold cyan]{'🔤' if cat == 'text' else '🎨' if cat == 'image' else '🎬' if cat == 'video' else '🔊' if cat == 'audio' else '🌐'} {cat.upper()}[/bold cyan]")
+                    # Category header with emoji mapping
+                    emoji_map = {
+                        'text': '🔤',
+                        'image': '🎨',
+                        'video': '🎬',
+                        'audio': '🔊',
+                        'multimodal': '🌐',
+                        'code': '💻'
+                    }
+                    emoji = emoji_map.get(cat, '📁')  # Default emoji for unknown categories
+                    console.print(f"\n[bold cyan]{emoji} {cat.upper()}[/bold cyan]")
                     
                     # List all models one per line
                     for model in sorted(model_list):
