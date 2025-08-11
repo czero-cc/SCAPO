@@ -235,11 +235,6 @@ reddit:
       priority: medium
       models: ["general"]
     
-    - name: "r/ArtificialIntelligence"
-      url: "https://www.reddit.com/r/ArtificialIntelligence/"
-      focus: "Meta debates, news, trends"
-      priority: low
-      models: ["general"]
     
     - name: "r/comfyui"
       url: "https://www.reddit.com/r/comfyui/"
@@ -365,36 +360,6 @@ apis:
       priority: medium
       rate_limit: "100 requests/hour"
 
-discord:
-  description: "Discord communities (requires bot setup)"
-  api: "discord.py with bot token"
-  auth: "Bot token with message read permissions"
-  sources:
-    - name: "LangChain Discord"
-      invite: "Public"
-      size: "~60k members"
-      focus: "Live debugging of agents/chains"
-      priority: medium
-      channels:
-        - "general"
-        - "help"
-        - "showcase"
-    
-    - name: "Hugging Face Discord"
-      invite: "hf.co/join/discord"
-      size: "~180k members"
-      focus: "Fine-tune configs, community sprints"
-      priority: medium
-      channels:
-        - "general"
-        - "beginners"
-        - "research"
-    
-    - name: "Midjourney Discord"
-      invite: "Limited"
-      focus: "Image generation prompts"
-      priority: low
-      note: "Heavily rate-limited, consider manual curation"
 
 rss_feeds:
   description: "RSS/Atom feeds for blog content"

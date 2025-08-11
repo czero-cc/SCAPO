@@ -23,12 +23,16 @@ logger = get_logger(__name__)
 class SourceValidator:
     """Validates sources.yaml structure and content."""
     
-    VALID_PRIORITIES = {"high", "medium", "low"}
-    VALID_SOURCE_TYPES = {"reddit", "discord", "forums", "github", "rss", "youtube", "twitter"}
+    VALID_PRIORITIES = {"high", "medium", "low", "critical", "ultra"}
+    VALID_SOURCE_TYPES = {"reddit", "forums", "github", "apis", "rss_feeds", "news_aggregators"}
     REQUIRED_FIELDS = {"name", "url", "priority"}
     OPTIONAL_FIELDS = {
         "models", "description", "requires_auth", "channels", 
-        "categories", "keywords", "paths", "playlist", "type"
+        "categories", "keywords", "paths", "playlist", "type",
+        "focus", "license", "update_frequency", "raw_url", "api",
+        "endpoints", "rate_limit", "auth", "sdk", "example_endpoint",
+        "specific_datasets", "invite", "size", "note", "format",
+        "tags_to_track"
     }
     
     def __init__(self, sources_file: Path):
@@ -38,7 +42,7 @@ class SourceValidator:
         self.stats = {
             "total_sources": 0,
             "by_type": {},
-            "by_priority": {"high": 0, "medium": 0, "low": 0},
+            "by_priority": {"high": 0, "medium": 0, "low": 0, "critical": 0, "ultra": 0},
             "duplicates": []
         }
     
@@ -61,12 +65,24 @@ class SourceValidator:
         # Check each source type
         seen_urls = set()
         
-        for source_type, sources in sources_data.items():
+        for source_type, source_config in sources_data.items():
+            # Skip configuration sections
+            if source_type in ["scraping_config", "content_filters"]:
+                continue
+                
             if source_type not in self.VALID_SOURCE_TYPES:
                 self.warnings.append(f"Unknown source type: {source_type}")
             
-            if not isinstance(sources, list):
-                self.errors.append(f"{source_type}: Must be a list")
+            # Handle new structure where each source type has a sources list
+            if isinstance(source_config, dict) and "sources" in source_config:
+                sources = source_config["sources"]
+                if not isinstance(sources, list):
+                    self.errors.append(f"{source_type}: 'sources' must be a list")
+                    continue
+            elif isinstance(source_config, list):
+                sources = source_config
+            else:
+                self.errors.append(f"{source_type}: Invalid structure")
                 continue
             
             self.stats["by_type"][source_type] = len(sources)
