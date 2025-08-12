@@ -1,14 +1,16 @@
 # GitHub Copilot Prompting Guide
 
-*Last updated: 2025-08-11*
+*Last updated: 2025-08-12*
 
 ## Usage Tips
 
-- Create a copilot-instructions.md file with specific sections including: Terminology (domain-specific terms), Architecture (key files and design decisions), and Task Plan
+- When Gemini API access is unavailable in the GitHub Copilot extension, add a Groq or OpenRouter API key via the extension settings to regain model selection.
+- Create a custom VS Code extension that uses the GitHub Copilot API as an LLM provider to bypass the standard completion limits
 
 ## Recommended Settings
 
-- GitHub Copilot can be configured to use Sonnet 4
+- github.copilot.chat.agent.autoFix
+- chat.tools.autoApprove
 
 ## Sources
 

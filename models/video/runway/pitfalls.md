@@ -1,13 +1,8 @@
 # Runway - Common Pitfalls & Issues
 
-*Last updated: 2025-08-11*
-
-## Policy & Account Issues
-
-### ⚠️ Runway throttles Unlimited [$95/month] accounts
-**Note**: Be aware of terms of service regarding account creation.
+*Last updated: 2025-08-12*
 
 ## Cost & Limits
 
-### 💰 Unlimited plan costs $95/month
+### 💰 Daily image generation limit is 3 per day.
 

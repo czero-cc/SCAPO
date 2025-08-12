@@ -25,27 +25,21 @@ class LLMCapabilities:
     def detect_capabilities(cls, provider: str, model: str) -> 'LLMCapabilities':
         """Detect LLM capabilities based on provider and model."""
         
-        # Local LLMs (limited context)
+        # Local LLMs - use environment variables if set
         if provider == "local":
-            if "llama" in model.lower():
-                if "3" in model:
-                    return cls(provider, model, 8192, False, 2000)
-                elif "2" in model:
-                    return cls(provider, model, 4096, False, 1500)
-                else:
-                    return cls(provider, model, 2048, False, 1000)
-            elif "mistral" in model.lower():
-                return cls(provider, model, 8192, False, 2000)
-            elif "phi" in model.lower():
-                return cls(provider, model, 4096, False, 1500)
-            elif "qwen" in model.lower():
-                if "32k" in model.lower():
-                    return cls(provider, model, 32768, True, 8000)
-                else:
-                    return cls(provider, model, 8192, True, 2000)
-            else:
-                # Conservative defaults for unknown local models
-                return cls(provider, model, 2048, False, 1000)
+            # Check for user-configured values
+            if settings.local_llm_max_context:
+                max_context = settings.local_llm_max_context
+                optimal_chunk = settings.local_llm_optimal_chunk or max_context // 4
+                logger.info(f"Using user-configured local LLM context: {max_context} tokens, {optimal_chunk} chunk size")
+                return cls(provider, model, max_context, False, optimal_chunk)
+            
+            # Fallback to conservative defaults if not configured
+            logger.warning(f"No LOCAL_LLM_MAX_CONTEXT set for {model}. Using conservative defaults.")
+            logger.info("Set LOCAL_LLM_MAX_CONTEXT and LOCAL_LLM_OPTIMAL_CHUNK in .env for better performance")
+            
+            # Very conservative defaults for safety
+            return cls(provider, model, 2048, False, 500)
         
         # Cloud providers (larger context)
         elif provider == "openrouter":

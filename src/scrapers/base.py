@@ -204,7 +204,6 @@ class BaseScraper(ABC):
                 model=settings.local_llm_model,
                 api_type=settings.local_llm_type,
                 api_key=settings.openrouter_api_key,
-                max_chars=settings.llm_max_chars,
             )
             
             enhanced_practices = initial_practices.copy()

@@ -170,9 +170,8 @@ def scrape():
 @click.option("--sources", "-s", multiple=True, 
               help="Sources to scrape (e.g., reddit:LocalLLaMA)")
 @click.option("--limit", "-l", default=10, help="Maximum posts per source")
-@click.option("--llm-max-chars", "-c", type=int, help="Max characters for LLM processing")
 @click.option("--interactive", "-i", is_flag=True, help="Interactive source selection")
-def run_scraper(sources, limit, llm_max_chars, interactive):
+def run_scraper(sources, limit, interactive):
     """Run intelligent scraper with enhanced UI."""
     show_banner()
     
@@ -223,8 +222,7 @@ def run_scraper(sources, limit, llm_max_chars, interactive):
         console.print(Panel(
             f"[bold]Scraping Plan[/bold]\n\n"
             f"Sources:\n{source_text}\n\n"
-            f"Post limit: [cyan]{limit}[/cyan] per source\n"
-            f"LLM processing: [cyan]{'Limited' if llm_max_chars else 'Full'}[/cyan]",
+            f"Post limit: [cyan]{limit}[/cyan] per source",
             border_style="blue"
         ))
         
@@ -251,7 +249,6 @@ def run_scraper(sources, limit, llm_max_chars, interactive):
             result = await service.run_scrapers(
                 sources=sources_list,
                 max_posts_per_source=limit,
-                llm_max_chars=llm_max_chars,
             )
             
             progress.update(task, completed=100)
@@ -746,6 +743,113 @@ def update_status():
     # Suggest next action
     if status['stale_services']:
         console.print(f"\n[dim]Tip: Run 'scapo scrape batch --max-services {min(3, len(status['stale_services']))}' to update stale services[/dim]")
+
+
+@scrape.command(name="all")
+@click.option('-l', '--limit', default=20, help='Max posts per search (default: 20)')
+@click.option('-c', '--category', help='Filter by category (video, audio, code, etc)')
+@click.option('-p', '--priority', 
+              type=click.Choice(['ultra', 'critical', 'high', 'all']),
+              default='ultra',
+              help='Service priority level')
+@click.option('--dry-run', is_flag=True, help='Show what would be processed without running')
+@click.option('--delay', default=5, help='Delay in seconds between services (default: 5)')
+def scrape_all(limit: int, category: str, priority: str, dry_run: bool, delay: int):
+    """Process all priority services one by one."""
+    show_banner()
+    
+    from src.scrapers.targeted_search_generator import TargetedSearchGenerator
+    from src.scrapers.intelligent_browser_scraper import IntelligentBrowserScraper
+    from src.services.batch_llm_processor import BatchLLMProcessor
+    from src.services.llm_processor import LLMProcessorFactory
+    from src.services.model_entry_generator import ModelEntryGenerator
+    from src.services.service_alias_manager import ServiceAliasManager
+    import asyncio
+    import time
+    from pathlib import Path
+    import json
+    
+    # Initialize components
+    generator = TargetedSearchGenerator()
+    alias_manager = ServiceAliasManager()
+    
+    # Get all priority services
+    priority_services = list(generator.priority_services)
+    
+    # Filter discovered services that match priority services
+    filtered_services = {}
+    for service_key, service_data in generator.services.items():
+        display_name = service_data['display_name'].lower()
+        if any(priority in display_name for priority in priority_services):
+            # Apply category filter if specified
+            if category and service_data['category'] != category:
+                continue
+            # Mark with ultra priority for our priority services
+            service_data['priority'] = 'ultra'
+            filtered_services[service_key] = service_data
+    
+    # Apply priority filter
+    if priority != 'all':
+        filtered_services = {k: v for k, v in filtered_services.items() 
+                            if v.get('priority') == priority}
+    
+    services_to_process = list(filtered_services.values())
+    
+    console.print(f"[cyan]Found {len(services_to_process)} services to process[/cyan]")
+    
+    if dry_run:
+        console.print("\n[yellow]DRY RUN - Services that would be processed:[/yellow]")
+        for i, service in enumerate(services_to_process, 1):
+            console.print(f"  {i}. {service['display_name']} ({service['category']})")
+        console.print(f"\n[dim]Total: {len(services_to_process)} services × 5 queries × {limit} posts = {len(services_to_process) * 5 * limit} posts[/dim]")
+        return
+    
+    if not Confirm.ask(f"\n[yellow]Process {len(services_to_process)} services individually?[/yellow]", default=True):
+        console.print("[red]Cancelled[/red]")
+        return
+    
+    # Process each service one by one
+    successful = 0
+    failed = 0
+    
+    for i, service_data in enumerate(services_to_process, 1):
+        service_name = service_data['display_name']
+        
+        console.print(f"\n[cyan][{i}/{len(services_to_process)}] Processing {service_name}...[/cyan]")
+        
+        try:
+            # Run targeted scraper for this service
+            from subprocess import run, PIPE
+            result = run(
+                ['uv', 'run', 'scapo', 'scrape', 'targeted', 
+                 '--service', service_name, 
+                 '--limit', str(limit),
+                 '--max-queries', '5'],
+                capture_output=True,
+                text=True
+            )
+            
+            if result.returncode == 0:
+                successful += 1
+                console.print(f"  ✅ {service_name} completed")
+            else:
+                failed += 1
+                console.print(f"  ❌ {service_name} failed: {result.stderr[:100]}")
+        
+        except Exception as e:
+            failed += 1
+            console.print(f"  ❌ {service_name} error: {str(e)[:100]}")
+        
+        # Delay between services (except for the last one)
+        if i < len(services_to_process):
+            console.print(f"  [dim]Waiting {delay} seconds before next service...[/dim]")
+            time.sleep(delay)
+    
+    # Summary
+    console.print(f"\n[green]✨ Processing complete![/green]")
+    console.print(f"  Successful: {successful}")
+    console.print(f"  Failed: {failed}")
+    console.print(f"  Total: {len(services_to_process)}")
 
 
 @scrape.command(name="status")

@@ -1,14 +1,12 @@
 # Eleven Labs Prompting Guide
 
-*Last updated: 2025-08-11*
-
-## Technical Tips
-
-- For Manim voiceovers, use ElevenLabsService with voice_name='Mun W' parameter
+*Last updated: 2025-08-12*
 
 ## Recommended Settings
 
-- In Manim implementation: set_speech_service(ElevenLabsService(voice_name="Mun W"))
+- Model ID: gemini-2.0-flash
+- API Key: (user-provided)
+- Server URL: https://9df9e70d40a2.ngrok-free.app/v1/big-chief
 
 ## Sources
 

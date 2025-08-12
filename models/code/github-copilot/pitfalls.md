@@ -1,23 +1,21 @@
 # GitHub Copilot - Common Pitfalls & Issues
 
-*Last updated: 2025-08-11*
+*Last updated: 2025-08-12*
 
 ## Technical Issues
 
-### ⚠️ Slower performance compared to alternatives like Claude Code
+### ⚠️ Extension 'GitHub.copilot-chat' cannot use API proposal: chatParticipantPrivate. Its package.json#enabledApiProposals-property declares: but NOT chatParticipantPrivate.
 
-## Policy & Account Issues
+### ⚠️ 300 requests per day limit on VS Code LM API for Copilot Pro
 
-### ⚠️ Technical issue with signing up for the free tier after trial expiration (continuous redirect between pages)
-**Note**: Be aware of terms of service regarding account creation.
+### ⚠️ GitHub Copilot extension lost Gemini API access; only Groq and OpenRouter API keys can be added.
+**Fix**: Store API keys in environment variables or use a secrets manager.
 
 ## Cost & Limits
 
-### 💰 Daily request limit of 300 requests for all models including GPT-4.1 (equals about 4 hours of usage per day)
+### 💰 300 premium requests per month limit on Copilot Pro
 
-### 💰 GitHub Copilot Pro: $10/month with unlimited standard usage (fair use policies apply)
+### 💰 Free tier limited to 2,000 completions per month and 50 chat prompts
 
-### 💰 GitHub Copilot Pro has a daily request limit of 300 requests for all models including GPT-4.1
-
-### 💰 This limit equals about 4 hours of usage per day
+### 💰 Paid tier: unlimited completions and chat prompts
 

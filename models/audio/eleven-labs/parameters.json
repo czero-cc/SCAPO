@@ -1,13 +1,21 @@
 {
   "service": "Eleven Labs",
-  "last_updated": "2025-08-11T23:07:25.519029",
+  "last_updated": "2025-08-12T20:08:46.346345",
   "recommended_settings": {
     "setting_0": {
-      "description": "In Manim implementation: set_speech_service(ElevenLabsService(voice_name=\"Mun W\"))"
+      "description": "Model ID: gemini-2.0-flash"
+    },
+    "setting_1": {
+      "description": "API Key: (user-provided)"
+    },
+    "setting_2": {
+      "description": "Server URL: https://9df9e70d40a2.ngrok-free.app/v1/big-chief"
     }
   },
   "cost_optimization": {
-    "pricing": "Business subscription: over $1,300/month"
+    "pricing": "$1,300+/month for Business subscription",
+    "tip_1": "Approximately 400,000 credits were removed; 60% of credits left should last until June 5th.",
+    "tip_2": "Free plan: 12 minutes/month via web UI, 2h30 via API"
   },
   "sources": [
     "Reddit community",

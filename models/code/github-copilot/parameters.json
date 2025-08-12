@@ -1,19 +1,9 @@
 {
   "service": "GitHub Copilot",
-  "last_updated": "2025-08-11T22:04:52.544713",
-  "recommended_settings": {
-    "setting_0": {
-      "description": "GitHub Copilot can be configured to use Sonnet 4"
-    }
-  },
+  "last_updated": "2025-08-12T21:24:27.207908",
+  "recommended_settings": {},
   "cost_optimization": {
-    "tip_0": "Unclear if Azure Credits can be used to pay for GitHub Copilot",
-    "pricing": "More cost-effective than Cursor Pro ($20/month with only 500 premium requests)",
-    "tip_2": "GitHub Copilot now has a free tier",
-    "tip_3": "GitHub Copilot Pro has a daily request limit of 300 requests for all models including GPT-4.1",
-    "tip_4": "Copilot Pro is mentioned as a higher tier than the free tier",
-    "tip_5": "GitHub Copilot with Sonnet 4 is described as 'cheap' compared to alternatives",
-    "tip_6": "This limit equals about 4 hours of usage per day"
+    "tip_0": "\u20ac8.4 per month for GPT-4 to Copilot and text chatbox"
   },
   "sources": [
     "Reddit community",

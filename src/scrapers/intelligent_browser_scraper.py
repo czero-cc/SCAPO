@@ -83,7 +83,7 @@ class IntelligentBrowserScraper(BrowserBaseScraper):
         """Required abstract method - handled by LLM processing instead."""
         return {}
     
-    def _get_llm_processor(self, max_chars: Optional[int] = None):
+    def _get_llm_processor(self):
         """Get or create a cached LLM processor instance."""
         if self._llm_processor is None:
             if settings.llm_provider == "openrouter":
@@ -91,14 +91,12 @@ class IntelligentBrowserScraper(BrowserBaseScraper):
                     provider="openrouter",
                     api_key=settings.openrouter_api_key,
                     model=settings.openrouter_model,
-                    max_chars=max_chars or settings.llm_max_chars
                 )
             else:
                 self._llm_processor = LLMProcessorFactory.create_processor(
                     provider="local",
                     base_url=settings.local_llm_url,
                     model=settings.local_llm_model,
-                    max_chars=max_chars or settings.llm_max_chars
                 )
         return self._llm_processor
         

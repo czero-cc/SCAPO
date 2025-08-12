@@ -1,13 +1,14 @@
 {
   "service": "Runway",
-  "last_updated": "2025-08-11T23:04:57.371483",
+  "last_updated": "2025-08-12T20:10:15.827498",
   "recommended_settings": {
     "setting_0": {
-      "description": "For Gen-4 References, use up to 3 reference images per request"
+      "description": "Maximum of 3 reference images per request"
     }
   },
   "cost_optimization": {
-    "pricing": "Unlimited plan costs $95/month"
+    "tip_0": "Daily image generation limit is 3 per day.",
+    "pricing": "$0.08 (8 credits) per image generation"
   },
   "sources": [
     "Reddit community",
