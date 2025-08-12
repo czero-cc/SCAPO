@@ -87,7 +87,7 @@ class SCAPOServer {
             properties: {
               category: {
                 type: 'string',
-                enum: ['text', 'image', 'video', 'audio', 'multimodal', 'all'],
+                enum: ['text', 'image', 'video', 'audio', 'multimodal', 'code', 'all'],
                 description: 'Model category',
                 default: 'all',
               },
@@ -199,7 +199,7 @@ class SCAPOServer {
         content: [
           {
             type: 'text',
-            text: `No exact match found for "${model_name}".\n\nDid you mean one of these?\n${suggestionText}\n\nTip: Try searching with 'search_models' tool or run the scraper to populate more model data.`,
+            text: `No exact match found for "${model_name}".\n\nDid you mean one of these?\n${suggestionText}\n\nIf you're looking for a different model, it may not be registered yet.\nPlease contribute or open an issue at: https://github.com/czero-cc/SCAPO/`,
           },
         ],
       };
@@ -209,7 +209,7 @@ class SCAPOServer {
       content: [
         {
           type: 'text',
-          text: `No practices found for model: ${model_name}\n\nTip: Run the intelligent scraper to populate model data:\npython -m src.cli scrape run --sources reddit:LocalLLaMA`,
+          text: `Model "${model_name}" is not yet registered in SCAPO.\n\nThis repository is continuously evolving. You can:\n1. Open an issue to request this model: https://github.com/czero-cc/SCAPO/issues\n2. Contribute best practices for this model: https://github.com/czero-cc/SCAPO/\n\nCurrently registered models can be listed using the 'list_models' tool.`,
         },
       ],
     };
@@ -246,7 +246,7 @@ class SCAPOServer {
 
   getLocalPractices(modelName, practiceType) {
     // Search in local models directory
-    const categories = ['text', 'image', 'video', 'audio', 'multimodal'];
+    const categories = ['text', 'image', 'video', 'audio', 'multimodal', 'code'];
     
     for (const category of categories) {
       const modelPath = join(LOCAL_MODELS_PATH, category, modelName);
@@ -286,13 +286,38 @@ class SCAPOServer {
   }
 
   formatParameters(params) {
-    return params.map(param => {
-      let text = `### ${param.name}\n`;
-      if (param.default_value) text += `- Default: ${param.default_value}\n`;
-      if (param.recommended_range) text += `- Recommended: ${param.recommended_range}\n`;
-      if (param.description) text += `- ${param.description}\n`;
+    // Handle both array format and object format
+    if (Array.isArray(params)) {
+      return params.map(param => {
+        let text = `### ${param.name}\n`;
+        if (param.default_value) text += `- Default: ${param.default_value}\n`;
+        if (param.recommended_range) text += `- Recommended: ${param.recommended_range}\n`;
+        if (param.description) text += `- ${param.description}\n`;
+        return text;
+      }).join('\n');
+    } else if (typeof params === 'object') {
+      // Handle the current format in parameters.json files
+      let text = '';
+      if (params.recommended_settings) {
+        text += '### Recommended Settings\n';
+        Object.values(params.recommended_settings).forEach(setting => {
+          if (setting.description) text += `- ${setting.description}\n`;
+        });
+      }
+      if (params.cost_optimization) {
+        text += '\n### Cost Optimization\n';
+        if (params.cost_optimization.pricing) {
+          text += `- Pricing: ${params.cost_optimization.pricing}\n`;
+        }
+        Object.entries(params.cost_optimization).forEach(([key, value]) => {
+          if (key.startsWith('tip_')) {
+            text += `- ${value}\n`;
+          }
+        });
+      }
       return text;
-    }).join('\n');
+    }
+    return 'No parameters available';
   }
 
   formatPractices(data, modelName) {
@@ -355,7 +380,7 @@ class SCAPOServer {
       const results = await response.json();
       
       if (results.length === 0) {
-        // Provide suggestions even when no matches
+        // Provide suggestions from actual registered models
         const suggestions = this.fuzzyMatcher.getSuggestions(query, 5);
         if (suggestions.length > 0) {
           const suggestionText = suggestions.map(s => `- ${s.model} (${s.category})`).join('\n');
@@ -363,7 +388,7 @@ class SCAPOServer {
             content: [
               {
                 type: 'text',
-                text: `No models found matching: ${query}\n\nDid you mean:\n${suggestionText}`,
+                text: `No models found matching: ${query}\n\nSimilar registered models:\n${suggestionText}\n\nIf you're looking for a different model, it may not be registered yet.\nContribute at: https://github.com/czero-cc/SCAPO/`,
               },
             ],
           };
@@ -373,7 +398,7 @@ class SCAPOServer {
           content: [
             {
               type: 'text',
-              text: `No models found matching: ${query}`,
+              text: `No models found matching: ${query}\n\nThis model may not be registered yet in SCAPO.\nYou can:\n1. Check available models with 'list_models' tool\n2. Request this model: https://github.com/czero-cc/SCAPO/issues\n3. Contribute: https://github.com/czero-cc/SCAPO/`,
             },
           ],
         };
@@ -392,7 +417,7 @@ class SCAPOServer {
         ],
       };
     } catch (error) {
-      // Provide suggestions on error
+      // Provide suggestions from actual registered models on error
       const suggestions = this.fuzzyMatcher.getSuggestions(query, 3);
       if (suggestions.length > 0) {
         const suggestionText = suggestions.map(s => `- ${s.model} (${s.category})`).join('\n');
@@ -400,7 +425,7 @@ class SCAPOServer {
           content: [
             {
               type: 'text',
-              text: `Search failed for: ${query}\n\nSuggestions:\n${suggestionText}`,
+              text: `Search failed for: ${query}\n\nRegistered models similar to your search:\n${suggestionText}\n\nFor other models, visit: https://github.com/czero-cc/SCAPO/`,
             },
           ],
         };
@@ -410,7 +435,7 @@ class SCAPOServer {
         content: [
           {
             type: 'text',
-            text: `No models found matching: ${query}`,
+            text: `No models found matching: ${query}\n\nSCApo repository is continuously evolving.\nContribute or request models at: https://github.com/czero-cc/SCAPO/`,
           },
         ],
       };
@@ -452,7 +477,7 @@ class SCAPOServer {
     let result = '# Available Models (Local)\n\n';
     
     const categories = category === 'all'
-      ? ['text', 'image', 'video', 'audio', 'multimodal']
+      ? ['text', 'image', 'video', 'audio', 'multimodal', 'code']
       : [category];
     
     for (const cat of categories) {
@@ -487,44 +512,60 @@ class SCAPOServer {
   async getRecommendedModels(args) {
     const { use_case } = args;
     
-    // Recommendations based on use case
-    const recommendations = {
-      code_generation: [
-        'Qwen3-Coder-Flash - Fast code completion',
-        'DeepCoder-14B - Advanced code understanding',
-        'Phi-4-14B - Efficient code generation',
-      ],
-      creative_writing: [
-        'Llama-3.2-1B - Lightweight creative tasks',
-        'Qwen3-32B - High-quality text generation',
-        'GLM-4-32B - Multilingual creative writing',
-      ],
-      image_generation: [
-        'Stable Diffusion XL - High-quality images',
-        'Midjourney v6 - Artistic style',
-        'DALL-E 3 - Photorealistic images',
-      ],
-      chat_conversation: [
-        'Gemini - Multi-turn conversations',
-        'Qwen3-14B - Efficient chat model',
-        'Phi-3.1-mini - Fast responses',
-      ],
+    // Map use cases to model categories ONLY - no hardcoded keywords!
+    const useCaseMapping = {
+      code_generation: ['code'],
+      creative_writing: ['text'],
+      image_generation: ['image'],
+      video_generation: ['video'],
+      audio_generation: ['audio'],
+      chat_conversation: ['text', 'multimodal'],
+      multimodal_tasks: ['multimodal'],
     };
     
-    const models = recommendations[use_case] || [];
+    const relevantCategories = useCaseMapping[use_case];
     
-    if (models.length === 0) {
+    if (!relevantCategories) {
       return {
         content: [
           {
             type: 'text',
-            text: `No specific recommendations for use case: ${use_case}\n\nAvailable use cases: ${Object.keys(recommendations).join(', ')}`,
+            text: `Use case "${use_case}" is not recognized.\n\nSupported use cases: ${Object.keys(useCaseMapping).join(', ')}\n\nFor model recommendations, please check our repository: https://github.com/czero-cc/SCAPO/`,
           },
         ],
       };
     }
     
-    const result = `# Recommended Models for ${use_case.replace('_', ' ').toUpperCase()}\n\n${models.map(m => `- ${m}`).join('\n')}`;
+    // Get actual models from the file system - no keyword matching!
+    const relevantModels = [];
+    
+    for (const category of relevantCategories) {
+      const catPath = join(LOCAL_MODELS_PATH, category);
+      
+      if (existsSync(catPath)) {
+        const models = readdirSync(catPath).filter(f => {
+          const modelPath = join(catPath, f);
+          return statSync(modelPath).isDirectory();
+        });
+        
+        for (const model of models) {
+          relevantModels.push(`${model} (${category})`);
+        }
+      }
+    }
+    
+    if (relevantModels.length === 0) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `No registered models found for ${use_case.replace('_', ' ')}.\n\nSCApo is continuously evolving. To add models for this use case:\n- Open an issue: https://github.com/czero-cc/SCAPO/issues\n- Contribute: https://github.com/czero-cc/SCAPO/\n\nUse 'list_models' to see currently available models.`,
+          },
+        ],
+      };
+    }
+    
+    const result = `# Available Models for ${use_case.replace('_', ' ').toUpperCase()}\n\n${relevantModels.map(m => `- ${m}`).join('\n')}\n\nNote: This list only includes currently registered models in SCAPO.\nFor more models, contribute at: https://github.com/czero-cc/SCAPO/`;
     
     return {
       content: [

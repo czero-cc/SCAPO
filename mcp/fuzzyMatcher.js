@@ -17,7 +17,7 @@ export class FuzzyModelMatcher {
     }
 
     const cache = new Map();
-    const categories = ['text', 'image', 'video', 'audio', 'multimodal'];
+    const categories = ['text', 'image', 'video', 'audio', 'multimodal', 'code'];
     
     for (const category of categories) {
       const catPath = join(this.modelsPath, category);
