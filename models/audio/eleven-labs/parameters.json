@@ -1,0 +1,16 @@
+{
+  "service": "Eleven Labs",
+  "last_updated": "2025-08-11T23:07:25.519029",
+  "recommended_settings": {
+    "setting_0": {
+      "description": "In Manim implementation: set_speech_service(ElevenLabsService(voice_name=\"Mun W\"))"
+    }
+  },
+  "cost_optimization": {
+    "pricing": "Business subscription: over $1,300/month"
+  },
+  "sources": [
+    "Reddit community",
+    "User reports"
+  ]
+}

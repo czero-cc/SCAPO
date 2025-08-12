@@ -1,0 +1,16 @@
+{
+  "service": "Runway",
+  "last_updated": "2025-08-11T23:04:57.371483",
+  "recommended_settings": {
+    "setting_0": {
+      "description": "For Gen-4 References, use up to 3 reference images per request"
+    }
+  },
+  "cost_optimization": {
+    "pricing": "Unlimited plan costs $95/month"
+  },
+  "sources": [
+    "Reddit community",
+    "User reports"
+  ]
+}

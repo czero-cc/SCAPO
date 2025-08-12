@@ -137,3 +137,21 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+
+# reference / scratchpad files
+reference
+
+# python
+.venv
+__pycache__
+*.egg-info
+*.egg
+
+# vibe code related
+CLAUDE.md
+.cursor*
+.claude/
+
+# intermediate files
+data

@@ -1,0 +1,132 @@
+name: "💡 Share Best Practice"
+description: Share a prompt, parameter setting, or tip that works well
+title: "[Practice]: "
+labels: ["best-practice", "community-knowledge"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Share your discovered best practices with the community! Every contribution helps.
+
+  - type: dropdown
+    id: practice-type
+    attributes:
+      label: Practice Type
+      description: What kind of practice are you sharing?
+      options:
+        - Prompt Template/Example
+        - Parameter Configuration
+        - Common Pitfall/Solution
+        - Integration Pattern
+        - Performance Optimization
+        - Other Tip/Trick
+    validations:
+      required: true
+
+  - type: input
+    id: model-name
+    attributes:
+      label: Model Name
+      description: Exact model name (e.g., gpt-4, claude-opus-4, stable-diffusion-xl)
+      placeholder: "gpt-4-turbo"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: model-category
+    attributes:
+      label: Model Category
+      description: Where this model belongs in our structure
+      options:
+        - text (Language models like GPT, Claude, Llama)
+        - image (DALL-E, Stable Diffusion, Midjourney)
+        - video (Runway, Pika, Sora)
+        - audio (Whisper, ElevenLabs, Bark)
+        - multimodal (GPT-4V, CLIP, LLaVA)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: target-file
+    attributes:
+      label: Which file should this go in?
+      description: Based on practice type
+      options:
+        - prompting.md (Prompting strategies and templates)
+        - parameters.json (Specific parameter values)
+        - pitfalls.md (Common mistakes and how to avoid them)
+        - examples/tips.json (General tips and tricks)
+    validations:
+      required: true
+
+  - type: textarea
+    id: practice-content
+    attributes:
+      label: The Practice
+      description: Share your practice in detail
+      placeholder: |
+        For prompt template:
+        ```
+        You are an expert [role]. Your task is to [specific task].
+        
+        Context: [provide context]
+        Requirements: [list requirements]
+        Output format: [specify format]
+        ```
+        
+        For parameters:
+        - temperature: 0.3 (for factual tasks)
+        - top_p: 0.9
+        - frequency_penalty: 0.5
+    validations:
+      required: true
+
+  - type: textarea
+    id: explanation
+    attributes:
+      label: Why does this work?
+      description: Help others understand the reasoning
+      placeholder: |
+        This prompt structure works because:
+        - Clear role definition reduces ambiguity
+        - Explicit requirements prevent common mistakes
+        - Output format ensures consistent results
+    validations:
+      required: true
+
+  - type: textarea
+    id: example-results
+    attributes:
+      label: Example Results (Optional)
+      description: Show what kind of outputs this produces
+      placeholder: |
+        Input: "Explain quantum computing"
+        Output: "Quantum computing uses quantum mechanical phenomena..."
+
+  - type: dropdown
+    id: tested-extent
+    attributes:
+      label: How extensively have you tested this?
+      options:
+        - Used in production for months
+        - Tested on many examples
+        - Works well in my use cases
+        - Initial testing looks promising
+    validations:
+      required: true
+
+  - type: input
+    id: tags
+    attributes:
+      label: Tags
+      description: Help others find this practice
+      placeholder: "code-generation, refactoring, python"
+
+  - type: checkboxes
+    id: share-permission
+    attributes:
+      label: Sharing
+      options:
+        - label: I'm happy for this to be included in the repository
+          required: true
+        - label: Credit me as contributor (optional)
