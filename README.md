@@ -296,6 +296,8 @@ Built as part of the CZero Engine project to improve AI application development.
 - Reddit communities for sharing real experiences
 - OpenRouter for accessible AI APIs
 - Coffee ☕ for making this possible
+- Ollama and LMstudio for awesome local LLM experience
+- All opensource contributors in this AI space
 
 ---
 
