@@ -203,53 +203,90 @@ IMPORTANT: Start your response with {{ and end with }}. No other text allowed.""
             models_context = f"Models discussed: {', '.join(entities.models_mentioned)}" if entities.models_mentioned else ""
             theme_context = f"Theme: {entities.theme}"
             
-            prompt = f"""Extract actionable AI/ML best practices from this content.
+            prompt = f"""Extract SPECIFIC tips, settings, and techniques from this AI discussion.
 {models_context}
 {theme_context}
 
 Content:
 {content[:3000]}
 
-Focus on extracting practices related to: {', '.join(entities.techniques) if entities.techniques else 'general AI/ML techniques'}
+Look for ANY of these:
+1. SPECIFIC SETTINGS: "temperature 0.7", "top_p 0.95", "steps 50", "cfg 7"
+2. TECHNIQUES: "use system prompt", "chain of thought", "few-shot examples"
+3. PROBLEMS & SOLUTIONS: "slow" -> "use streaming", "expensive" -> "batch requests"
+4. PARAMETERS: API limits, token counts, rate limits, pricing tiers
+5. TIPS: keyboard shortcuts, hidden features, workarounds, optimizations
 
-Return a JSON array of practices:
+Return a JSON array. ONLY include SPECIFIC, ACTIONABLE information:
 [
   {{
-    "practice_type": "prompting|parameter|pitfall|tip",
-    "content": "clear, actionable description",
-    "confidence": 0.0-1.0,
-    "applicable_models": ["model1", "model2"],
-    "source_quality": "high|medium|low",
-    "extracted_parameters": {{"param": value}} or null,
-    "example_code": "code snippet" or null
+    "model_or_service": "GPT-4|Claude|Midjourney|ElevenLabs|etc",
+    "tip": "the specific tip or technique",
+    "details": "exact settings, parameters, or steps",
+    "type": "parameter|technique|optimization|workaround",
+    "benefit": "faster|cheaper|better quality|etc"
   }}
 ]
 
-Only extract concrete, verifiable practices. Be specific about which models they apply to."""
+Return EMPTY array [] if no specific tips found. Skip ALL generic advice like "be clear" or "experiment"."""
 
-            # Use the structured process_content method instead of raw prompt
-            processed_practices = await processor.process_content(content[:3000], f"reddit post about {entities.theme}")
+            # Use our new problem-solution extraction prompt
+            response = await processor.process_raw_prompt(prompt)
             
-            # Convert ProcessedPractice objects to the expected format
+            # Parse the response
+            try:
+                extracted_items = json.loads(response)
+                if not isinstance(extracted_items, list):
+                    extracted_items = []
+            except json.JSONDecodeError:
+                # Try to extract JSON from response
+                import re
+                json_match = re.search(r'\[.*?\]', response, re.DOTALL)
+                if json_match:
+                    try:
+                        extracted_items = json.loads(json_match.group())
+                    except:
+                        extracted_items = []
+                else:
+                    extracted_items = []
+            
+            # Convert to new pipeline format (tips, problems, settings, cost_info)
             practices = []
-            for practice in processed_practices:
-                # Map model_name to applicable_models array
-                applicable_models = [practice.model_name] if practice.model_name else []
-                
-                # Try to match any mentioned models from entities
-                if entities.models_mentioned and not applicable_models:
-                    # If no specific model in practice, use first mentioned model
-                    applicable_models = entities.models_mentioned[:1]
-                
-                practices.append({
-                    "practice_type": practice.practice_type,
-                    "content": practice.content,
-                    "confidence": practice.confidence,
-                    "applicable_models": applicable_models,
-                    "source_quality": "high" if practice.confidence > 0.8 else ("medium" if practice.confidence > 0.5 else "low"),
-                    "extracted_parameters": None,  # Could extract from content if needed
-                    "example_code": None  # Could extract from content if needed
-                })
+            for item in extracted_items:
+                # Create a practice in the legacy format for compatibility
+                if item.get("tip"):
+                    # New format from updated prompt
+                    model_or_service = item.get("model_or_service", "unknown")
+                    practice = {
+                        "practice_type": item.get("type", "technique"),
+                        "content": item.get("tip"),
+                        "details": item.get("details", ""),
+                        "benefit": item.get("benefit", ""),
+                        "applicable_models": [model_or_service] if model_or_service != "unknown" else entities.models_mentioned[:1] if entities.models_mentioned else ["general"],
+                        "confidence": 0.7  # Default confidence for extracted tips
+                    }
+                    practices.append(practice)
+                elif item.get("problem") and item.get("solution"):
+                    # Old problem-solution format (fallback)
+                    practices.append({
+                        "practice_type": item.get("practice_type", "cost_optimization"),
+                        "problem": item.get("problem"),
+                        "solution": item.get("solution"),
+                        "service_name": item.get("service_name"),
+                        "savings_or_improvement": item.get("savings_or_improvement"),
+                        "specific_settings": item.get("specific_settings"),
+                        "content": f"Problem: {item.get('problem')}\nSolution: {item.get('solution')}",
+                        "confidence": item.get("confidence", 0.5),
+                        "applicable_models": [item.get("service_name")] if item.get("service_name") else entities.models_mentioned[:1] if entities.models_mentioned else ["general"]
+                    })
+                else:
+                    # Fallback to traditional format
+                    practices.append({
+                        "practice_type": "tip",
+                        "content": item.get("content", str(item)),
+                        "confidence": item.get("confidence", 0.5),
+                        "applicable_models": entities.models_mentioned[:1] if entities.models_mentioned else ["general"]
+                    })
             
             # Ensure applicable_models includes entities.models_mentioned
             for practice in practices:
@@ -392,16 +429,35 @@ IMPORTANT: Start with {{ and end with }}. Be strict - only high-quality, model-s
             (maxPosts) => {
                 // Try both regular subreddit selectors and search result selectors
                 let posts = Array.from(document.querySelectorAll('.thing.link'));
+                let isSearchPage = false;
+                
                 if (posts.length === 0) {
                     // Try search result selectors
                     posts = Array.from(document.querySelectorAll('.search-result-link'));
+                    isSearchPage = true;
                 }
                 
-                return posts.slice(0, maxPosts).map(post => ({
-                    title: post.querySelector('a.title')?.innerText || post.querySelector('.search-title a')?.innerText || '',
-                    url: post.querySelector('.comments')?.href || post.querySelector('a.comments')?.href || '',
-                    score: post.querySelector('.score.unvoted')?.innerText || post.querySelector('.search-score')?.innerText || '0'
-                })).filter(p => p.url && p.title);
+                return posts.slice(0, maxPosts).map(post => {
+                    if (isSearchPage) {
+                        // Search result page structure
+                        const header = post.querySelector('.search-result-header');
+                        const titleLink = header?.querySelector('a.search-title') || header?.querySelector('a');
+                        const commentsLink = header?.querySelector('a.search-comments');
+                        
+                        return {
+                            title: titleLink?.innerText || '',
+                            url: commentsLink?.href || titleLink?.href || '',
+                            score: post.querySelector('.search-score')?.innerText || '0'
+                        };
+                    } else {
+                        // Regular subreddit page structure
+                        return {
+                            title: post.querySelector('a.title')?.innerText || '',
+                            url: post.querySelector('.comments')?.href || '',
+                            score: post.querySelector('.score.unvoted')?.innerText || '0'
+                        };
+                    }
+                }).filter(p => p.url && p.title);
             }
         ''', max_posts)
         
@@ -535,11 +591,13 @@ IMPORTANT: Start with {{ and end with }}. Be strict - only high-quality, model-s
         return processed
     
     async def save_to_model_directories(self):
-        """Save processed content to appropriate model directories WITHOUT overwriting existing content."""
-        models_dir = Path("models")
+        """Save processed content using the ModelEntryGenerator for consistency with new pipeline."""
+        from src.services.model_entry_generator import ModelEntryGenerator
         
-        # Group practices by model
-        model_practices = {}
+        generator = ModelEntryGenerator()
+        
+        # Group practices by model/service
+        model_data = {}
         
         # Use quality threshold from settings
         quality_threshold = settings.llm_quality_threshold
@@ -547,17 +605,14 @@ IMPORTANT: Start with {{ and end with }}. Be strict - only high-quality, model-s
         # Progress tracking
         total_practices = sum(len(content.best_practices) for content in self.processed_content)
         evaluated_count = 0
+        saved_count = 0
         start_time = datetime.now()
         
-        logger.info(f"Starting quality evaluation for {total_practices} practices...")
+        logger.info(f"Processing {total_practices} practices from {len(self.processed_content)} posts...")
         if quality_threshold > 0:
-            logger.info(f"Quality threshold: {quality_threshold} (practices below this score will be filtered)")
-            if settings.llm_provider == "local":
-                logger.info("Using local LLM - this may take several minutes. Consider:")
-                logger.info("  • Using a faster model (still, 7B+ recommended)")
-                logger.info("  • Switching to OpenRouter for faster processing")
-                logger.info("  • Lowering LLM_QUALITY_THRESHOLD in .env to speed up")
+            logger.info(f"Quality threshold: {quality_threshold}")
         
+        # Process all content and group by model/service
         for content in self.processed_content:
             for practice in content.best_practices:
                 models = practice.get("applicable_models", ["general"])
@@ -565,408 +620,77 @@ IMPORTANT: Start with {{ and end with }}. Be strict - only high-quality, model-s
                 # Skip if all models are generic
                 non_generic_models = [m for m in models if m.lower() not in ["general", "unknown", "ai", "llm"]]
                 if not non_generic_models:
-                    logger.debug("Skipping practice with only generic models")
                     continue
                 
-                # Progress update
                 evaluated_count += 1
-                if evaluated_count % 5 == 0 or evaluated_count == 1:
-                    elapsed = (datetime.now() - start_time).total_seconds()
-                    rate = evaluated_count / elapsed if elapsed > 0 else 0
-                    remaining = (total_practices - evaluated_count) / rate if rate > 0 else 0
-                    logger.info(
-                        f"Progress: {evaluated_count}/{total_practices} practices evaluated "
-                        f"({evaluated_count/total_practices*100:.1f}%) - "
-                        f"Est. time remaining: {remaining/60:.1f} minutes"
-                    )
                 
-                # Evaluate practice quality once for the first non-generic model
-                first_model = non_generic_models[0]
-                evaluated_practice = await self.evaluate_practice_quality(
-                    practice.copy(),  # Don't modify original
-                    first_model,
-                    content.original_text[:1000]  # Provide context
-                )
-                
-                # Check quality threshold
-                quality_score = evaluated_practice.get('quality_score', 0.0)
-                if quality_score < quality_threshold:
-                    logger.info(
-                        f"Filtered out low-quality practice: "
-                        f"score={quality_score:.2f}, models={models}, "
-                        f"reason={evaluated_practice.get('quality_evaluation', {}).get('reason', 'N/A')}"
-                    )
+                # Simple quality check - skip if confidence too low
+                confidence = practice.get('confidence', 0.5)
+                if confidence < quality_threshold:
+                    logger.debug(f"Skipping low confidence practice: {confidence}")
                     continue
                 
-                logger.info(f"Keeping high-quality practice: score={quality_score:.2f}, models={models}")
-                
-                # Now add this practice to all applicable models
-                for model in models:
-                    # Sanitize model name
+                # Add to each applicable model/service
+                for model in non_generic_models:
                     clean_model = sanitize_model_name(model)
                     if not clean_model:
-                        logger.warning(f"Skipping invalid model name: {model}")
                         continue
                     
-                    if clean_model not in model_practices:
-                        model_practices[clean_model] = {
-                            "prompting": [],
-                            "parameters": [],
-                            "pitfalls": [],
-                            "tips": []
+                    # Initialize model data if needed
+                    if clean_model not in model_data:
+                        model_data[clean_model] = {
+                            "service": clean_model,
+                            "tips": [],
+                            "problems": [],
+                            "settings": [],
+                            "cost_info": []
                         }
                     
-                    practice_data = {
-                        "content": evaluated_practice.get("content", practice["content"]),  # Use improved content if available
-                        "confidence": evaluated_practice.get("confidence", practice.get("confidence", 0.5)),
-                        "quality_score": quality_score,
-                        "source": content.source_type,
-                        "source_url": content.source_url,
-                        "timestamp": content.timestamp,
-                        "theme": content.entities.theme,
-                        "extracted_parameters": practice.get("extracted_parameters"),
-                        "example_code": practice.get("example_code")
-                    }
+                    # Convert practice to new format
+                    if practice.get("tip"):  # New format from updated prompt
+                        model_data[clean_model]["tips"].append(
+                            f"{practice.get('tip')} - {practice.get('details', '')}"
+                        )
+                        if practice.get("details") and any(k in practice.get("details", "").lower() for k in ["parameter", "setting", "config"]):
+                            model_data[clean_model]["settings"].append(practice.get("details"))
+                    elif practice.get("problem") and practice.get("solution"):
+                        # Problem-solution format
+                        model_data[clean_model]["problems"].append(
+                            f"Problem: {practice.get('problem')}\nSolution: {practice.get('solution')}"
+                        )
+                        if practice.get("savings_or_improvement"):
+                            model_data[clean_model]["cost_info"].append(practice.get("savings_or_improvement"))
+                    else:
+                        # Generic practice - add as tip
+                        content_text = practice.get("content", "")
+                        if content_text:
+                            model_data[clean_model]["tips"].append(content_text)
                     
-                    # Map singular practice types to plural storage keys
-                    practice_type = practice.get("practice_type", "tip")
-                    type_mapping = {
-                        "prompting": "prompting",
-                        "parameter": "parameters",
-                        "pitfall": "pitfalls",
-                        "tip": "tips"
-                    }
-                    storage_key = type_mapping.get(practice_type, "tips")
-                    
-                    model_practices[clean_model][storage_key].append(practice_data)
+                    saved_count += 1
         
-        # Save to files
-        for model_name, practices in model_practices.items():
-            # Skip if no practices
-            total_practices = sum(len(plist) for plist in practices.values())
-            if total_practices == 0:
+        # Save using ModelEntryGenerator for consistency
+        models_created = 0
+        for model_name, extraction_data in model_data.items():
+            # Skip if no data
+            if not any([extraction_data.get('tips'), extraction_data.get('problems'), 
+                       extraction_data.get('settings'), extraction_data.get('cost_info')]):
                 continue
-                
-            # Determine category based on model name
-            category = "text"  # default
             
-            # Image models
-            if any(img in model_name.lower() for img in ['stable-diffusion', 'midjourney', 'dalle', 'flux', 'sdxl', 'imagen', 'playground']):
-                category = "image"
-            # Video models  
-            elif any(vid in model_name.lower() for vid in ['runway', 'pika', 'stable-video', 'sora', 'gen-']):
-                category = "video"
-            # Audio models
-            elif any(aud in model_name.lower() for aud in ['whisper', 'bark', 'elevenlabs', 'tortoise', 'musicgen']):
-                category = "audio"
-            # Multimodal models
-            elif any(multi in model_name.lower() for multi in ['vision', 'clip', 'blip', 'llava', 'gpt-4v', 'gemini-vision', 'minigpt']):
-                category = "multimodal"
-            
-            model_dir = models_dir / category / model_name
-            model_dir.mkdir(parents=True, exist_ok=True)
-            
-            timestamp = datetime.now().isoformat()
-            
-            # Update prompting guide with deduplication
-            if practices["prompting"]:
-                prompting_file = model_dir / "prompting.md"
-                
-                # Parse existing practices from the file
-                existing_practices = []
-                if prompting_file.exists():
-                    existing_content = prompting_file.read_text()
-                    # Extract practice headings (lines starting with ##)
-                    import re
-                    practice_pattern = r'^##\s+(.+)$'
-                    for match in re.finditer(practice_pattern, existing_content, re.MULTILINE):
-                        practice_text = match.group(1).strip()
-                        # Skip section headers like "Practices Added..."
-                        if not practice_text.startswith("Practices Added"):
-                            existing_practices.append(practice_text.lower())
-                
-                # Build new content, checking for duplicates
-                practices_to_add = []
-                for p in practices["prompting"]:
-                    normalized_content = p['content'].lower().strip()
-                    
-                    # Check for duplicates
-                    is_duplicate = False
-                    for existing in existing_practices:
-                        # Calculate similarity
-                        new_words = set(normalized_content.split())
-                        existing_words = set(existing.split())
-                        
-                        if new_words and existing_words:
-                            common_words = new_words.intersection(existing_words)
-                            similarity = len(common_words) / min(len(new_words), len(existing_words))
-                            
-                            if similarity > 0.8:  # 80% similarity threshold
-                                is_duplicate = True
-                                logger.info(f"Skipping duplicate prompting practice: {p['content'][:50]}...")
-                                break
-                    
-                    if not is_duplicate:
-                        practices_to_add.append(p)
-                        existing_practices.append(normalized_content)
-                
-                # Only write if we have new practices to add
-                if practices_to_add:
-                    # If file doesn't exist, create with header
-                    if not prompting_file.exists():
-                        existing_content = f"# {model_name} Prompting Guide\n\n*Last updated: {timestamp}*\n"
-                    else:
-                        # Update the last updated timestamp
-                        existing_content = re.sub(
-                            r'\*Last updated: .+\*', 
-                            f'*Last updated: {timestamp}*', 
-                            existing_content
-                        )
-                    
-                    # Add new practices
-                    new_content = "\n"
-                    for p in practices_to_add:
-                        new_content += f"\n## {p['content']}\n"
-                        new_content += f"- **Quality Score**: {p.get('quality_score', 'N/A')}\n"
-                        new_content += f"- **Confidence**: {p['confidence']}\n"
-                        new_content += f"- **Source**: [{p['source']}]({p.get('source_url', '#')})\n"
-                        new_content += f"- **Theme**: {p['theme']}\n"
-                        if p.get('example_code'):
-                            new_content += f"\n```\n{p['example_code']}\n```\n"
-                        new_content += "\n"
-                    
-                    # Write combined content
-                    if existing_content and not existing_content.endswith('\n'):
-                        existing_content += '\n'
-                    prompting_file.write_text(existing_content + new_content)
-                    logger.info(f"Added {len(practices_to_add)} new prompting practices for {model_name}")
-            
-            # Merge parameters (don't overwrite)
-            if practices["parameters"]:
-                params_file = model_dir / "parameters.json"
-                
-                # Load existing parameters
-                existing_params = []
-                if params_file.exists():
-                    with open(params_file, 'r') as f:
-                        existing_params = json.load(f)
-                
-                # Create a set of existing parameter descriptions for deduplication
-                existing_descriptions = {param["description"].lower().strip() for param in existing_params}
-                
-                # Add new parameters
-                for p in practices["parameters"]:
-                    normalized_desc = p["content"].lower().strip()
-                    
-                    # Check for duplicates
-                    is_duplicate = False
-                    for existing_desc in existing_descriptions:
-                        # Calculate similarity
-                        new_words = set(normalized_desc.split())
-                        existing_words = set(existing_desc.split())
-                        
-                        if new_words and existing_words:
-                            common_words = new_words.intersection(existing_words)
-                            similarity = len(common_words) / min(len(new_words), len(existing_words))
-                            
-                            if similarity > 0.8:  # 80% similarity threshold
-                                is_duplicate = True
-                                logger.info(f"Skipping duplicate parameter: {p['content'][:50]}...")
-                                break
-                    
-                    if not is_duplicate:
-                        # Filter extracted parameters to only include this model's data
-                        extracted_params = p.get("extracted_parameters", {})
-                        if extracted_params is None:
-                            extracted_params = {}
-                        filtered_params = {}
-                        
-                        # Check if parameters contain model-specific data
-                        for param_name, param_value in extracted_params.items():
-                            if isinstance(param_value, dict):
-                                # If it's a dict with model names as keys, extract only this model's data
-                                if model_name in param_value:
-                                    filtered_params[param_name] = param_value[model_name]
-                                elif clean_model in param_value:
-                                    filtered_params[param_name] = param_value[clean_model]
-                                # If neither exact match, skip this parameter for this model
-                            else:
-                                # If it's not a dict, include it as-is
-                                filtered_params[param_name] = param_value
-                        
-                        # Only add parameter entry if we have relevant data
-                        if filtered_params or not extracted_params:  # Include if no params or if we found relevant params
-                            param_entry = {
-                                "description": p["content"],
-                                "confidence": p["confidence"],
-                                "source": p["source"],
-                                "timestamp": p["timestamp"],
-                                "extracted_values": filtered_params
-                            }
-                            existing_params.append(param_entry)
-                            existing_descriptions.add(normalized_desc)
-                            logger.info(f"Added new parameter for {model_name}: {p['content'][:50]}...")
-                
-                # Save merged parameters
-                with open(params_file, 'w') as f:
-                    json.dump(existing_params, f, indent=2)
-            
-            # Update pitfalls with deduplication
-            if practices["pitfalls"]:
-                pitfalls_file = model_dir / "pitfalls.md"
-                
-                # Parse existing pitfalls from the file
-                existing_pitfalls = []
-                if pitfalls_file.exists():
-                    existing_content = pitfalls_file.read_text()
-                    # Extract pitfall headings (lines starting with ## or ###)
-                    import re
-                    pitfall_pattern = r'^###?\s+(.+)$'
-                    for match in re.finditer(pitfall_pattern, existing_content, re.MULTILINE):
-                        pitfall_text = match.group(1).strip()
-                        # Skip section headers like "Pitfalls Added..."
-                        if not pitfall_text.startswith("Pitfalls Added"):
-                            existing_pitfalls.append(pitfall_text.lower())
-                
-                # Build new content, checking for duplicates
-                pitfalls_to_add = []
-                for p in practices["pitfalls"]:
-                    normalized_content = p['content'].lower().strip()
-                    
-                    # Check for duplicates
-                    is_duplicate = False
-                    for existing in existing_pitfalls:
-                        # Calculate similarity
-                        new_words = set(normalized_content.split())
-                        existing_words = set(existing.split())
-                        
-                        if new_words and existing_words:
-                            common_words = new_words.intersection(existing_words)
-                            similarity = len(common_words) / min(len(new_words), len(existing_words))
-                            
-                            if similarity > 0.8:  # 80% similarity threshold
-                                is_duplicate = True
-                                logger.info(f"Skipping duplicate pitfall: {p['content'][:50]}...")
-                                break
-                    
-                    if not is_duplicate:
-                        pitfalls_to_add.append(p)
-                        existing_pitfalls.append(normalized_content)
-                
-                # Only write if we have new pitfalls to add
-                if pitfalls_to_add:
-                    # If file doesn't exist, create with header
-                    if not pitfalls_file.exists():
-                        existing_content = f"# {model_name} Common Pitfalls\n\n*Last updated: {timestamp}*\n"
-                    else:
-                        # Update the last updated timestamp
-                        existing_content = re.sub(
-                            r'\*Last updated: .+\*', 
-                            f'*Last updated: {timestamp}*', 
-                            existing_content
-                        )
-                    
-                    # Add new pitfalls
-                    new_content = "\n"
-                    for p in pitfalls_to_add:
-                        new_content += f"\n## {p['content']}\n"
-                        new_content += f"- **Confidence**: {p['confidence']}\n"
-                        new_content += f"- **Source**: [{p['source']}]({p.get('source_url', '#')})\n"
-                        if p.get('example_code'):
-                            new_content += f"\n```\n{p['example_code']}\n```\n"
-                        new_content += "\n"
-                    
-                    # Write combined content
-                    if existing_content and not existing_content.endswith('\n'):
-                        existing_content += '\n'
-                    pitfalls_file.write_text(existing_content + new_content)
-                    logger.info(f"Added {len(pitfalls_to_add)} new pitfalls for {model_name}")
-            
-            # Save tips to examples directory
-            if practices["tips"]:
-                examples_dir = model_dir / "examples"
-                examples_dir.mkdir(exist_ok=True)
-                
-                tips_file = examples_dir / "tips.json"
-                
-                # Load existing tips
-                existing_tips = []
-                if tips_file.exists():
-                    with open(tips_file, 'r') as f:
-                        existing_tips = json.load(f)
-                
-                # Create a set of existing tip contents for deduplication
-                # Normalize content for comparison (lowercase, strip whitespace)
-                existing_contents = {tip["tip"].lower().strip() for tip in existing_tips}
-                
-                # Add new tips, avoiding duplicates
-                for p in practices["tips"]:
-                    normalized_content = p["content"].lower().strip()
-                    
-                    # Check for similar content (not just exact match)
-                    is_duplicate = False
-                    for existing_content in existing_contents:
-                        # Calculate similarity (simple approach: check if 80% of words match)
-                        new_words = set(normalized_content.split())
-                        existing_words = set(existing_content.split())
-                        
-                        if new_words and existing_words:
-                            common_words = new_words.intersection(existing_words)
-                            similarity = len(common_words) / min(len(new_words), len(existing_words))
-                            
-                            if similarity > 0.8:  # 80% similarity threshold
-                                is_duplicate = True
-                                logger.info(f"Skipping duplicate tip: {p['content'][:50]}...")
-                                break
-                    
-                    if not is_duplicate:
-                        new_tip = {
-                            "tip": p["content"],
-                            "confidence": p["confidence"],
-                            "source": p["source"],
-                            "timestamp": p["timestamp"],
-                            "example": p.get("example_code")
-                        }
-                        existing_tips.append(new_tip)
-                        existing_contents.add(normalized_content)
-                        logger.info(f"Added new tip for {model_name}: {p['content'][:50]}...")
-                
-                # Save merged tips
-                with open(tips_file, 'w') as f:
-                    json.dump(existing_tips, f, indent=2)
-            
-            # Update metadata without overwriting
-            metadata_file = model_dir / "metadata.json"
-            metadata = {}
-            if metadata_file.exists():
-                with open(metadata_file, 'r') as f:
-                    metadata = json.load(f)
-            
-            # Update metadata
-            if "model_id" not in metadata:
-                metadata["model_id"] = model_name
-            metadata["last_updated"] = timestamp
-            metadata["total_practices"] = metadata.get("total_practices", 0) + total_practices
-            
-            # Add sources
-            if "sources" not in metadata:
-                metadata["sources"] = []
-            
-            for content in self.processed_content:
-                if content.source_url and content.source_url not in metadata["sources"]:
-                    metadata["sources"].append(content.source_url)
-            
-            with open(metadata_file, 'w') as f:
-                json.dump(metadata, f, indent=2)
-            
-            logger.info(f"Saved {total_practices} practices for {model_name}")
+            # Use ModelEntryGenerator to create the model entry
+            try:
+                success = generator.create_model_entry(extraction_data)
+                if success:
+                    models_created += 1
+                    logger.info(f"Created model entry for {model_name}")
+                else:
+                    logger.warning(f"Failed to create model entry for {model_name}")
+            except Exception as e:
+                logger.error(f"Error creating model entry for {model_name}: {e}")
         
         # Final summary
-        if quality_threshold > 0:
-            total_time = (datetime.now() - start_time).total_seconds()
-            logger.info(f"Quality evaluation complete! Took {total_time/60:.1f} minutes")
-            logger.info(f"Evaluated {evaluated_count} practices, saved to {len(model_practices)} models")
+        logger.info(f"Legacy scraping complete: {evaluated_count} practices processed, {models_created} models created")
     
+
     async def scrape_github_browser(self, page: Page, repo_path: str) -> List[ProcessedContent]:
         """Scrape GitHub repository for AI best practices."""
         logger.info(f"Scraping GitHub repo: {repo_path}")
@@ -1061,11 +785,163 @@ IMPORTANT: Start with {{ and end with }}. Be strict - only high-quality, model-s
                 "average_relevance": sum(c.entities.relevance_score for c in self.processed_content) / len(self.processed_content) if self.processed_content else 0
             }
             
-            with open("intelligent_scraper_summary.json", "w") as f:
+            # Save summary in data directory
+            summary_file = Path("data") / "intelligent_scraper_summary.json"
+            summary_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(summary_file, "w") as f:
                 json.dump(summary, f, indent=2)
                 
         finally:
             await self.close_browser()
+
+    async def scrape_url(self, url: str, max_posts: int = 10) -> List[Dict]:
+        """Scrape a single URL and return posts as dicts."""
+        posts = []
+        
+        # For Reddit, use JSON API instead of browser scraping
+        if 'reddit.com' in url:
+            import aiohttp
+            import urllib.parse
+            
+            # Extract search query from URL
+            parsed = urllib.parse.urlparse(url)
+            params = urllib.parse.parse_qs(parsed.query)
+            query = params.get('q', [''])[0]
+            
+            if query:
+                # Use Reddit JSON API
+                json_url = f'https://www.reddit.com/search.json?q={urllib.parse.quote(query)}&limit={max_posts}'
+                
+                async with aiohttp.ClientSession() as session:
+                    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+                    async with session.get(json_url, headers=headers) as response:
+                        if response.status == 200:
+                            data = await response.json()
+                            
+                            # Extract posts from JSON
+                            if 'data' in data and 'children' in data['data']:
+                                for child in data['data']['children'][:max_posts]:
+                                    post_data = child['data']
+                                    posts.append({
+                                        'id': post_data.get('id', ''),
+                                        'title': post_data.get('title', ''),
+                                        'content': post_data.get('selftext', '')[:500],
+                                        'url': f"https://reddit.com{post_data.get('permalink', '')}",
+                                        'score': post_data.get('score', 0),
+                                        'subreddit': post_data.get('subreddit', ''),
+                                        'num_comments': post_data.get('num_comments', 0)
+                                    })
+            
+            return posts
+        
+        # For non-Reddit URLs, use browser scraping
+        if not self.browser:
+            from playwright.async_api import async_playwright
+            self.playwright = await async_playwright().start()
+            self.browser = await self.playwright.chromium.launch(headless=True)
+        
+        page = await self.browser.new_page()
+        try:
+            await page.goto(url, wait_until='networkidle', timeout=30000)
+            await asyncio.sleep(2)
+            
+            # Extract posts based on URL type
+            posts = []
+            if False:  # Disabled old Reddit scraping code
+                # Convert to old.reddit.com for easier scraping
+                if 'old.reddit.com' not in url:
+                    url = url.replace('www.reddit.com', 'old.reddit.com').replace('reddit.com', 'old.reddit.com')
+                    await page.goto(url, wait_until='networkidle', timeout=30000)
+                    await asyncio.sleep(2)
+                
+                # Extract posts directly from Reddit search pages using old Reddit structure
+                post_data = await page.evaluate('''() => {
+                    const posts = [];
+                    
+                    // Old Reddit uses .thing.link for posts
+                    let postElements = document.querySelectorAll('.thing.link');
+                    
+                    // If no posts found, try search result specific selectors
+                    if (postElements.length === 0) {
+                        postElements = document.querySelectorAll('.search-result-link');
+                    }
+                    
+                    postElements.forEach((post, idx) => {
+                        if (idx >= ''' + str(max_posts) + ''') return;
+                        
+                        // Extract title
+                        let title = '';
+                        const titleEl = post.querySelector('h3, [data-testid="post-title"], a.title, .title');
+                        if (titleEl) title = titleEl.innerText || titleEl.textContent;
+                        
+                        // Extract content/selftext
+                        let content = '';
+                        const contentEl = post.querySelector('[data-testid="post-content"], .selftext, .md');
+                        if (contentEl) content = contentEl.innerText || contentEl.textContent;
+                        
+                        // Extract score
+                        let score = 0;
+                        const scoreEl = post.querySelector('.score, [score]');
+                        if (scoreEl) {
+                            const scoreText = scoreEl.innerText || scoreEl.getAttribute('score') || '0';
+                            score = parseInt(scoreText.replace(/[^0-9-]/g, '')) || 0;
+                        }
+                        
+                        // Extract URL
+                        let postUrl = '';
+                        const linkEl = post.querySelector('a[href*="/comments/"], [data-testid="post-title"] a');
+                        if (linkEl) {
+                            postUrl = linkEl.href;
+                            if (postUrl.startsWith('/')) postUrl = 'https://www.reddit.com' + postUrl;
+                        }
+                        
+                        posts.push({
+                            id: 'post_' + idx,
+                            title: title || 'No title',
+                            content: content || title || '',
+                            url: postUrl || window.location.href,
+                            score: score
+                        });
+                    });
+                    
+                    return posts;
+                }''')
+                
+                posts = post_data if post_data else []
+            else:
+                # Generic extraction for other sites
+                # Try to find post-like elements
+                elements = await page.query_selector_all('article, .post, .item, .entry, .result')
+                for elem in elements[:max_posts]:
+                    try:
+                        title = await elem.query_selector('h2, h3, .title')
+                        title_text = await title.inner_text() if title else ''
+                        content = await elem.inner_text()
+                        posts.append({
+                            'id': f'post_{len(posts)}',
+                            'title': title_text,
+                            'content': content[:500],
+                            'url': url,
+                            'score': 0
+                        })
+                    except:
+                        continue
+            
+            return posts
+        finally:
+            await page.close()
+    
+    async def scrape(self, url: str, max_posts: int = 10) -> List[Dict]:
+        """Alias for scrape_url for compatibility."""
+        return await self.scrape_url(url, max_posts)
+    
+    async def close(self):
+        """Close browser and save all extracted data."""
+        await self.save_to_model_directories()
+        if self.browser:
+            await self.browser.close()
+        if self.playwright:
+            await self.playwright.stop()
 
 
 # Test function

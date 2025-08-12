@@ -210,18 +210,60 @@ reddit:
       priority: ultra
       models: ["digital-human-enterprise", "avatar-enterprise"]
     
-    # Latest AI Models
-    - name: "r/GPT5"
-      url: "https://www.reddit.com/search/?q=gpt-5+tips+OR+gpt5+tricks+OR+\"gpt+5\"+tips+OR+\"gpt-5\"+tutorial+OR+\"gpt-5\"+prompt+OR+\"gpt-5\"+best+practices"
-      focus: "GPT-5 optimization, cost management, advanced features"
-      priority: critical
-      models: ["gpt-5", "gpt5"]
+    # Problem-Solution Pattern Searches (service-agnostic)
+    - name: "Credits Burned Problems"
+      url: "https://www.reddit.com/search/?q=\"credits\"+AND+(\"burned+through\"+OR+\"disappeared\"+OR+\"ate+my\"+OR+\"gone+in\")"
+      focus: "Credit consumption problems and solutions"
+      priority: ultra
+      models: ["problem-solution", "cost-optimization"]
     
-    - name: "r/Claude4"
-      url: "https://www.reddit.com/search/?q=claude+4+tips+OR+\"claude 4\"+optimization"
-      focus: "Claude 4 advanced features, cost optimization, prompt engineering"
+    - name: "Cost Per Unit Pain"
+      url: "https://www.reddit.com/search/?q=\"expensive\"+AND+(\"per+second\"+OR+\"per+minute\"+OR+\"per+generation\"+OR+\"per+image\"+OR+\"per+video\")"
+      focus: "Specific cost complaints with solutions"
+      priority: ultra
+      models: ["problem-solution", "pricing"]
+    
+    - name: "Settings Sweet Spot"
+      url: "https://www.reddit.com/search/?q=\"settings\"+AND+(\"finally+worked\"+OR+\"sweet+spot\"+OR+\"optimal\"+OR+\"perfect\")"
+      focus: "Optimal settings discoveries"
+      priority: ultra
+      models: ["problem-solution", "optimization"]
+    
+    - name: "Cost Reduction Success"
+      url: "https://www.reddit.com/search/?q=(\"reduced\"+AND+\"cost\")+AND+(\"AI\"+OR+\"GPT\"+OR+\"API\"+OR+\"model\"+OR+\"generation\")"
+      focus: "Successful AI cost reduction strategies"
+      priority: ultra
+      models: ["problem-solution", "savings"]
+    
+    - name: "Parameter Testing Results"
+      url: "https://www.reddit.com/search/?q=\"parameters\"+AND+(\"tested\"+OR+\"compared\"+OR+\"tried\")+AND+(\"best\"+OR+\"optimal\"+OR+\"recommended\")"
+      focus: "Parameter comparison results"
       priority: critical
-      models: ["claude-4", "claude4"]
+      models: ["problem-solution", "parameters"]
+    
+    - name: "Batch Processing Savings"
+      url: "https://www.reddit.com/search/?q=\"batch\"+AND+(\"cheaper\"+OR+\"saves\"+OR+\"reduced\")+AND+(\"API\"+OR+\"processing\")"
+      focus: "Batch processing optimizations"
+      priority: critical
+      models: ["problem-solution", "batch-optimization"]
+    
+    - name: "Resolution Cost Trade-offs"
+      url: "https://www.reddit.com/search/?q=\"resolution\"+AND+(\"cost\"+OR+\"credits\"+OR+\"pricing\"+OR+\"cheaper\")"
+      focus: "Resolution vs cost optimizations"
+      priority: critical
+      models: ["problem-solution", "quality-settings"]
+    
+    - name: "Quality Speed Balance"
+      url: "https://www.reddit.com/search/?q=\"quality\"+AND+(\"vs\"+OR+\"versus\")+AND+(\"speed\"+OR+\"cost\"+OR+\"credits\")"
+      focus: "Quality vs performance trade-offs"
+      priority: critical
+      models: ["problem-solution", "trade-offs"]
+    
+    - name: "Workaround Discoveries"
+      url: "https://www.reddit.com/search/?q=\"workaround\"+OR+\"trick\"+OR+\"hack\"+AND+(\"credits\"+OR+\"cheaper\"+OR+\"faster\")"
+      focus: "Creative workarounds and optimizations"
+      priority: ultra
+      models: ["problem-solution", "workarounds"]
     
     - name: "r/ClaudeAI"
       url: "https://www.reddit.com/r/ClaudeAI/"
@@ -273,10 +315,19 @@ github:
     - name: "Awesome Generative AI"
       url: "https://github.com/steven2358/awesome-generative-ai"
       raw_url: "https://raw.githubusercontent.com/steven2358/awesome-generative-ai/main/README.md"
-      focus: "Broader GenAI resources, models, frameworks"
+      focus: "Auto-updated directory of ALL GenAI services and tools"
       license: "CC0"
-      priority: medium
-      update_frequency: "biweekly"
+      priority: critical
+      update_frequency: "weekly"
+      models: ["all-services", "emerging"]
+    
+    - name: "Awesome AI Tools"
+      url: "https://github.com/mahseema/awesome-ai-tools"
+      raw_url: "https://raw.githubusercontent.com/mahseema/awesome-ai-tools/main/README.md"
+      focus: "Comprehensive list of AI services with pricing info"
+      priority: critical
+      update_frequency: "weekly"
+      models: ["all-services", "pricing"]
     
     - name: "Brex Prompt Engineering"
       url: "https://github.com/brexhq/prompt-engineering"
@@ -392,9 +443,18 @@ news_aggregators:
         top: "https://hacker-news.firebaseio.com/v0/topstories.json"
         item: "https://hacker-news.firebaseio.com/v0/item/{id}.json"
         search: "https://hn.algolia.com/api/v1/search"
-      focus: "Technical discussions, new tools"
-      priority: high
-      tags_to_track: ["gpt", "llm", "prompt", "ai", "genai"]
+      focus: "New AI service launches, pricing discussions, optimization tips"
+      priority: critical
+      search_patterns:
+        - "Show HN: AI"
+        - "Launch HN: AI"
+        - "AI pricing"
+        - "cheaper alternative to"
+        - "open source alternative"
+        - "AI credits"
+        - "prompt engineering"
+        - "optimization"
+      tags_to_track: ["gpt", "llm", "prompt", "ai", "genai", "api", "saas", "pricing"]
 
 # Scraping Configuration
 scraping_config:
@@ -410,22 +470,67 @@ content_filters:
   min_score: 10  # Minimum upvotes/score
   min_comments: 5  # Minimum engagement
   keywords:
-    include:
-      - "prompt"
-      - "parameter"
-      - "best practice"
-      - "tip"
-      - "trick"
-      - "optimal"
-      - "recommended"
-      - "setting"
-      - "config"
-      - "guide"
-      - "tutorial"
-      - "workflow"
+    # High-value discovery keywords (catches new services)
+    discovery:
+      - "just launched"
+      - "just released"
+      - "beta access"
+      - "early access"
+      - "waitlist"
+      - "free credits"
+      - "pricing announced"
+      - "new model"
+      - "v2"
+      - "v3"
+      - "updated pricing"
+    
+    # Cost optimization signals
+    cost_optimization:
+      - "credits optimization"
+      - "burn rate"
+      - "save money"
+      - "cheaper alternative"
+      - "free tier"
+      - "bulk pricing"
+      - "API cheaper"
+      - "subscription hack"
+      - "unlimited"
+      - "workaround"
+      - "cost comparison"
+    
+    # Technical optimization
+    technical:
+      - "prompt engineering"
+      - "parameters"
+      - "settings"
+      - "sweet spot"
+      - "quality vs speed"
+      - "batch processing"
+      - "rate limit"
+      - "optimization"
+      - "benchmark"
+      - "tested"
+      - "production"
+    
+    # Service-agnostic patterns
+    patterns:
+      - "vs"
+      - "compared to"
+      - "alternative to"
+      - "migrating from"
+      - "switching to"
+      - "better than"
+      - "review"
+      - "hands on"
+      - "real world"
+    
     exclude:
       - "meme"
       - "joke"
       - "shitpost"
       - "[deleted]"
       - "[removed]"
+      - "eli5"
+      - "explain like"
+      - "what is"
+      - "how to start"

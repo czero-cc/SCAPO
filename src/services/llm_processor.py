@@ -179,6 +179,11 @@ class UnifiedLLMProcessor(BaseLLMProcessor):
         for attempt in range(max_retries):
             try:
                 response = await acompletion(**kwargs)
+                
+                # Add delay for OpenRouter to respect rate limits
+                if self.provider == "openrouter":
+                    await asyncio.sleep(1.0)  # 1 second delay between OpenRouter requests
+                
                 return response.choices[0].message.content
                 
             except RateLimitError as e:
