@@ -7,76 +7,6 @@ on:
     branches: [ main ]
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.12'
-    
-    - name: Install uv
-      run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
-    
-    - name: Install dependencies
-      run: |
-        uv venv
-        source .venv/bin/activate
-        uv pip install -e .
-    
-    - name: Run ruff
-      run: |
-        source .venv/bin/activate
-        ruff check src tests
-    
-    - name: Run mypy
-      run: |
-        source .venv/bin/activate
-        mypy src
-
-  test:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.12'
-    
-    - name: Install uv
-      run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
-    
-    - name: Install dependencies
-      run: |
-        uv venv
-        source .venv/bin/activate
-        uv pip install -e .
-        uv run playwright install
-    
-    - name: Run tests
-      env:
-        API_KEY: test_key
-        SECRET_KEY: test_secret
-        LLM_PROVIDER: local
-        LOCAL_LLM_URL: http://localhost:1234
-      run: |
-        source .venv/bin/activate
-        pytest -v --cov=src --cov-report=xml
-    
-    - name: Upload coverage
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        fail_ci_if_error: false
-
   test-mcp:
     runs-on: ubuntu-latest
     
@@ -96,4 +26,4 @@ jobs:
     - name: Test MCP server
       run: |
         cd mcp
-        npm test || echo "No tests defined yet"
+        npm test

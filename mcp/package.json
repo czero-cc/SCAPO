@@ -8,7 +8,8 @@
     "scapo-mcp": "./index.js"
   },
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "node test.js"
   },
   "keywords": [
     "mcp",
