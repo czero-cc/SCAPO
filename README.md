@@ -210,6 +210,10 @@ LLM_PROVIDER=openrouter
 OPENROUTER_API_KEY=your_key
 OPENROUTER_MODEL=your_favorite_model
 
+# Local LLM Context (Important for Ollama/LM Studio!)
+LOCAL_LLM_MAX_CONTEXT=8192              # Your model's context size in tokens
+LOCAL_LLM_OPTIMAL_CHUNK=2048            # Optimal batch size (typically 1/4 of max)
+
 # Extraction Quality
 LLM_QUALITY_THRESHOLD=0.6               # Min quality (0.0-1.0)
 
@@ -218,10 +222,13 @@ SCRAPING_DELAY_SECONDS=2                # Be respectful
 MAX_POSTS_PER_SCRAPE=100               # Limit per source
 ```
 
-### Recommended Settings for Quality Extraction
-- **Posts per query**: 15-20 minimum (more posts = better tips)
-- **Queries per service**: 5-10 different search types
-- **Batch size**: 3 services at a time for focused extraction
+### Why --limit Matters (More Posts = Better Tips)
+```bash
+--limit 5   # ❌ Often finds nothing (too few samples)
+--limit 15  # ✅ Good baseline (finds common issues)  
+--limit 25  # 🎯 Optimal (uncovers hidden gems & edge cases)
+```
+so, hand-wavy breakdown: With 5 posts, extraction success ~20%. With 20+ posts, success jumps to ~80%.
 
 ## 🎨 Interactive TUI
 

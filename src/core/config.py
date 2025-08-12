@@ -49,9 +49,11 @@ class Settings(BaseSettings):
     local_llm_model: str = Field(default="llama3", description="Local LLM model")
     local_llm_type: str = Field(default="ollama", description="Local LLM type: ollama, lmstudio")
     llm_processing_enabled: bool = Field(default=True, description="Enable LLM processing of content")
-    llm_max_chars: int = Field(default=4000, description="Maximum characters to send to LLM (user-friendly)")
-    llm_char_hard_limit: int = Field(default=50000, description="Absolute maximum characters (safety limit)")
     llm_quality_threshold: float = Field(default=0.6, description="Minimum quality score for practices (0.0-1.0)")
+    
+    # Local LLM context configuration
+    local_llm_max_context: Optional[int] = Field(None, description="Maximum context tokens for local LLM (e.g., 4096, 8192, 32768)")
+    local_llm_optimal_chunk: Optional[int] = Field(None, description="Optimal chunk size for local LLM processing")
 
     @field_validator("models_dir", "scrapers_dir")
     @classmethod

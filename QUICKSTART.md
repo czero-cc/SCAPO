@@ -32,6 +32,9 @@ LLM_PROVIDER=local
 LOCAL_LLM_TYPE=ollama
 LOCAL_LLM_URL=http://localhost:11434
 LOCAL_LLM_MODEL=model_alias
+# Important: Set your model's context size!
+LOCAL_LLM_MAX_CONTEXT=8192  # e.g., 4096, 8192, 32768
+LOCAL_LLM_OPTIMAL_CHUNK=2048  # Typically 1/4 of max
 ```
 #### Option C: LM Studio (Local)
 1. Install [LM Studio](https://lmstudio.ai/)
@@ -42,6 +45,9 @@ LOCAL_LLM_MODEL=model_alias
 LLM_PROVIDER=local
 LOCAL_LLM_TYPE=lmstudio
 LOCAL_LLM_URL=http://localhost:1234
+# Important: Set your model's context size!
+LOCAL_LLM_MAX_CONTEXT=8192  # Check your model's specs
+LOCAL_LLM_OPTIMAL_CHUNK=2048  # Typically 1/4 of max
 ```
 
 ### 3. Choose Your Approach
@@ -115,19 +121,19 @@ models/
 │       └── parameters.json     # Recommended settings
 ```
 
-## ⚙️ Optimization Tips
+## ⚙️ The --limit flag
 
-### For Better Extraction:
 ```bash
-# More posts = better tips (15-20 minimum)
-scapo scrape targeted --service "HeyGen" --limit 20
+# ❌ Too few posts = no useful tips found
+scapo scrape targeted --service "HeyGen" --limit 5     # ~20% success rate
 
-# Multiple search types
-scapo scrape targeted --service "Midjourney" --max-queries 10
+# ✅ Sweet spot = reliable extraction  
+scapo scrape targeted --service "HeyGen" --limit 20    # ~80% success rate
 
-# Process similar services together
-scapo scrape batch --category audio --limit 15
+# 🎯 Maximum insights = comprehensive coverage
+scapo scrape targeted --service "HeyGen" --limit 30    # Finds rare edge cases
 ```
+**Why it matters:** LLMs need multiple examples to identify patterns. More posts = higher chance of finding specific pricing, bugs, and workarounds.
 
 ### Adjust Quality Threshold:
 ```bash

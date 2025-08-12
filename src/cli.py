@@ -170,9 +170,8 @@ def scrape():
 @click.option("--sources", "-s", multiple=True, 
               help="Sources to scrape (e.g., reddit:LocalLLaMA)")
 @click.option("--limit", "-l", default=10, help="Maximum posts per source")
-@click.option("--llm-max-chars", "-c", type=int, help="Max characters for LLM processing")
 @click.option("--interactive", "-i", is_flag=True, help="Interactive source selection")
-def run_scraper(sources, limit, llm_max_chars, interactive):
+def run_scraper(sources, limit, interactive):
     """Run intelligent scraper with enhanced UI."""
     show_banner()
     
@@ -223,8 +222,7 @@ def run_scraper(sources, limit, llm_max_chars, interactive):
         console.print(Panel(
             f"[bold]Scraping Plan[/bold]\n\n"
             f"Sources:\n{source_text}\n\n"
-            f"Post limit: [cyan]{limit}[/cyan] per source\n"
-            f"LLM processing: [cyan]{'Limited' if llm_max_chars else 'Full'}[/cyan]",
+            f"Post limit: [cyan]{limit}[/cyan] per source",
             border_style="blue"
         ))
         
@@ -251,7 +249,6 @@ def run_scraper(sources, limit, llm_max_chars, interactive):
             result = await service.run_scrapers(
                 sources=sources_list,
                 max_posts_per_source=limit,
-                llm_max_chars=llm_max_chars,
             )
             
             progress.update(task, completed=100)

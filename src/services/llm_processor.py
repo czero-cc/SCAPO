@@ -8,6 +8,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 import litellm
 from litellm import acompletion, RateLimitError, AuthenticationError
+import tiktoken
 
 from src.core.logging import get_logger
 from src.core.config import settings
@@ -36,9 +37,15 @@ class ProcessedPractice(BaseModel):
 class BaseLLMProcessor(ABC):
     """Base class for LLM processors using LiteLLM."""
     
-    def __init__(self, max_chars: Optional[int] = None):
-        self.max_chars = max_chars or settings.llm_max_chars
+    # Default context limit if we can't determine from API or env
+    DEFAULT_CONTEXT_LIMIT = 4096  # Conservative default
+    
+    def __init__(self, model_name: str = None):
+        self.model_name = model_name or "gpt-3.5-turbo"
         self.logger = logger
+        self.encoder = self._get_encoder(self.model_name)
+        self.context_limit = self._get_context_limit()
+        self.usable_tokens = self._calculate_usable_tokens()
         
     @abstractmethod
     async def process_content(self, content: str, content_type: str) -> List[ProcessedPractice]:
@@ -50,23 +57,93 @@ class BaseLLMProcessor(ABC):
         """Process a raw prompt and return the response as a string."""
         pass
     
-    def truncate_to_limit(self, text: str) -> Tuple[str, bool]:
-        """Truncate text to character limit.
+    def _get_encoder(self, model_name: str):
+        """Get appropriate tokenizer for the model"""
+        try:
+            # Try to get model-specific encoder
+            if 'gpt-4' in model_name.lower():
+                return tiktoken.encoding_for_model('gpt-4')
+            elif 'gpt-3.5' in model_name.lower():
+                return tiktoken.encoding_for_model('gpt-3.5-turbo')
+            else:
+                # Default to cl100k_base for most modern models
+                return tiktoken.get_encoding('cl100k_base')
+        except Exception as e:
+            self.logger.warning(f"Could not get specific encoder for {model_name}: {e}")
+            return tiktoken.get_encoding('cl100k_base')
+    
+    def _get_context_limit(self) -> int:
+        """Get context limit for the model"""
+        # Try to get from OpenRouter API first (if available)
+        try:
+            from src.services.openrouter_context import OpenRouterContextManager
+            api_key = settings.openrouter_api_key
+            if api_key and settings.llm_provider == "openrouter":
+                manager = OpenRouterContextManager(api_key=api_key)
+                manager.load_cache()
+                context = manager.get_context_length(self.model_name)
+                if context:
+                    self.logger.info(f"Got context limit from OpenRouter: {context}")
+                    return context
+        except Exception as e:
+            self.logger.debug(f"Could not get context from OpenRouter: {e}")
+        
+        # For local models, check environment variable
+        if settings.llm_provider == "local" and settings.local_llm_max_context:
+            self.logger.info(f"Using LOCAL_LLM_MAX_CONTEXT: {settings.local_llm_max_context}")
+            return settings.local_llm_max_context
+        
+        # Fall back to conservative default
+        self.logger.warning(f"Using default context limit: {self.DEFAULT_CONTEXT_LIMIT}")
+        return self.DEFAULT_CONTEXT_LIMIT
+    
+    def _calculate_usable_tokens(self) -> int:
+        """Calculate tokens available for actual content"""
+        # Reserve tokens for system prompt and response
+        reserved_tokens = 1500  # Conservative reservation
+        usable = self.context_limit - reserved_tokens
+        
+        if usable < 1000:
+            self.logger.warning(f"Very limited context space: {usable} tokens")
+            return max(500, usable)  # Minimum 500 tokens for content
+        
+        return usable
+    
+    def count_tokens(self, text: str) -> int:
+        """Count tokens in text"""
+        try:
+            return len(self.encoder.encode(text))
+        except Exception as e:
+            self.logger.warning(f"Token counting failed, using approximation: {e}")
+            # Fallback: approximate 1 token per 4 characters
+            return len(text) // 4
+    
+    def truncate_to_token_limit(self, text: str) -> Tuple[str, bool]:
+        """Truncate text to fit within token limit.
         
         Returns:
             Tuple of (truncated_text, was_truncated)
         """
-        # Apply hard limit first
-        if len(text) > settings.llm_char_hard_limit:
-            text = text[:settings.llm_char_hard_limit]
-            self.logger.warning(f"Applied hard limit of {settings.llm_char_hard_limit} chars")
+        token_count = self.count_tokens(text)
         
-        # Apply user-specified limit
-        if len(text) > self.max_chars:
-            self.logger.info(f"Truncating content from {len(text)} to {self.max_chars} chars")
-            return text[:self.max_chars] + "\n\n[Content truncated...]", True
+        if token_count <= self.usable_tokens:
+            return text, False
         
-        return text, False
+        # Binary search to find the right truncation point
+        left, right = 0, len(text)
+        best_fit = ""
+        
+        while left < right:
+            mid = (left + right) // 2
+            truncated = text[:mid]
+            if self.count_tokens(truncated) <= self.usable_tokens:
+                best_fit = truncated
+                left = mid + 1
+            else:
+                right = mid
+        
+        self.logger.info(f"Truncated content from {token_count} to {self.count_tokens(best_fit)} tokens")
+        return best_fit + "\n\n[Content truncated...]", True
     
     def create_extraction_prompt(self, content: str, content_type: str) -> str:
         """Create a prompt for extracting practices from content."""
@@ -107,13 +184,14 @@ class UnifiedLLMProcessor(BaseLLMProcessor):
                  provider: str = None,
                  model: str = None,
                  api_key: str = None,
-                 base_url: str = None,
-                 max_chars: Optional[int] = None):
-        super().__init__(max_chars)
-        
-        # Set up provider-specific configuration
+                 base_url: str = None):
+        # Set up provider-specific configuration first
         self.provider = provider or settings.llm_provider
-        self.model_name = model or (settings.openrouter_model if self.provider == "openrouter" else settings.local_llm_model)
+        model_name = model or (settings.openrouter_model if self.provider == "openrouter" else settings.local_llm_model)
+        super().__init__(model_name)
+        
+        # Store the full model name for litellm
+        self.model_name = model_name
         
         # Initialize smart processors
         self.capabilities = LLMCapabilities.detect_capabilities(self.provider, self.model_name)
@@ -222,10 +300,10 @@ class UnifiedLLMProcessor(BaseLLMProcessor):
                 
         except Exception as e:
             self.logger.error(f"Smart processing failed, falling back to basic truncation: {e}")
-            # Fallback to basic truncation
-            content, was_truncated = self.truncate_to_limit(content)
+            # Fallback to token-based truncation
+            content, was_truncated = self.truncate_to_token_limit(content)
             if was_truncated:
-                self.logger.info(f"Content truncated to {self.max_chars} characters for {content_type}")
+                self.logger.info(f"Content truncated to fit token limit for {content_type}")
             
             prompt = self.create_extraction_prompt(content, content_type)
             practices = await self._extract_practices_from_chunk(prompt, content_type)

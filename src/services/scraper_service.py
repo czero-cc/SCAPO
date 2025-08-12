@@ -62,7 +62,6 @@ class ScraperService:
         self,
         sources: List[str] = None,
         max_posts_per_source: int = 10,
-        llm_max_chars: Optional[int] = None,
     ) -> Dict[str, Any]:
         """Run intelligent scraper on specified sources."""
         
@@ -70,10 +69,6 @@ class ScraperService:
         if sources is None:
             sources = self._get_default_sources()
         
-        # Override LLM max chars if provided
-        if llm_max_chars is not None:
-            settings.llm_max_chars = llm_max_chars
-            logger.info(f"Using custom LLM character limit: {llm_max_chars}")
         
         status = self.scraper_status["intelligent"]
         
