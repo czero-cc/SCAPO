@@ -23,11 +23,7 @@ Ever burned through credits in minutes? Searching Reddit for that one optimizati
 
 ![Classic AI Frustration](assets/guy_freaking_out2.png)
 
-**SCAPO** extracts **specific, actionable optimization techniques** from Reddit about AI services - not generic "write better prompts" advice, but real techniques like:
-- "Use HeyGen API v1 for unlimited ElevenLabs access at $10/month"
-- "GitHub Copilot has a 300 request/day limit"
-- "Avoid slowing ElevenLabs speech >5% to prevent stutters"
-- "Set temperature=0.7 for wan2.2 video generation"
+**SCAPO** extracts **specific, actionable optimization techniques** from Reddit about AI services - not generic "write better prompts" advice, but real discussions.
 
 ## ✨ Two Approaches
 
