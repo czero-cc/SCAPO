@@ -1,7 +1,7 @@
 {
-  "service": "Runway",
-  "category": "video",
-  "last_updated": "2025-08-12T20:10:15.923183",
+  "service": "Cursor",
+  "category": "code",
+  "last_updated": "2025-08-12T20:05:11.499882",
   "extraction_timestamp": null,
   "data_sources": [
     "Reddit API",

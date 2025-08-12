@@ -1,0 +1,13 @@
+{
+  "service": "Play.ht",
+  "category": "text",
+  "last_updated": "2025-08-12T20:09:36.214880",
+  "extraction_timestamp": "2025-08-12T20:09:36.064867",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 28,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

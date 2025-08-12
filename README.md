@@ -87,6 +87,9 @@ scapo scrape targeted --service "Midjourney" --limit 20
 
 # Or batch process multiple services
 scapo scrape batch --category video --limit 15
+
+# Process ALL priority services one by one (no limits!)
+scapo scrape all --priority ultra --limit 20
 ```
 
 #### Option B: Legacy Sources

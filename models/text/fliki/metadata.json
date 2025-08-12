@@ -1,13 +1,13 @@
 {
-  "service": "Character.AI",
-  "category": "multimodal",
-  "last_updated": "2025-08-11T22:13:29.427007",
+  "service": "Fliki",
+  "category": "text",
+  "last_updated": "2025-08-12T20:07:02.281408",
   "extraction_timestamp": null,
   "data_sources": [
     "Reddit API",
     "Community discussions"
   ],
-  "posts_analyzed": 75,
+  "posts_analyzed": 23,
   "confidence": "medium",
   "version": "1.0.0"
 }

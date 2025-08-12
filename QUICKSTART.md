@@ -60,13 +60,17 @@ scapo scrape targeted --service "GitHub Copilot" --limit 20
 
 # Or batch process by category
 scapo scrape batch --category video --limit 15
-scapo scrape batch --max-services 3 --priority ultra
+
+# Process ALL priority services one by one
+scapo scrape all --priority ultra --limit 20    # Process all ultra priority services
+scapo scrape all --dry-run                      # Preview what will be processed
 ```
 
 ### Key Commands:
-- `discover --update` - Find services from GitHub Awesome lists
+- `discover --update` - Find services from GitHub Awesome lists  
 - `targeted --service NAME` - Extract tips for one service
-- `batch --category TYPE` - Process multiple services
+- `batch --category TYPE` - Process multiple services (limited)
+- `all --priority LEVEL` - Process ALL services one by one
 - `update-status` - See what needs updating
 
 ## 📚 Approach 2: Legacy Sources

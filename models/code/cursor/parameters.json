@@ -1,0 +1,15 @@
+{
+  "service": "Cursor",
+  "last_updated": "2025-08-12T20:05:11.435746",
+  "recommended_settings": {},
+  "cost_optimization": {
+    "tip_0": "API costs have decreased in recent months; prompt caching further lowers costs.",
+    "tip_1": "Pro plan indexing limit: 100,000 files",
+    "pricing": "Monthly subscription remains $20.",
+    "tip_3": "deepseekcoder\u2011v2 is cheaper than other models."
+  },
+  "sources": [
+    "Reddit community",
+    "User reports"
+  ]
+}

@@ -56,10 +56,16 @@ class BatchLLMProcessor:
     def _get_dynamic_context_limit(self, model_name: str) -> Optional[int]:
         """Try to get context limit from OpenRouter API"""
         try:
-            # Only try if we have an API key
-            if os.getenv("OPENROUTER_API_KEY"):
+            # Try to get API key from settings or environment
+            from src.core.config import Settings
+            settings = Settings()
+            api_key = settings.openrouter_api_key or os.getenv("OPENROUTER_API_KEY")
+            
+            if api_key:
                 from src.services.openrouter_context import OpenRouterContextManager
-                manager = OpenRouterContextManager()
+                manager = OpenRouterContextManager(api_key=api_key)
+                # Load from cache first
+                manager.load_cache()
                 context = manager.get_context_length(model_name)
                 if context:
                     logger.info(f"Got context limit from OpenRouter: {context}")

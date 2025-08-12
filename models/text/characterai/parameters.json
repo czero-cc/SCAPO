@@ -1,0 +1,14 @@
+{
+  "service": "Character.AI",
+  "last_updated": "2025-08-12T20:04:44.782084",
+  "recommended_settings": {
+    "setting_0": {
+      "description": "Enable 'Goro' in the experimental settings under the Style tab"
+    }
+  },
+  "cost_optimization": {},
+  "sources": [
+    "Reddit community",
+    "User reports"
+  ]
+}
