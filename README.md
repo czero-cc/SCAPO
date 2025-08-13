@@ -26,7 +26,7 @@
 
 Ever burned through credits in minutes? Searching Reddit for that one optimization tip? Getting generic advice when you need specific settings?
 
-![Classic AI Frustration](assets/guy_freaking_out2.png)
+![Scapo Running](assets/promo_scapo.gif)
 
 **SCAPO** extracts **specific, actionable optimization techniques** from Reddit about AI services - not generic "write better prompts" advice, but real discussions.
 
