@@ -6,18 +6,23 @@
 
 **The Community-Driven Knowledge Base for AI Service Optimization**
 
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Made with Love](https://img.shields.io/badge/Made%20with-❤️-red.svg)](https://github.com/czero-cc/scapo)
-[![No API Keys](https://img.shields.io/badge/API%20Keys-Not%20Required-brightgreen.svg)]()
+[![No API Keys](https://img.shields.io/badge/API%20Keys-Not%20Required-brightgreen.svg)]()<br/>
 [![LLM Powered](https://img.shields.io/badge/LLM-Powered-blue.svg)]()
 [![Browser Magic](https://img.shields.io/badge/Scraping-Browser%20Based-orange.svg)]()
 [![MCP Ready](https://img.shields.io/badge/Claude-MCP%20Ready-purple.svg)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 ### 🎯 Real optimization tips from real users for AI services
 
 </div>
 
 ## 🤔 What is SCAPO?
+
+**Keywords**: AI cost optimization, prompt engineering, LLM tips, OpenAI, Claude, Anthropic, Midjourney, Stable Diffusion, ElevenLabs, GitHub Copilot, reduce AI costs, AI service best practices, Reddit scraper, community knowledge base
 
 Ever burned through credits in minutes? Searching Reddit for that one optimization tip? Getting generic advice when you need specific settings?
 
@@ -293,7 +298,7 @@ Help us build the community knowledge base for AI service optimization!
 - [Configuration Guide](docs/CONFIGURATION.md)
 - [Quick Start Guide](QUICKSTART.md) 
 - [Contributing Guide](CONTRIBUTING.md)
-- [Add New Source Tutorial](docs/ADD_NEW_SOURCE.md)
+- [Add New Source Tutorial (legacy method)](docs/ADD_NEW_SOURCE.md)
 
 ## 📜 License
 
@@ -304,9 +309,10 @@ Built as part of the CZero Engine project to improve AI application development.
 ## 🙏 Acknowledgments
 
 - Reddit communities for sharing real experiences
-- OpenRouter for accessible AI APIs
+- [OpenRouter](https://openrouter.ai/) for accessible AI APIs
 - Coffee ☕ for making this possible
-- Ollama and LMstudio for awesome local LLM experience
+- [Ollama](https://ollama.com/) and [LMstudio](https://lmstudio.ai/) for awesome local LLM experience
+- [Awesome Generative AI](https://github.com/steven2358/awesome-generative-ai) & [Awesome AI Tools](https://github.com/mahseema/awesome-ai-tools) for service discovery
 - All opensource contributors in this AI space
 
 ---

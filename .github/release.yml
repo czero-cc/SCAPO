@@ -1,0 +1,34 @@
+# GitHub Release configuration
+# This helps auto-generate better release notes
+
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+    authors:
+      - dependabot
+  categories:
+    - title: 🚀 New Features
+      labels:
+        - enhancement
+        - feature
+    - title: 🐛 Bug Fixes
+      labels:
+        - bug
+        - fix
+    - title: 📚 Documentation
+      labels:
+        - documentation
+        - docs
+    - title: 🔧 Maintenance
+      labels:
+        - chore
+        - maintenance
+        - dependencies
+    - title: 🎉 New AI Services
+      labels:
+        - new-service
+        - model
+    - title: Other Changes
+      labels:
+        - "*"

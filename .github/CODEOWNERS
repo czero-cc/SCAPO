@@ -1,0 +1,24 @@
+# CODEOWNERS file helps GitHub route pull requests to the right reviewers
+# This also shows up in GitHub's interface showing who maintains what
+
+# Global owners
+* @czero-cc
+
+# Documentation
+*.md @czero-cc
+/docs/ @czero-cc
+
+# Core functionality
+/src/core/ @czero-cc
+/src/scrapers/ @czero-cc
+/src/services/ @czero-cc
+
+# Models and data
+/models/ @czero-cc
+/data/ @czero-cc
+
+# MCP Server
+/mcp/ @czero-cc
+
+# CI/CD
+/.github/ @czero-cc

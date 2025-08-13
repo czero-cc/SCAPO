@@ -1,0 +1,28 @@
+# This CITATION file helps researchers cite your project properly
+cff-version: 1.2.0
+title: 'SCAPO: Stay Calm and Prompt On'
+message: 'If you use this software, please cite it as below.'
+type: software
+authors:
+  - name: "CZero Engine Team"
+    email: "info@czero.cc"
+    affiliation: "Fiefworks, Inc."
+repository-code: 'https://github.com/czero-cc/scapo'
+url: 'https://czero.cc'
+abstract: 'A community-driven knowledge base that automatically extracts specific AI service optimization techniques from Reddit discussions, providing actionable tips for cost reduction and performance improvement.'
+keywords:
+  - prompt-engineering
+  - ai-optimization
+  - llm-tools
+  - cost-optimization
+  - reddit-scraper
+  - ai-tips
+  - generative-ai
+  - mcp-server
+  - openai
+  - anthropic
+  - midjourney
+  - stable-diffusion
+license: MIT
+version: 0.1.0
+date-released: '2024-08-01'
