@@ -2,7 +2,7 @@
 pydantic==2.9.0
 pydantic-settings==2.5.0
 httpx==0.27.0
-litellm==1.56.2
+litellm==1.75.5.post1
 
 # Scraping
 beautifulsoup4==4.13.4
