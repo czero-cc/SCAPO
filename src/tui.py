@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 from textual.app import App, ComposeResult
-from textual.containers import Container, Vertical, Horizontal
+from textual.containers import Container, Vertical, Horizontal, VerticalScroll
 from textual.widgets import (
     Header, Footer, Tree, Static, Markdown, DataTable, 
     Button, Input, Label, Select
@@ -109,8 +109,17 @@ class ModelExplorer(App):
     }
 
     /* Markdown styling */
-    Markdown {
+    VerticalScroll#content-viewer, Markdown {
         background: $surface;
+        color: $text;
+        overflow-y: scroll;
+        overflow-x: scroll;
+        scrollbar-gutter: stable;
+        scrollbar-size: 1 1;
+    }
+
+    VerticalScroll#content-viewer:focus, Markdown:focus {
+        background: $accent;
         color: $text;
     }
 
@@ -172,11 +181,15 @@ class ModelExplorer(App):
         self.current_model_path: Optional[Path] = None
         self.current_file_path: Optional[Path] = None
     
-    def get_welcome_message(self) -> str:
+    def get_welcome_message(self, focus: str = "tree") -> str:
         """Generate welcome message with command recap."""
-        return """🧘 SCAPO Model Explorer
-Navigation: ↑/↓ - Navigate tree, Enter - Select item, Space - Expand
-Commands: q - Quit, h - Help, c - Copy content, o - Open location
+        focus_status = "Tree" if focus == "tree" else "Content"
+        
+        return f"""SCAPO Model Explorer
+
+Status: Ready | Focus: {focus_status} | Viewer: Active
+
+Navigation: ↑/↓ Navigate | Enter Select | Space Expand | Tab Cycle | q Quit | h Help
 
 Select a model from the tree to view content."""
         
@@ -189,8 +202,9 @@ Select a model from the tree to view content."""
                 yield Tree("📚 Models", id="model-tree")
                 
             with Vertical(id="content"):
-                yield Static(self.get_welcome_message(), id="welcome")
-                yield Markdown(id="content-viewer")
+                yield Static(self.get_welcome_message("tree"), id="welcome")
+                with VerticalScroll(id="content-viewer"):
+                    yield Markdown(id="md-view")
                 yield DataTable(id="json-table")
                 
         yield Static("q Quit  h Help  space Toggle Expand  c Copy Content  o Open Location", id="footer", classes="scapo-footer")
@@ -200,6 +214,10 @@ Select a model from the tree to view content."""
         self.title = "SCAPO"
         self.sub_title = "Stay Calm and Prompt On - Model Explorer"
         self.load_model_tree()
+        
+        # Ensure content viewer container exists
+        _ = self.query_one("#content-viewer", VerticalScroll)
+        
         # Focus the tree for better navigation
         tree = self.query_one("#model-tree", Tree)
         tree.focus()
@@ -325,7 +343,8 @@ Select a model from the tree to view content."""
             
             # Add file info header
             header = f"# 📄 {file_path.name}\n\n*Press 'o' to open location in Finder*\n\n---\n\n"
-            viewer.update(header + content)
+            md = self.query_one("#md-view", Markdown)
+            md.update(header + content)
             
         except Exception as e:
             self.show_error(f"Error loading markdown: {e}")
@@ -343,7 +362,8 @@ Select a model from the tree to view content."""
             
             # Add file info header
             header = f"# 📄 {file_path.name}\n\n*Press 'o' to open location in Finder*\n\n---\n\n"
-            viewer.update(header + f"```\n{content}\n```")
+            md = self.query_one("#md-view", Markdown)
+            md.update(header + f"```\n{content}\n```")
             
         except Exception as e:
             self.show_error(f"Error loading file: {e}")
@@ -373,14 +393,16 @@ Select a model from the tree to view content."""
                 icon = self.get_file_icon(file_path.name)
                 info += f"- {icon} **{file_path.name}** ({size:,} bytes)\n"
         
-        viewer.update(info)
+        md = self.query_one("#md-view", Markdown)
+        md.update(info)
     
     def show_error(self, message: str) -> None:
         """Show error message."""
         self.query_one("#json-table").display = False
         viewer = self.query_one("#content-viewer")
         viewer.display = True
-        viewer.update(f"# Error\n\n{message}")
+        md = self.query_one("#md-view", Markdown)
+        md.update(f"# Error\n\n{message}")
     
     def action_quit(self) -> None:
         """Quit the app."""
@@ -415,7 +437,8 @@ Select a model from the tree to view content."""
         self.query_one("#json-table").display = False
         viewer = self.query_one("#content-viewer")
         viewer.display = True
-        viewer.update(help_text)
+        md = self.query_one("#md-view", Markdown)
+        md.update(help_text)
     
 
     
@@ -462,7 +485,7 @@ Select a model from the tree to view content."""
                 
             else:
                 # Copy welcome message
-                welcome_text = self.get_welcome_message()
+                welcome_text = self.get_welcome_message("tree")
                 pyperclip.copy(welcome_text)
                 self.notify("Copied welcome message to clipboard", severity="information")
                 
