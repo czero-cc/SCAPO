@@ -1,4 +1,3 @@
-Output ../assets/tui.gif
 Output ../assets/tui.mp4
 
 Require bash
