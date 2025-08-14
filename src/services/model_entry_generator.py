@@ -53,27 +53,11 @@ class ModelEntryGenerator:
         content = f"# {service_name} Prompting Guide\n\n"
         content += f"*Last updated: {datetime.now().strftime('%Y-%m-%d')}*\n\n"
         
-        # Filter tips for actual prompting/usage advice
-        usage_tips = []
-        technical_tips = []
-        
-        for tip in tips:
-            tip_lower = tip.lower()
-            # Categorize tips
-            if any(keyword in tip_lower for keyword in ['tag', 'break', 'pause', 'speech', 'voice', 'prompt', 'format']):
-                technical_tips.append(tip)
-            elif any(keyword in tip_lower for keyword in ['use', 'create', 'need', 'minute', 'audio', 'model']):
-                usage_tips.append(tip)
-        
-        if technical_tips:
-            content += "## Technical Tips\n\n"
-            for tip in technical_tips:
-                content += f"- {tip}\n"
-            content += "\n"
-        
-        if usage_tips:
-            content += "## Usage Tips\n\n"
-            for tip in usage_tips:
+        # Don't filter tips - include all extracted tips like the current pipeline does
+        # The LLM already filtered for relevance during extraction
+        if tips:
+            content += "## Tips & Techniques\n\n"
+            for tip in tips:
                 content += f"- {tip}\n"
             content += "\n"
         
@@ -84,7 +68,7 @@ class ModelEntryGenerator:
             content += "\n"
         
         # Only add if we have actual content
-        if not (technical_tips or usage_tips or settings):
+        if not (tips or settings):
             content += "*No specific prompting tips available yet. Check back for updates.*\n\n"
         
         content += "## Sources\n\n"
@@ -193,45 +177,27 @@ class ModelEntryGenerator:
         content = f"# {service_name} - Cost Optimization Guide\n\n"
         content += f"*Last updated: {datetime.now().strftime('%Y-%m-%d')}*\n\n"
         
-        # Extract money-saving tips
-        money_tips = []
-        pricing_info = []
-        workarounds = []
-        
-        for info in cost_info:
-            if '$' in info or 'price' in info.lower() or 'cost' in info.lower():
-                pricing_info.append(info)
-            else:
-                money_tips.append(info)
-        
-        for tip in tips:
-            tip_lower = tip.lower()
-            if any(keyword in tip_lower for keyword in ['free', 'trial', 'unlimited', 'save', 'cheap', 'alternative']):
-                if 'third-party' in tip_lower or 'api' in tip_lower:
-                    workarounds.append(tip)
-                else:
-                    money_tips.append(tip)
-        
-        if pricing_info:
-            content += "## Pricing Information\n\n"
-            for info in pricing_info:
+        # Include all cost info without filtering - LLM already filtered
+        if cost_info:
+            content += "## Cost & Pricing Information\n\n"
+            for info in cost_info:
                 content += f"- {info}\n"
             content += "\n"
         
+        # Include money-saving tips from the tips list
+        money_tips = [tip for tip in tips if any(
+            keyword in tip.lower() for keyword in 
+            ['save', 'cheap', 'free', 'cost', 'price', 'credit', 'limit', 'tier', 'plan']
+        )]
+        
         if money_tips:
             content += "## Money-Saving Tips\n\n"
-            for tip in set(money_tips):  # Deduplicate
+            for tip in money_tips:
                 content += f"- {tip}\n"
             content += "\n"
         
-        if workarounds:
-            content += "## Alternative Access Methods\n\n"
-            for workaround in workarounds:
-                content += f"- {workaround}\n"
-            content += "\n"
-        
-        if not (pricing_info or money_tips or workarounds):
-            content += "*No cost optimization tips available yet.*\n\n"
+        if not (cost_info or money_tips):
+            content += "*No cost optimization information available yet.*\n\n"
         
         return content
     
@@ -366,12 +332,29 @@ class ModelEntryGenerator:
                 merged_by_service[service]['cost_info'].extend(result.get('cost_info', []))
                 merged_by_service[service]['batch_size'] += result.get('batch_size', 0)
             
-            # Deduplicate
+            # Deduplicate and normalize
             for service, data in merged_by_service.items():
+                # Simple string lists can use set
                 data['tips'] = list(set(data['tips']))
                 data['problems'] = list(set(data['problems']))
-                data['settings'] = list(set(data['settings']))
                 data['cost_info'] = list(set(data['cost_info']))
+                
+                # Settings might contain dicts from local LLMs, need special handling
+                normalized_settings = []
+                seen_settings = set()
+                for setting in data['settings']:
+                    if isinstance(setting, dict):
+                        # Convert dict to string representation
+                        for key, value in setting.items():
+                            setting_str = f"{key} = {value}"
+                            if setting_str not in seen_settings:
+                                normalized_settings.append(setting_str)
+                                seen_settings.add(setting_str)
+                    elif isinstance(setting, str):
+                        if setting not in seen_settings:
+                            normalized_settings.append(setting)
+                            seen_settings.add(setting)
+                data['settings'] = normalized_settings
             
             # Create entries
             for service, extraction in merged_by_service.items():

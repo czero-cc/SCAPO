@@ -47,6 +47,7 @@ class BatchLLMProcessor:
         
         logger.info(f"Initialized BatchLLMProcessor for {model_name}")
         logger.info(f"Context limit: {self.context_limit}, Usable tokens: {self.usable_tokens}")
+        logger.info("NOTE: Quality filtering (LLM_QUALITY_THRESHOLD) is NOT applied in batch processing - mixed quality content expected")
     
     def _get_dynamic_context_limit(self, model_name: str) -> Optional[int]:
         """Try to get context limit from OpenRouter API"""
@@ -118,13 +119,18 @@ class BatchLLMProcessor:
             })
         
         return f"""Extract SPECIFIC, ACTIONABLE tips about {service_name} from these Reddit posts. 
-IGNORE generic advice like "be respectful" or "read the docs".
-ONLY extract concrete, technical, specific information that saves money or improves performance.
+
+CRITICAL RULES:
+1. ONLY extract information DIRECTLY RELATED to {service_name}
+2. IGNORE any content about unrelated topics (e.g., 3D printing, cooking, gaming, etc.)
+3. IGNORE generic advice like "be respectful" or "read the docs"
+4. Each extracted item MUST mention {service_name} or be clearly about it
+5. Include the FULL context - don't truncate mid-sentence
 
 Posts:
 {json.dumps(simplified_posts, indent=2)}
 
-Look for SPECIFIC mentions of:
+Look for SPECIFIC mentions about {service_name}:
 - Exact pricing, tiers, limits (e.g., "$10/month", "300 requests/day", "10k character limit")
 - Hidden features or workarounds (e.g., "use API v2 for unlimited", "add this flag to bypass limit")
 - Specific parameter values (e.g., "set temperature=0.7", "use model='gpt-4-turbo'")
@@ -133,17 +139,23 @@ Look for SPECIFIC mentions of:
 - Alternative access methods (e.g., "use Azure credits", "third-party API is cheaper")
 - Exact error messages and solutions
 
-Return JSON with ONLY specific, actionable information:
+EXTRACTION GUIDELINES:
+- Include valuable info even if phrasing is informal or broken
+- Preserve the complete thought/tip - don't cut off mid-sentence
+- Focus on SPECIFIC details (numbers, settings, commands) about {service_name}
+- Settings must be returned as 'key=value' strings, NOT as dictionaries
+
+Return JSON with ONLY {service_name}-specific information:
 {{
   "service": "{service_name}",
-  "problems": ["ONLY specific technical problems with details"],
-  "tips": ["ONLY specific actionable tips with exact steps or values"],
-  "cost_info": ["ONLY specific pricing, limits, or credit information with numbers"],
-  "settings": ["ONLY specific settings, parameters, or config values"]
+  "problems": ["{service_name}-specific technical problems with details"],
+  "tips": ["{service_name}-specific actionable tips with concrete details"],
+  "cost_info": ["{service_name}-specific pricing, limits, or credit information"],
+  "settings": ["{service_name} settings as 'key=value' strings, NOT dictionaries"]
 }}
 
-If you find NO specific technical information, return empty lists.
-Generic tips like "be patient" or "try different prompts" should be IGNORED."""
+If you find NO specific technical information about {service_name}, return empty lists.
+Generic tips or unrelated content (3D printing, cooking, etc.) MUST BE IGNORED."""
     
     def batch_posts_by_tokens(self, posts: List[Dict], service_name: str) -> List[List[Dict]]:
         """
@@ -259,8 +271,33 @@ Generic tips like "be patient" or "try different prompts" should be IGNORED."""
             # Process with LLM
             response = await llm_processor.process_raw_prompt(prompt)
             
+            # Check if response is empty
+            if not response or response.strip() == "":
+                logger.error(f"Empty response from LLM for {service_name}")
+                return {
+                    "service": service_name,
+                    "problems": [],
+                    "tips": [],
+                    "cost_info": [],
+                    "settings": [],
+                    "error": "Empty response from LLM",
+                    "batch_size": len(posts)
+                }
+            
             # Parse response
             result = json.loads(response)
+            
+            # Clean settings - ensure they are strings not dicts
+            if 'settings' in result:
+                clean_settings = []
+                for setting in result['settings']:
+                    if isinstance(setting, dict):
+                        # Convert dict to string format
+                        for key, value in setting.items():
+                            clean_settings.append(f"{key} = {value}")
+                    elif isinstance(setting, str):
+                        clean_settings.append(setting)
+                result['settings'] = clean_settings
             
             # Add metadata
             result['batch_size'] = len(posts)
@@ -309,11 +346,35 @@ Generic tips like "be patient" or "try different prompts" should be IGNORED."""
             merged["cost_info"].extend(result.get("cost_info", []))
             merged["settings"].extend(result.get("settings", []))
         
-        # Deduplicate
-        merged["problems"] = list(set(merged["problems"]))
-        merged["tips"] = list(set(merged["tips"]))
-        merged["cost_info"] = list(set(merged["cost_info"]))
-        merged["settings"] = list(set(merged["settings"]))
+        # Lightweight deduplication - only for simple strings
+        # Using case-insensitive comparison to catch more duplicates
+        def dedupe_list(items):
+            """Deduplicate while preserving order and handling edge cases"""
+            if not items:
+                return []
+            seen = set()
+            deduped = []
+            for item in items:
+                # Only dedupe strings, keep other types as-is
+                if isinstance(item, str):
+                    # Use lowercase for comparison but keep original case
+                    item_lower = item.lower().strip()
+                    if item_lower not in seen:
+                        seen.add(item_lower)
+                        deduped.append(item)
+                else:
+                    # Non-strings pass through (shouldn't happen but safety first)
+                    deduped.append(item)
+            return deduped
+        
+        # Apply deduplication
+        merged["problems"] = dedupe_list(merged["problems"])
+        merged["tips"] = dedupe_list(merged["tips"])
+        merged["cost_info"] = dedupe_list(merged["cost_info"])
+        merged["settings"] = dedupe_list(merged["settings"])
+        
+        logger.debug(f"Deduplication: problems {len(results[0].get('problems', []))}→{len(merged['problems'])}, "
+                    f"tips {len(results[0].get('tips', []))}→{len(merged['tips'])}")
         
         return merged
     

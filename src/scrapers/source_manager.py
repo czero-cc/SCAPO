@@ -150,14 +150,17 @@ class SourceManager:
         
         return issues
     
-    def get_all_sources_summary(self) -> Dict[str, int]:
+    def get_all_sources_summary(self) -> List[str]:
         """Get summary of all available sources."""
-        summary = {}
+        # Only return functional sources
+        reddit_config = self.sources_config.get("reddit", {})
+        reddit_sources = reddit_config.get("sources", [])
         
-        for source_type in ["reddit", "github", "forums", "apis", "discord", "rss_feeds", "news_aggregators"]:
-            config = self.sources_config.get(source_type, {})
-            sources = config.get("sources", [])
-            summary[source_type] = len(sources)
+        summary = []
+        if reddit_sources:
+            summary.append(f"reddit ({len(reddit_sources)} sources)")
         
-        summary["total"] = sum(summary.values())
+        # Note: HackerNews is handled specially in the scraper
+        # but not configured in sources.yaml
+        
         return summary

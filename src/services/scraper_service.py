@@ -48,12 +48,13 @@ class ScraperService:
                 if 'github.com/' in url:
                     repo_path = url.split('github.com/')[-1].rstrip('/')
                     default_sources.append(f"github:{repo_path}")
-            elif source_type == 'news_aggregators':
-                default_sources.append("hackernews")
+            # News aggregators not yet implemented
+            # elif source_type == 'news_aggregators':
+            #     default_sources.append("hackernews")
         
         # Fallback to hardcoded if no high priority sources
         if not default_sources:
-            default_sources = ["reddit:LocalLLaMA", "reddit:OpenAI", "hackernews"]
+            default_sources = ["reddit:LocalLLaMA", "reddit:OpenAI"]
             
         logger.info(f"Using default sources: {default_sources}")
         return default_sources
@@ -162,31 +163,14 @@ class ScraperService:
         """List available scraping sources from sources.yaml."""
         sources_dict = {}
         
-        # Get Reddit sources
+        # Get Reddit sources (functional)
         reddit_sources = self.source_manager.get_reddit_sources()
         sources_dict["reddit"] = [f"reddit:{s['name'].split('/')[-1]}" for s in reddit_sources]
         
-        # Get GitHub sources
-        github_sources = self.source_manager.get_github_sources()
-        sources_dict["github"] = []
-        for s in github_sources:
-            # Extract repo path from URL
-            url = s.get('url', '')
-            if 'github.com/' in url:
-                repo_path = url.split('github.com/')[-1].rstrip('/')
-                sources_dict["github"].append(f"github:{repo_path}")
-        
-        # Get other sources
-        sources_dict["hackernews"] = ["hackernews"]  # Still hardcoded as it's a special case
-        
-        # Forums (not yet implemented in scraper)
-        forum_sources = self.source_manager.get_forum_sources()
-        if forum_sources:
-            sources_dict["forums (coming soon)"] = [s['name'] for s in forum_sources]
-        
-        # Get summary
+        # Get summary (only shows functional sources now)
         summary = self.source_manager.get_all_sources_summary()
-        sources_dict["_summary"] = summary
+        if summary:
+            sources_dict["_summary"] = summary
         
         return sources_dict
 
@@ -201,7 +185,7 @@ class ScraperService:
                     "reddit:LocalLLaMA",
                     "reddit:OpenAI",
                     "reddit:StableDiffusion",
-                    "hackernews",
+                    # "hackernews",  # Not yet implemented
                     "github:dair-ai/Prompt-Engineering-Guide"
                 ]
                 

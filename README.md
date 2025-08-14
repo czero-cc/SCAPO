@@ -61,7 +61,7 @@ scapo scrape run --sources reddit:LocalLLaMA --limit 10
 git clone https://github.com/czero-cc/scapo.git
 cd scapo
 curl -LsSf https://astral.sh/uv/install.sh | sh  # Install uv
-uv venv && source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uv venv && source .venv/bin/activate  # On Windows: .venv\Scripts\activate / if, you do not want to activate venv, you need to run scapo commands with 'uv run'.
 uv pip install -e .
 uv run playwright install  # Browser automation
 ```
@@ -219,6 +219,10 @@ OPENROUTER_MODEL=your_favorite_model
 LOCAL_LLM_MAX_CONTEXT=8192              # Your model's context size in tokens
 LOCAL_LLM_OPTIMAL_CHUNK=2048            # Optimal batch size (typically 1/4 of max)
 
+# Timeout Settings (Critical for local models!)
+LOCAL_LLM_TIMEOUT_SECONDS=600           # 10 minutes for slower local models
+LLM_TIMEOUT_SECONDS=120                 # 2 minutes for cloud models
+
 # Extraction Quality
 LLM_QUALITY_THRESHOLD=0.6               # Min quality (0.0-1.0)
 
@@ -253,13 +257,13 @@ Navigate extracted tips with:
 SCAPO is designed for version control:
 ```bash
 # Check what changed
-python scripts/git_update.py --status
+scripts/git_update.py --status
 
 # Generate commit message
-python scripts/git_update.py --message
+scripts/git_update.py --message
 
 # Commit changes
-python scripts/git_update.py --commit
+scripts/git_update.py --commit
 ```
 
 Updates completely replace old content, ensuring:
@@ -313,7 +317,7 @@ Built as part of the CZero Engine project to improve AI application development.
 - Coffee ☕ for making this possible
 - [Ollama](https://ollama.com/) and [LMstudio](https://lmstudio.ai/) for awesome local LLM experience
 - [Awesome Generative AI](https://github.com/steven2358/awesome-generative-ai) & [Awesome AI Tools](https://github.com/mahseema/awesome-ai-tools) for service discovery
-- All opensource contributors in this AI space
+- All opensource contributors in this space
 
 ---
 

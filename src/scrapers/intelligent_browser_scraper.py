@@ -606,6 +606,10 @@ IMPORTANT: Start with {{ and end with }}. Be strict - only high-quality, model-s
         saved_count = 0
         start_time = datetime.now()
         
+        # Skip logging if no content to process (e.g., when used only for scraping in targeted pipeline)
+        if total_practices == 0 and len(self.processed_content) == 0:
+            return
+            
         logger.info(f"Processing {total_practices} practices from {len(self.processed_content)} posts...")
         if quality_threshold > 0:
             logger.info(f"Quality threshold: {quality_threshold}")
@@ -644,25 +648,28 @@ IMPORTANT: Start with {{ and end with }}. Be strict - only high-quality, model-s
                             "cost_info": []
                         }
                     
-                    # Convert practice to new format
-                    if practice.get("tip"):  # New format from updated prompt
-                        model_data[clean_model]["tips"].append(
-                            f"{practice.get('tip')} - {practice.get('details', '')}"
-                        )
-                        if practice.get("details") and any(k in practice.get("details", "").lower() for k in ["parameter", "setting", "config"]):
-                            model_data[clean_model]["settings"].append(practice.get("details"))
+                    # Convert practice to new format - prioritize content field
+                    content_text = practice.get("content", "")
+                    details = practice.get("details", "")
+                    
+                    if content_text:
+                        # Add tip with details if available (avoid duplication)
+                        if details and details.lower() != content_text.lower():
+                            # Only append details if it's different from content
+                            model_data[clean_model]["tips"].append(f"{content_text} - {details}")
+                        else:
+                            model_data[clean_model]["tips"].append(content_text)
+                        
+                        # Also add to settings if it looks like a parameter
+                        if details and any(k in details.lower() for k in ["parameter", "setting", "config", "="]):
+                            model_data[clean_model]["settings"].append(details)
                     elif practice.get("problem") and practice.get("solution"):
-                        # Problem-solution format
+                        # Problem-solution format (fallback)
                         model_data[clean_model]["problems"].append(
                             f"Problem: {practice.get('problem')}\nSolution: {practice.get('solution')}"
                         )
                         if practice.get("savings_or_improvement"):
                             model_data[clean_model]["cost_info"].append(practice.get("savings_or_improvement"))
-                    else:
-                        # Generic practice - add as tip
-                        content_text = practice.get("content", "")
-                        if content_text:
-                            model_data[clean_model]["tips"].append(content_text)
                     
                     saved_count += 1
         
@@ -735,7 +742,7 @@ IMPORTANT: Start with {{ and end with }}. Be strict - only high-quality, model-s
     async def scrape_sources(self, sources: List[str] = None, max_posts_per_source: int = 10):
         """Main entry point for scraping multiple sources."""
         if sources is None:
-            sources = ["reddit:LocalLLaMA", "reddit:OpenAI", "hackernews"]
+            sources = ["reddit:LocalLLaMA", "reddit:OpenAI"]
         
         await self.initialize_browser()
         
@@ -748,9 +755,10 @@ IMPORTANT: Start with {{ and end with }}. Be strict - only high-quality, model-s
                     content = await self.scrape_reddit_browser(page, subreddit, max_posts_per_source)
                     self.processed_content.extend(content)
                     
-                elif source == "hackernews":
-                    content = await self.scrape_hackernews_browser(page, max_posts_per_source)
-                    self.processed_content.extend(content)
+                # HackerNews not yet implemented
+                # elif source == "hackernews":
+                #     content = await self.scrape_hackernews_browser(page, max_posts_per_source)
+                #     self.processed_content.extend(content)
                     
                 elif source.startswith("github:"):
                     repo = source.split(":", 1)[1]
@@ -947,7 +955,7 @@ async def test_intelligent_scraper():
     """Test the intelligent scraper."""
     scraper = IntelligentBrowserScraper()
     await scraper.scrape_sources(
-        sources=["reddit:LocalLLaMA", "hackernews"],
+        sources=["reddit:LocalLLaMA", "reddit:OpenAI"],
         max_posts_per_source=5
     )
 

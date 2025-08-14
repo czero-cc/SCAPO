@@ -7,7 +7,7 @@
 git clone https://github.com/czero-cc/scapo.git
 cd scapo
 curl -LsSf https://astral.sh/uv/install.sh | sh
-uv venv && source .venv/bin/activate  # Windows: .venv\Scripts\activate
+uv venv && source .venv/bin/activate  # Windows: .venv\Scripts\activate (if venv is not activated, you need to run scapo commands with 'uv run')
 uv pip install -e .
 uv run playwright install
 ```
@@ -35,6 +35,7 @@ LOCAL_LLM_MODEL=model_alias
 # Important: Set your model's context size!
 LOCAL_LLM_MAX_CONTEXT=8192  # e.g., 4096, 8192, 32768
 LOCAL_LLM_OPTIMAL_CHUNK=2048  # Typically 1/4 of max
+LOCAL_LLM_TIMEOUT_SECONDS=600  # 10 minutes for slower local models
 ```
 #### Option C: LM Studio (Local)
 1. Install [LM Studio](https://lmstudio.ai/)
@@ -48,6 +49,7 @@ LOCAL_LLM_URL=http://localhost:1234
 # Important: Set your model's context size!
 LOCAL_LLM_MAX_CONTEXT=8192  # Check your model's specs
 LOCAL_LLM_OPTIMAL_CHUNK=2048  # Typically 1/4 of max
+LOCAL_LLM_TIMEOUT_SECONDS=600  # 10 minutes for slower local models
 ```
 
 ### 3. Choose Your Approach
@@ -161,6 +163,14 @@ scapo scrape targeted --service "Eleven Labs" --dry-run
 ```bash
 # Edit .env:
 SCRAPING_DELAY_SECONDS=3  # Increase delay
+```
+
+### "Local LLM timeout errors"
+```bash
+# Solution: Increase timeout for slower models
+# Edit .env:
+LOCAL_LLM_TIMEOUT_SECONDS=600  # 10 minutes
+LOCAL_LLM_TIMEOUT_SECONDS=1200  # 20 minutes for very slow models
 ```
 
 ## 📈 What You'll Get

@@ -290,247 +290,29 @@ reddit:
       priority: low
       models: ["general"]
 
-github:
-  description: "GitHub repositories with structured AI best practices"
-  api: "GitHub API v4 (GraphQL) or raw.githubusercontent.com"
-  rate_limit: "5000 requests/hour authenticated"
-  auth: "Personal Access Token (PAT)"
-  sources:
-    - name: "DAIR-AI Prompt Engineering Guide"
-      url: "https://github.com/dair-ai/Prompt-Engineering-Guide"
-      raw_url: "https://raw.githubusercontent.com/dair-ai/Prompt-Engineering-Guide/main/README.md"
-      focus: "Research papers, cheat-sheets, prompt engineering courses"
-      license: "CC-BY-SA-4.0"
-      priority: high
-      update_frequency: "weekly"
-    
-    - name: "Awesome Prompt Engineering"
-      url: "https://github.com/promptslab/Awesome-Prompt-Engineering"
-      raw_url: "https://raw.githubusercontent.com/promptslab/Awesome-Prompt-Engineering/main/README.md"
-      focus: "Curated links to papers, tools, datasets, prompt patterns"
-      license: "MIT"
-      priority: high
-      update_frequency: "weekly"
-    
-    - name: "Awesome Generative AI"
-      url: "https://github.com/steven2358/awesome-generative-ai"
-      raw_url: "https://raw.githubusercontent.com/steven2358/awesome-generative-ai/main/README.md"
-      focus: "Auto-updated directory of ALL GenAI services and tools"
-      license: "CC0"
-      priority: critical
-      update_frequency: "weekly"
-      models: ["all-services", "emerging"]
-    
-    - name: "Awesome AI Tools"
-      url: "https://github.com/mahseema/awesome-ai-tools"
-      raw_url: "https://raw.githubusercontent.com/mahseema/awesome-ai-tools/main/README.md"
-      focus: "Comprehensive list of AI services with pricing info"
-      priority: critical
-      update_frequency: "weekly"
-      models: ["all-services", "pricing"]
-    
-    - name: "Brex Prompt Engineering"
-      url: "https://github.com/brexhq/prompt-engineering"
-      raw_url: "https://raw.githubusercontent.com/brexhq/prompt-engineering/main/README.md"
-      focus: "Corporate best practices, guardrails, evaluation"
-      license: "Apache-2.0"
-      priority: high
-      update_frequency: "monthly"
-    
-    - name: "OpenAI Cookbook"
-      url: "https://github.com/openai/openai-cookbook"
-      focus: "Example code and guides for OpenAI API"
-      license: "MIT"
-      priority: high
-      update_frequency: "weekly"
-    
-    - name: "LangChain Documentation"
-      url: "https://github.com/langchain-ai/langchain"
-      focus: "Agent patterns, chain examples"
-      license: "MIT"
-      priority: medium
-      update_frequency: "daily"
+# Future sources (not yet implemented):
+# - GitHub repositories
+# - Developer forums (Discourse)
+# - APIs (LangChain Hub, Hugging Face)
+# - RSS feeds
+# - News aggregators (Hacker News)
 
-forums:
-  description: "Developer forums with structured discussions"
-  sources:
-    - name: "OpenAI Community Forum"
-      url: "https://community.openai.com"
-      api: "Discourse JSON endpoints"
-      endpoints:
-        latest: "https://community.openai.com/latest.json"
-        categories: "https://community.openai.com/categories.json"
-        search: "https://community.openai.com/search.json"
-      focus: "Production guardrails, rate-limit workarounds"
-      priority: high
-      rate_limit: "60 requests/minute"
-    
-    - name: "Hugging Face Forums"
-      url: "https://discuss.huggingface.co"
-      api: "Discourse JSON endpoints"
-      focus: "Model fine-tuning, deployment tips"
-      priority: high
-      rate_limit: "60 requests/minute"
-    
-    - name: "AIPRM Community Forum"
-      url: "https://forum.aiprm.com"
-      api: "Discourse JSON endpoints"
-      focus: "SEO-oriented prompt tweaks"
-      priority: low
-      rate_limit: "60 requests/minute"
-
-apis:
-  description: "Direct API access to prompt/practice databases"
-  sources:
-    - name: "LangChain Hub"
-      url: "https://smith.langchain.com/hub"
-      api: "REST & Python client"
-      sdk: "langchain.hub"
-      focus: "Community-maintained prompt chains"
-      auth: "API key"
-      priority: high
-      example_endpoint: "https://api.smith.langchain.com/v1/public/prompts"
-    
-    - name: "Hugging Face Datasets"
-      url: "https://huggingface.co/datasets"
-      api: "Datasets library"
-      focus: "Prompt templates, evaluation datasets"
-      priority: high
-      specific_datasets:
-        - "bigscience/promptsource"
-        - "databricks/databricks-dolly-15k"
-        - "OpenAssistant/oasst1"
-    
-    - name: "Papers with Code"
-      url: "https://paperswithcode.com"
-      api: "REST API v0"
-      endpoints:
-        tasks: "https://paperswithcode.com/api/v0/tasks/"
-        papers: "https://paperswithcode.com/api/v0/papers/"
-      focus: "Benchmarks, best implementations"
-      priority: medium
-      rate_limit: "100 requests/hour"
-
-
-rss_feeds:
-  description: "RSS/Atom feeds for blog content"
-  sources:
-    - name: "DEV.to GenerativeAI tag"
-      url: "https://dev.to/feed/tag/generativeai"
-      format: "RSS"
-      focus: "How-to posts, code examples"
-      priority: medium
-    
-    - name: "Towards Data Science - AI"
-      url: "https://towardsdatascience.com/feed"
-      format: "RSS"
-      focus: "Technical deep-dives"
-      priority: low
-    
-    - name: "AI Alignment Forum"
-      url: "https://www.alignmentforum.org/feed.xml"
-      format: "RSS"
-      focus: "Safety practices, alignment techniques"
-      priority: low
-
-news_aggregators:
-  description: "High-signal news and discussion aggregators"
-  sources:
-    - name: "Hacker News"
-      url: "https://news.ycombinator.com"
-      api: "Firebase API"
-      endpoints:
-        top: "https://hacker-news.firebaseio.com/v0/topstories.json"
-        item: "https://hacker-news.firebaseio.com/v0/item/{id}.json"
-        search: "https://hn.algolia.com/api/v1/search"
-      focus: "New AI service launches, pricing discussions, optimization tips"
-      priority: critical
-      search_patterns:
-        - "Show HN: AI"
-        - "Launch HN: AI"
-        - "AI pricing"
-        - "cheaper alternative to"
-        - "open source alternative"
-        - "AI credits"
-        - "prompt engineering"
-        - "optimization"
-      tags_to_track: ["gpt", "llm", "prompt", "ai", "genai", "api", "saas", "pricing"]
-
-# Scraping Configuration
-scraping_config:
-  user_agent: "Mozilla/5.0 (compatible; SCAPOBot/1.0; +https://github.com/czero-cc/scapo)"
-  respect_robots_txt: true
-  concurrent_requests: 5
-  timeout_seconds: 30
-  retry_attempts: 3
-  cache_duration_hours: 24
+# Scraping Configuration (for future implementation)
+# scraping_config:
+#   user_agent: "Mozilla/5.0 (compatible; SCAPOBot/1.0; +https://github.com/czero-cc/scapo)"
+#   respect_robots_txt: true
+#   concurrent_requests: 5
+#   timeout_seconds: 30
+#   retry_attempts: 3
+#   cache_duration_hours: 24
   
-# Content Filtering
-content_filters:
-  min_score: 10  # Minimum upvotes/score
-  min_comments: 5  # Minimum engagement
-  keywords:
-    # High-value discovery keywords (catches new services)
-    discovery:
-      - "just launched"
-      - "just released"
-      - "beta access"
-      - "early access"
-      - "waitlist"
-      - "free credits"
-      - "pricing announced"
-      - "new model"
-      - "v2"
-      - "v3"
-      - "updated pricing"
-    
-    # Cost optimization signals
-    cost_optimization:
-      - "credits optimization"
-      - "burn rate"
-      - "save money"
-      - "cheaper alternative"
-      - "free tier"
-      - "bulk pricing"
-      - "API cheaper"
-      - "subscription hack"
-      - "unlimited"
-      - "workaround"
-      - "cost comparison"
-    
-    # Technical optimization
-    technical:
-      - "prompt engineering"
-      - "parameters"
-      - "settings"
-      - "sweet spot"
-      - "quality vs speed"
-      - "batch processing"
-      - "rate limit"
-      - "optimization"
-      - "benchmark"
-      - "tested"
-      - "production"
-    
-    # Service-agnostic patterns
-    patterns:
-      - "vs"
-      - "compared to"
-      - "alternative to"
-      - "migrating from"
-      - "switching to"
-      - "better than"
-      - "review"
-      - "hands on"
-      - "real world"
-    
-    exclude:
-      - "meme"
-      - "joke"
-      - "shitpost"
-      - "[deleted]"
-      - "[removed]"
-      - "eli5"
-      - "explain like"
-      - "what is"
-      - "how to start"
+# Content Filtering (not currently used - filtering happens in LLM processing)
+# content_filters:
+#   min_score: 10  # Minimum upvotes/score
+#   min_comments: 5  # Minimum engagement
+#   keywords:
+#     discovery: ["just launched", "beta access", "waitlist", etc.]
+#     cost_optimization: ["credits optimization", "burn rate", etc.]
+#     technical: ["prompt engineering", "parameters", etc.]
+#     patterns: ["vs", "compared to", "alternative to", etc.]
+#     exclude: ["meme", "joke", "[deleted]", etc.]

@@ -72,7 +72,7 @@ def format_source_identifier(source: str) -> str:
     """Format source identifier with icon."""
     icons = {
         "reddit": "🔴",
-        "hackernews": "🔶",
+        # "hackernews": "🔶",  # Not yet implemented
         "github": "🐙",
         "discourse": "💬",
         "huggingface": "🤗",
@@ -1200,7 +1200,7 @@ def sources():
                     console.print(f"  • {source}")
         
         console.print("\n[yellow]Usage:[/yellow]")
-        console.print("  scapo scrape run -s reddit:LocalLLaMA -s hackernews")
+        console.print("  scapo scrape run -s reddit:LocalLLaMA -s reddit:OpenAI")
         console.print("  scapo scrape run --sources reddit:OpenAI --limit 5")
     
     asyncio.run(_sources())

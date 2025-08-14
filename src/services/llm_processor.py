@@ -21,6 +21,10 @@ logger = get_logger(__name__)
 litellm.drop_params = True  # Drop unsupported params instead of failing
 litellm.set_verbose = False  # Set to True for debugging
 
+# Suppress LiteLLM's misleading INFO logs only for local providers
+import logging as stdlib_logging
+# We'll set this conditionally based on the provider later
+
 
 class ProcessedPractice(BaseModel):
     """Structured output from LLM processing."""
@@ -207,21 +211,34 @@ class UnifiedLLMProcessor(BaseLLMProcessor):
             # Set OpenRouter specific settings
             litellm.api_key = self.api_key
             litellm.openrouter_api_key = self.api_key
+            logger.info(f"Using OpenRouter with model: {model or settings.openrouter_model}")
         elif self.provider == "local":
             if settings.local_llm_type == "ollama":
                 self.model = f"ollama/{model or settings.local_llm_model}"
                 self.api_base = base_url or settings.local_llm_url
                 litellm.api_base = self.api_base
+                logger.info(f"Using Ollama with model: {model or settings.local_llm_model} at {self.api_base}")
             else:  # lmstudio
+                # LM Studio uses OpenAI-compatible format but is NOT OpenAI
+                # Note: LM Studio ignores the model name and uses whatever is loaded in its UI
                 self.model = f"openai/{model or settings.local_llm_model}"
-                self.api_base = base_url or settings.local_llm_url
+                base_url = base_url or settings.local_llm_url
+                # Ensure LM Studio URL has /v1 suffix for OpenAI compatibility
+                if not base_url.endswith('/v1'):
+                    base_url = base_url.rstrip('/') + '/v1'
+                self.api_base = base_url
                 self.api_key = "lm-studio"  # LM Studio doesn't need a real key
                 litellm.api_key = self.api_key
                 litellm.api_base = self.api_base
+                logger.info(f"Using LM Studio at {self.api_base} (will use model currently loaded in LM Studio)")
+                
+                # Suppress LiteLLM's misleading logs only for LM Studio
+                litellm_logger = stdlib_logging.getLogger("LiteLLM")
+                litellm_logger.setLevel(stdlib_logging.WARNING)
         else:
             raise ValueError(f"Unknown provider: {self.provider}")
         
-        self.logger.info(f"Initialized LLM processor with model: {self.model}")
+        logger.info(f"Initialized LLM processor - Provider: {self.provider}, Internal model string: {self.model}")
     
     def _supports_json_mode(self) -> bool:
         """Check if model supports structured JSON mode."""
@@ -233,13 +250,23 @@ class UnifiedLLMProcessor(BaseLLMProcessor):
                              response_format: Optional[Dict] = None) -> str:
         """Make a completion request using LiteLLM with retry logic."""
         
+        # Determine appropriate timeout
+        timeout = settings.llm_timeout_seconds
+        if self.provider == "local" and settings.local_llm_timeout_seconds:
+            timeout = settings.local_llm_timeout_seconds
+            self.logger.debug(f"Using local LLM timeout: {timeout}s")
+        
+        # Log the actual provider being used (to clarify LiteLLM's misleading logs)
+        if self.provider == "local" and settings.local_llm_type == "lmstudio":
+            logger.info(f"Sending request to LM Studio (via OpenAI-compatible API)")
+        
         # Build kwargs
         kwargs = {
             "model": self.model,
             "messages": messages,
             "temperature": temperature,
             "max_tokens": max_tokens,
-            "timeout": 120.0,  # 2 minute timeout
+            "timeout": timeout,
         }
         
         # Add response format if supported by the model

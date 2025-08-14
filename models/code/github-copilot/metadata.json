@@ -1,13 +1,13 @@
 {
   "service": "GitHub Copilot",
   "category": "code",
-  "last_updated": "2025-08-12T21:24:27.281886",
-  "extraction_timestamp": "2025-08-12T21:24:27.096753",
+  "last_updated": "2025-08-14T13:58:41.346130",
+  "extraction_timestamp": null,
   "data_sources": [
     "Reddit API",
     "Community discussions"
   ],
-  "posts_analyzed": 2,
+  "posts_analyzed": 82,
   "confidence": "medium",
   "version": "1.0.0"
 }

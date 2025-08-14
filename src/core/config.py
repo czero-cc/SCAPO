@@ -26,9 +26,6 @@ class Settings(BaseSettings):
     max_posts_per_scrape: int = Field(
         default=100, description="Maximum posts to scrape per run"
     )
-    min_upvote_ratio: float = Field(
-        default=0.8, description="Minimum upvote ratio for posts"
-    )
     scraping_delay_seconds: float = Field(
         default=2.0, description="Delay between scraping pages/posts (be respectful to servers)"
     )
@@ -54,6 +51,10 @@ class Settings(BaseSettings):
     # Local LLM context configuration
     local_llm_max_context: Optional[int] = Field(None, description="Maximum context tokens for local LLM (e.g., 4096, 8192, 32768)")
     local_llm_optimal_chunk: Optional[int] = Field(None, description="Optimal chunk size for local LLM processing")
+    
+    # LLM timeout configuration
+    llm_timeout_seconds: float = Field(default=120.0, description="Timeout for LLM requests in seconds")
+    local_llm_timeout_seconds: Optional[float] = Field(None, description="Override timeout for local LLM requests (defaults to llm_timeout_seconds if not set)")
 
     @field_validator("models_dir", "scrapers_dir")
     @classmethod
