@@ -118,10 +118,7 @@ class ModelExplorer(App):
         scrollbar-size: 1 1;
     }
 
-    VerticalScroll#content-viewer:focus, Markdown:focus {
-        background: $accent;
-        color: $text;
-    }
+    /* Focus styling is unified below for both content boxes */
 
     /* DataTable styling */
     DataTable {
@@ -137,6 +134,13 @@ class ModelExplorer(App):
     ScrollBar {
         background: cyan;
         color: black;
+    }
+
+    /* Focus highlight for content boxes (same style for Markdown and JSON) */
+    #content-viewer:focus, #json-table:focus {
+        background: $boost;
+        border: solid cyan;
+        color: $text;
     }
 
     ScrollBar.vertical {
