@@ -26,7 +26,7 @@
 
 Ever burned through credits in minutes? Searching Reddit for that one optimization tip? Getting generic advice when you need specific settings?
 
-![Scapo Running](assets/promo_scapo.gif)
+![Scapo Running](assets/promo_scapo.mp4)
 
 **SCAPO** extracts **specific, actionable optimization techniques** from Reddit about AI services - not generic "write better prompts" advice, but real discussions.
 
@@ -104,6 +104,9 @@ scapo scrape run --sources reddit:LocalLLaMA --limit 10
 ```
 
 ### 4. View Your Extracted Tips
+
+![Scapo TUI](assets/tui.mp4)
+
 ```bash
 # Interactive TUI explorer
 scapo tui
