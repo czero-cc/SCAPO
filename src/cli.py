@@ -408,45 +408,23 @@ def targeted_scrape(service, category, limit, batch_size, dry_run, run_all, max_
         
         # Generate targeted searches
         generator = TargetedSearchGenerator()
-        all_queries = generator.generate_queries(
-            max_queries=100 if run_all else max_queries,
-            category_filter=category if category and not service else None
-        )
         
-        # Filter queries by service name if specified
-        queries = all_queries
+        # If a specific service is requested, generate queries directly for it
         if service and not category:
-            # Use alias manager for better matching
-            from src.services.service_alias_manager import ServiceAliasManager
-            alias_manager = ServiceAliasManager()
-            
-            # Get canonical name and all variations
-            service_match = alias_manager.match_service(service)
-            if service_match:
-                service_variations = service_match['all_variations']
-                # Filter queries matching any variation
-                queries = [q for q in all_queries 
-                          if any(var.lower() in q['service'].lower() or q['service'].lower() in var.lower() 
-                                for var in service_variations)]
-            else:
-                # Fallback to simple matching
-                queries = [q for q in all_queries if service.lower() in q['service'].lower()]
+            # Just generate queries for the requested service - don't generate for all services first
+            console.print(f"[cyan]Generating queries for {service}...[/cyan]")
+            queries = generator.generate_queries_for_service(service, max_queries=max_queries)
             
             if not queries:
-                # If no queries found, generate queries specifically for this service
-                console.print(f"[yellow]No existing queries for {service}, generating custom queries...[/yellow]")
-                queries = generator.generate_queries_for_service(service, max_queries=max_queries)
-                
-                if not queries:
-                    console.print(f"[red]Could not generate queries for service: {service}[/red]")
-                    console.print("[yellow]Tip: Try using the service name as it appears in 'scapo scrape discover'[/yellow]")
-                    return
-        
-        if not queries and service:
-            # Generate queries specifically for this service
-            console.print(f"[yellow]Service '{service}' not in priority list. Generating custom queries...[/yellow]")
-            display_name = service_match['display_name'] if service_match else service
-            queries = generator.generate_queries_for_service(display_name, max_queries)
+                console.print(f"[red]Could not generate queries for service: {service}[/red]")
+                return
+        else:
+            # Generate queries based on category or all services
+            all_queries = generator.generate_queries(
+                max_queries=100 if run_all else max_queries,
+                category_filter=category if category else None
+            )
+            queries = all_queries
         
         if not queries:
             console.print("[yellow]No matching queries found[/yellow]")

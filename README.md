@@ -255,18 +255,18 @@ Navigate extracted tips with:
 - **o** - Open file location
 - **q** - Quit
 
-## 🔄 Git-Friendly Updates
+## 🔄 Git-Friendly Updates tracking AI services in the Models folder
 
 SCAPO is designed for version control:
 ```bash
 # Check what changed
-scripts/git_update.py --status
+uv run scripts/git_update.py --status
 
 # Generate commit message
-scripts/git_update.py --message
+uv run scripts/git_update.py --message
 
 # Commit changes
-scripts/git_update.py --commit
+uv run scripts/git_update.py --commit
 ```
 
 Updates completely replace old content, ensuring:
