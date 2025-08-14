@@ -187,6 +187,9 @@ class ServiceRegistry:
     
     def save(self):
         """Save registry to file"""
+        # Ensure directory exists
+        self.registry_path.parent.mkdir(parents=True, exist_ok=True)
+        
         data = {
             'services': self.services,
             'aliases': self.aliases,

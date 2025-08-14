@@ -373,14 +373,14 @@ def targeted_scrape(service, category, limit, batch_size, dry_run, run_all, max_
                 queries = [q for q in all_queries if service.lower() in q['service'].lower()]
             
             if not queries:
-                # Try regenerating with all services if no match
-                all_queries = generator.generate_queries(max_queries=100)
-                if service_match:
-                    queries = [q for q in all_queries 
-                              if any(var.lower() in q['service'].lower() or q['service'].lower() in var.lower() 
-                                    for var in service_variations)]
-                else:
-                    queries = [q for q in all_queries if service.lower() in q['service'].lower()]
+                # If no queries found, generate queries specifically for this service
+                console.print(f"[yellow]No existing queries for {service}, generating custom queries...[/yellow]")
+                queries = generator.generate_queries_for_service(service, max_queries=max_queries)
+                
+                if not queries:
+                    console.print(f"[red]Could not generate queries for service: {service}[/red]")
+                    console.print("[yellow]Tip: Try using the service name as it appears in 'scapo scrape discover'[/yellow]")
+                    return
         
         if not queries and service:
             # Generate queries specifically for this service

@@ -1,22 +1,38 @@
 # Eleven Labs - Common Pitfalls & Issues
 
-*Last updated: 2025-08-12*
+*Last updated: 2025-08-14*
 
 ## Technical Issues
 
-### ⚠️ Unable to switch back to a Custom LLM after testing with built-in model gemini-2.0-flash; interface shows 'Fix the errors to proceed' even though Server URL, Model ID, and API Key are correctly filled.
+### ⚠️ crashes when X>100
+
+### ⚠️ hitting walls trying to figure out how to get their ElevenLabs API key properly set up
+**Fix**: Store API keys in environment variables or use a secrets manager.
+
+### ⚠️ Error when accessing eleven labs api from a selfhosted n8n.
+
+### ⚠️ Playing back a female voice regardless of male/female voice selection when using the ElevenLabs API in a JS chatbot.
+
+### ⚠️ Encountered a 401 Client Error: Unauthorized when trying to add audio to cards using the ElevenLabs API with HyperTTS.
+
+### ⚠️ Unable to switch back to a Custom LLM after testing with a built-in model (`gemini-2.0-flash`) on the ElevenLabs Conversational AI dashboard, even after correctly filling out Server URL (e.g., `https://9df9e70d40a2.ngrok-free.app/v1/big-chief`), Model ID (e.g., `gemini-2.0-flash`), and API Key. The interface shows an error message about fixing errors even when there are no errors.
+**Fix**: Store API keys in environment variables or use a secrets manager.
+
+### ⚠️ API keys for ElevenLabs were compromised in a hack affecting Rabbit R1.
 **Fix**: Store API keys in environment variables or use a secrets manager.
 
 ## Policy & Account Issues
 
-### ⚠️ 400,000 credits were wiped from account on the $99/month plan; subscription renewal failed due to paywall issues, leaving 60% of credits unused.
+### ⚠️ Eleven Labs just wiped 400,000 credits from a $99/month plan account because the paywall wouldn't let the user renew their subscription despite having 60% of credits remaining and submitting a support ticket.
 **Note**: Be aware of terms of service regarding account creation.
 
 ## Cost & Limits
 
-### 💰 Credits from ElevenLabs free plan do not roll over to the next month.
+### 💰 Getting ElevenLabs to accept calls from another provider than Twilio is difficult; calls are routed to the PBX, then forwarded to the Twilio number, costing more.
 
-### 💰 $29/month for Reader unlimited plan
+### 💰 ElevenLabs Creator plan ($22/month, 100k characters)
 
-### 💰 $22/month for Creator plan (100k characters)
+### 💰 ElevenLabs free plan offers 10k characters each month.
+
+### 💰 ElevenLabs Creator plan is $22/month with a 100k character limit.
 

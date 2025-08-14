@@ -90,11 +90,19 @@ class TargetedSearchGenerator:
             # Use first pattern from each type
             if pattern_list:
                 pattern = pattern_list[0]
+                query_text = pattern.replace('{service}', service_name)
+                query_url = f'https://old.reddit.com/search?q={query_text.replace(" ", "+").replace('"', "%22")}'
+                
                 query = {
                     'service': service_name,
-                    'pattern': pattern.replace('{service}', service_name),
+                    'service_key': service_name.lower().replace(' ', '-'),
+                    'category': 'general',  # Default category for custom queries
+                    'query': query_text,
+                    'query_url': query_url,
+                    'pattern': query_text,
                     'pattern_type': pattern_type,
-                    'priority': 'custom'
+                    'priority': 'custom',
+                    'generated': datetime.now().isoformat()
                 }
                 queries.append(query)
         
