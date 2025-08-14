@@ -18,6 +18,11 @@
 
 ### 🎯 Real optimization tips from real users for AI services
 
+If you find **SCAPO** useful, please consider giving it a star on GitHub!  
+Your support helps the project grow and reach more people.  
+
+[![Star on GitHub](https://img.shields.io/github/stars/czero-cc/SCAPO?style=social)](https://github.com/czero-cc/SCAPO/stargazers)
+
 </div>
 
 ## 🤔 What is SCAPO?
