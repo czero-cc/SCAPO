@@ -300,6 +300,9 @@ Select a model from the tree to view content."""
             with open(file_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             
+            # Hide welcome after first selection
+            self.query_one("#welcome").display = False
+
             # Hide markdown viewer and show table
             self.query_one("#content-viewer").display = False
             table = self.query_one("#json-table")
@@ -340,6 +343,9 @@ Select a model from the tree to view content."""
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             
+            # Hide welcome after first selection
+            self.query_one("#welcome").display = False
+
             # Hide table and show markdown viewer
             self.query_one("#json-table").display = False
             viewer = self.query_one("#content-viewer")
@@ -359,6 +365,9 @@ Select a model from the tree to view content."""
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             
+            # Hide welcome after first selection
+            self.query_one("#welcome").display = False
+
             # Hide table and show markdown viewer (for syntax highlighting)
             self.query_one("#json-table").display = False
             viewer = self.query_one("#content-viewer")
@@ -376,6 +385,9 @@ Select a model from the tree to view content."""
         """Show information about a model."""
         self.current_model_path = model_path
         
+        # Hide welcome after first selection
+        self.query_one("#welcome").display = False
+
         # Hide table and show markdown viewer
         self.query_one("#json-table").display = False
         viewer = self.query_one("#content-viewer")
@@ -402,6 +414,8 @@ Select a model from the tree to view content."""
     
     def show_error(self, message: str) -> None:
         """Show error message."""
+        # Hide welcome after first selection
+        self.query_one("#welcome").display = False
         self.query_one("#json-table").display = False
         viewer = self.query_one("#content-viewer")
         viewer.display = True
@@ -438,6 +452,8 @@ Select a model from the tree to view content."""
 - File size information
 - Copy content to clipboard
 """
+        # Hide welcome after first selection
+        self.query_one("#welcome").display = False
         self.query_one("#json-table").display = False
         viewer = self.query_one("#content-viewer")
         viewer.display = True

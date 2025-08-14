@@ -26,7 +26,7 @@
 
 Ever burned through credits in minutes? Searching Reddit for that one optimization tip? Getting generic advice when you need specific settings?
 
-![Scapo Running](assets/promo_scapo.gif)
+![Scapo Intro](assets/intro.gif)
 
 **SCAPO** extracts **specific, actionable optimization techniques** from Reddit about AI services - not generic "write better prompts" advice, but real discussions.
 
@@ -35,19 +35,38 @@ Ever burned through credits in minutes? Searching Reddit for that one optimizati
 SCAPO offers two distinct workflows:
 
 ### 1. 🎯 **Service Discovery Mode** (NEW - Recommended)
+
 Automatically discovers AI services and extracts specific optimization tips:
+
+![Scapo Discover](assets/scrape-discovery.gif)
+
+Discover services from GitHub Awesome lists
+
 ```bash
-# Discover services from GitHub Awesome lists
 scapo scrape discover --update
+```
 
-# Extract optimization tips for specific services
+![Scapo Discover](assets/scrape-targeted.gif)
+
+Extract optimization tips for specific services
+
+```bash
 scapo scrape targeted --service "Eleven Labs" --limit 20
+```
 
-# Batch process multiple priority services
+![Scapo Discover](assets/scrape-batch.gif)
+
+Batch process multiple priority services
+
+```bash
 scapo scrape batch --max-services 3 --category audio
 ```
 
-### 2. 📚 **Legacy Sources Mode** 
+### 2. 📚 **Legacy Sources Mode**
+
+![Scapo Batch](assets/legacy.gif)
+
+
 Traditional approach using predefined sources from `sources.yaml`:
 ```bash
 # Scrape from configured sources
@@ -61,7 +80,7 @@ scapo scrape run --sources reddit:LocalLLaMA --limit 10
 git clone https://github.com/czero-cc/scapo.git
 cd scapo
 curl -LsSf https://astral.sh/uv/install.sh | sh  # Install uv
-uv venv && source .venv/bin/activate  # On Windows: .venv\Scripts\activate / if, you do not want to activate venv, you need to run scapo commands with 'uv run'.
+uv venv && source .venv/ben/activate  # On Windows: .venv\Scripts\activate / if, you do not want to activate venv, you need to run scapo commands with 'uv run'.
 uv pip install -e .
 uv run playwright install  # Browser automation
 ```
@@ -82,6 +101,7 @@ Get your API key from [openrouter.ai](https://openrouter.ai/)
 ### 3. Start Extracting Optimization Tips
 
 #### Option A: Service Discovery (Recommended)
+
 ```bash
 # Step 1: Discover AI services (381+ services)
 scapo scrape discover --update
@@ -98,6 +118,7 @@ scapo scrape all --priority ultra --limit 20
 ```
 
 #### Option B: Legacy Sources
+
 ```bash
 # Use predefined sources from sources.yaml
 scapo scrape run --sources reddit:LocalLLaMA --limit 10
