@@ -93,7 +93,7 @@ scapo scrape targeted --service "Midjourney" --limit 20
 # Or batch process multiple services
 scapo scrape batch --category video --limit 15
 
-# Process ALL priority services one by one (no limits!)
+# Process ALL priority services one by one (i.e. all services with 'ultra' tag, see targted_search_generator.py)
 scapo scrape all --priority ultra --limit 20
 ```
 
@@ -255,18 +255,18 @@ Navigate extracted tips with:
 - **o** - Open file location
 - **q** - Quit
 
-## 🔄 Git-Friendly Updates
+## 🔄 Git-Friendly Updates tracking AI services in the Models folder
 
 SCAPO is designed for version control:
 ```bash
 # Check what changed
-scripts/git_update.py --status
+uv run scripts/git_update.py --status
 
 # Generate commit message
-scripts/git_update.py --message
+uv run scripts/git_update.py --message
 
 # Commit changes
-scripts/git_update.py --commit
+uv run scripts/git_update.py --commit
 ```
 
 Updates completely replace old content, ensuring:

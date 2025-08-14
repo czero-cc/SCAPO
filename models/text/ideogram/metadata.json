@@ -1,13 +1,13 @@
 {
   "service": "Ideogram",
   "category": "text",
-  "last_updated": "2025-08-12T20:05:32.879741",
-  "extraction_timestamp": "2025-08-12T20:05:25.727949",
+  "last_updated": "2025-08-14T18:50:04.941370",
+  "extraction_timestamp": "2025-08-14T18:49:56.394586",
   "data_sources": [
     "Reddit API",
     "Community discussions"
   ],
-  "posts_analyzed": 49,
+  "posts_analyzed": 50,
   "confidence": "medium",
   "version": "1.0.0"
 }

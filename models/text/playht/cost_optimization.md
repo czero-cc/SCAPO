@@ -1,8 +1,8 @@
 # Play.ht - Cost Optimization Guide
 
-*Last updated: 2025-08-12*
+*Last updated: 2025-08-14*
 
-## Pricing Information
+## Cost & Pricing Information
 
 - $100 per month
 

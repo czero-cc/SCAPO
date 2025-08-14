@@ -384,7 +384,7 @@ IMPORTANT: Start with {{ and end with }}. Be strict - only high-quality, model-s
             # Don't close the processor - we're reusing it
             pass
     
-    async def scrape_reddit_browser(self, page: Page, source_name: str, max_posts: int = 10) -> List[ProcessedContent]:
+    async def scrape_reddit_browser(self, page: Page, source_name: str, max_posts: int = 10, progress_callback=None) -> List[ProcessedContent]:
         """Scrape Reddit using browser and process with LLM."""
         logger.info(f"Scraping {source_name} with browser")
         
@@ -462,7 +462,7 @@ IMPORTANT: Start with {{ and end with }}. Be strict - only high-quality, model-s
         for i, post in enumerate(post_links):
             if i >= max_posts:
                 break
-                
+            
             try:
                 # Navigate to post
                 post_page = await page.context.new_page()
@@ -511,9 +511,16 @@ IMPORTANT: Start with {{ and end with }}. Be strict - only high-quality, model-s
                     logger.info(f"Extracted {len(practices)} practices from post")
                 else:
                     logger.debug(f"Skipping non-AI content: {content_data['title'][:60]}")
+                
+                # Report progress after processing this post
+                if progress_callback:
+                    await progress_callback(source_name, i+1, max_posts)
                     
             except Exception as e:
                 logger.error(f"Error processing post: {e}")
+                # Still report progress even if post failed
+                if progress_callback:
+                    await progress_callback(source_name, i+1, max_posts)
             
             await asyncio.sleep(self.scrape_delay)
         
@@ -739,8 +746,14 @@ IMPORTANT: Start with {{ and end with }}. Be strict - only high-quality, model-s
         
         return processed
     
-    async def scrape_sources(self, sources: List[str] = None, max_posts_per_source: int = 10):
-        """Main entry point for scraping multiple sources."""
+    async def scrape_sources(self, sources: List[str] = None, max_posts_per_source: int = 10, progress_callback=None):
+        """Main entry point for scraping multiple sources.
+        
+        Args:
+            sources: List of sources to scrape
+            max_posts_per_source: Maximum posts per source
+            progress_callback: Optional callback(source, posts_processed, total_posts) for progress updates
+        """
         if sources is None:
             sources = ["reddit:LocalLLaMA", "reddit:OpenAI"]
         
@@ -752,7 +765,7 @@ IMPORTANT: Start with {{ and end with }}. Be strict - only high-quality, model-s
             for source in sources:
                 if source.startswith("reddit:"):
                     subreddit = source.split(":", 1)[1]
-                    content = await self.scrape_reddit_browser(page, subreddit, max_posts_per_source)
+                    content = await self.scrape_reddit_browser(page, subreddit, max_posts_per_source, progress_callback)
                     self.processed_content.extend(content)
                     
                 # HackerNews not yet implemented

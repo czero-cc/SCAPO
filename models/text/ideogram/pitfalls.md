@@ -1,8 +1,6 @@
 # Ideogram - Common Pitfalls & Issues
 
-*Last updated: 2025-08-12*
+*Last updated: 2025-08-14*
 
-## Technical Issues
-
-### ⚠️ Leader/another role cannot be drafted due to a bug involving ideoligion objects such as shrines and ideograms.
+*No major issues reported yet. This may indicate limited community data.*
 

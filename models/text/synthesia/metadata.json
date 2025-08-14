@@ -1,0 +1,13 @@
+{
+  "service": "Synthesia",
+  "category": "text",
+  "last_updated": "2025-08-14T18:51:19.927147",
+  "extraction_timestamp": "2025-08-14T18:51:11.702010",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 47,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

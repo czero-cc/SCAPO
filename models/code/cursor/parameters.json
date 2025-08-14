@@ -1,13 +1,21 @@
 {
   "service": "Cursor",
-  "last_updated": "2025-08-12T20:05:11.435746",
-  "recommended_settings": {},
-  "cost_optimization": {
-    "tip_0": "API costs have decreased in recent months; prompt caching further lowers costs.",
-    "tip_1": "Pro plan indexing limit: 100,000 files",
-    "pricing": "Monthly subscription remains $20.",
-    "tip_3": "deepseekcoder\u2011v2 is cheaper than other models."
+  "last_updated": "2025-08-14T18:49:40.282309",
+  "recommended_settings": {
+    "setting_0": {
+      "description": "browser-tools.type=command"
+    },
+    "setting_1": {
+      "description": "browser-tools.command=npx"
+    },
+    "setting_2": {
+      "description": "browser-tools.args=[-y,@agentdeskai/browser-tools-mcp@1.2.0]"
+    },
+    "setting_3": {
+      "description": "browser-tools.enabled=true"
+    }
   },
+  "cost_optimization": {},
   "sources": [
     "Reddit community",
     "User reports"

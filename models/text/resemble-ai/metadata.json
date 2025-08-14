@@ -1,8 +1,8 @@
 {
   "service": "Resemble AI",
   "category": "text",
-  "last_updated": "2025-08-12T20:09:01.048329",
-  "extraction_timestamp": "2025-08-12T20:09:00.838795",
+  "last_updated": "2025-08-14T18:54:04.618837",
+  "extraction_timestamp": "2025-08-14T18:54:04.363479",
   "data_sources": [
     "Reddit API",
     "Community discussions"

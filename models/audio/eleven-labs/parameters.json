@@ -1,30 +1,24 @@
 {
   "service": "Eleven Labs",
-  "last_updated": "2025-08-14T15:21:43.094677",
+  "last_updated": "2025-08-14T18:53:46.993256",
   "recommended_settings": {
     "setting_0": {
-      "description": "set temperature=0.7"
+      "description": "voice_name=Mun W"
     },
     "setting_1": {
-      "description": "voice_name=\"Mun W\""
+      "description": "Server URL=https://9df9e70d40a2.ngrok-free.app/v1/big-chief"
     },
     "setting_2": {
-      "description": "voice ID"
+      "description": "Model ID=gemini-2.0-flash"
     },
     "setting_3": {
-      "description": "API key"
-    },
-    "setting_4": {
-      "description": "temperature=0.7"
+      "description": "API Key=YOUR_API_KEY"
     }
   },
   "cost_optimization": {
-    "pricing": "The user was on the $99/month plan and had 60% of their credits left, which should have lasted until June 5th, representing approximately 400,000 credits.",
-    "tip_1": "ElevenLabs free plan offers 10k characters each month.",
-    "tip_2": "ElevenLabs API key",
-    "tip_3": "doing Speech-To-Text via the web UI only gives you 12 minutes per month on the free plan, meanwhile via the API you get 2 hours and 30 minutes on the same free plan per month!",
-    "tip_4": "free",
-    "tip_5": "https://elevenlabs.io/app/settings/api-keys"
+    "tip_0": "60% of credits left (~400,000 credits)",
+    "tip_1": "Subscription renewal failed due to paywall issues",
+    "pricing": "$99/month plan"
   },
   "sources": [
     "Reddit community",

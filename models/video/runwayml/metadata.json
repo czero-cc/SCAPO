@@ -1,0 +1,13 @@
+{
+  "service": "RunwayML",
+  "category": "video",
+  "last_updated": "2025-08-14T18:55:25.468159",
+  "extraction_timestamp": "2025-08-14T18:55:16.191298",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 67,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

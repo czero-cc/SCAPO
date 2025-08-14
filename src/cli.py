@@ -12,6 +12,7 @@ warnings.filterwarnings(
 import asyncio
 import sys
 import click
+from datetime import datetime
 from rich.console import Console
 from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
@@ -99,8 +100,7 @@ def init():
     """Initialize SCAPO environment with interactive setup."""
     show_banner()
     
-    with console.status("[bold blue]Initializing SCAPO environment...[/bold blue]", spinner="dots"):
-        time.sleep(0.5)
+    # Initialize environment without fake delay
     
     # Check if .env exists
     import os
@@ -230,30 +230,90 @@ def run_scraper(sources, limit, interactive):
             console.print("[yellow]Scraping cancelled[/yellow]")
             return
         
-        # Run scraper with enhanced progress
+        # Run scraper with real progress tracking
+        num_sources = len(sources_list) if sources_list else 5  # Default has 5 sources
+        
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
             BarColumn(),
             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+            TextColumn("{task.completed}/{task.total}"),
             TimeElapsedColumn(),
             console=console,
         ) as progress:
-            task = progress.add_task("Collecting AI/ML best practices...", total=100)
-            
-            # Simulate progress updates
-            for i in range(20):
-                progress.update(task, advance=5)
-                await asyncio.sleep(0.1)
-            
-            result = await service.run_scrapers(
-                sources=sources_list,
-                max_posts_per_source=limit,
+            # Track total posts expected across all sources
+            total_posts_expected = num_sources * limit
+            task = progress.add_task(
+                f"Processing {num_sources} source{'s' if num_sources > 1 else ''} (up to {total_posts_expected} posts)...", 
+                total=total_posts_expected
             )
             
-            progress.update(task, completed=100)
+            # Process sources one by one for real progress
+            all_results = {
+                "status": "success",
+                "posts_scraped": 0,
+                "models_found": set(),
+                "best_practices": 0,
+                "practices_extracted": 0,
+                "processing_time": 0,
+                "sources_processed": []
+            }
             
-        display_scraper_result_enhanced(result)
+            start_time = datetime.utcnow()
+            
+            if sources_list:
+                total_posts_processed = 0
+                
+                # Create progress callback
+                async def report_progress(source_name, posts_done, total_posts):
+                    nonlocal total_posts_processed
+                    current_progress = total_posts_processed + posts_done
+                    progress.update(task, completed=current_progress, 
+                                  description=f"Processing {format_source_identifier(f'reddit:{source_name}')} [{posts_done}/{total_posts} posts]...")
+                
+                for idx, source in enumerate(sources_list):
+                    progress.update(task, description=f"Starting {format_source_identifier(source)}...")
+                    
+                    # Run scraper for single source with progress callback
+                    result = await service.run_scrapers(
+                        sources=[source],
+                        max_posts_per_source=limit,
+                        progress_callback=report_progress
+                    )
+                    
+                    # Aggregate results
+                    posts_found = result.get("posts_scraped", 0)
+                    all_results["posts_scraped"] += posts_found
+                    all_results["models_found"].update(result.get("models_found", []))
+                    all_results["best_practices"] += result.get("best_practices", 0)
+                    all_results["practices_extracted"] += result.get("best_practices", 0)  # Same as best_practices
+                    all_results["sources_processed"].append(source)
+                    
+                    # Update total posts processed
+                    total_posts_processed += min(posts_found, limit)
+            else:
+                # Use default sources
+                result = await service.run_scrapers(
+                    sources=None,
+                    max_posts_per_source=limit,
+                )
+                # Ensure result has all required fields
+                all_results = result
+                if "status" not in all_results:
+                    all_results["status"] = "success"
+                if "practices_extracted" not in all_results:
+                    all_results["practices_extracted"] = all_results.get("best_practices", 0)
+                progress.update(task, completed=total_posts_expected)
+            
+            end_time = datetime.utcnow()
+            all_results["processing_time"] = (end_time - start_time).total_seconds()
+            
+            # Convert set to list for display
+            if isinstance(all_results.get("models_found"), set):
+                all_results["models_found"] = list(all_results["models_found"])
+            
+        display_scraper_result_enhanced(all_results)
     
     asyncio.run(_run())
 
@@ -348,45 +408,23 @@ def targeted_scrape(service, category, limit, batch_size, dry_run, run_all, max_
         
         # Generate targeted searches
         generator = TargetedSearchGenerator()
-        all_queries = generator.generate_queries(
-            max_queries=100 if run_all else max_queries,
-            category_filter=category if category and not service else None
-        )
         
-        # Filter queries by service name if specified
-        queries = all_queries
+        # If a specific service is requested, generate queries directly for it
         if service and not category:
-            # Use alias manager for better matching
-            from src.services.service_alias_manager import ServiceAliasManager
-            alias_manager = ServiceAliasManager()
-            
-            # Get canonical name and all variations
-            service_match = alias_manager.match_service(service)
-            if service_match:
-                service_variations = service_match['all_variations']
-                # Filter queries matching any variation
-                queries = [q for q in all_queries 
-                          if any(var.lower() in q['service'].lower() or q['service'].lower() in var.lower() 
-                                for var in service_variations)]
-            else:
-                # Fallback to simple matching
-                queries = [q for q in all_queries if service.lower() in q['service'].lower()]
+            # Just generate queries for the requested service - don't generate for all services first
+            console.print(f"[cyan]Generating queries for {service}...[/cyan]")
+            queries = generator.generate_queries_for_service(service, max_queries=max_queries)
             
             if not queries:
-                # If no queries found, generate queries specifically for this service
-                console.print(f"[yellow]No existing queries for {service}, generating custom queries...[/yellow]")
-                queries = generator.generate_queries_for_service(service, max_queries=max_queries)
-                
-                if not queries:
-                    console.print(f"[red]Could not generate queries for service: {service}[/red]")
-                    console.print("[yellow]Tip: Try using the service name as it appears in 'scapo scrape discover'[/yellow]")
-                    return
-        
-        if not queries and service:
-            # Generate queries specifically for this service
-            console.print(f"[yellow]Service '{service}' not in priority list. Generating custom queries...[/yellow]")
-            display_name = service_match['display_name'] if service_match else service
-            queries = generator.generate_queries_for_service(display_name, max_queries)
+                console.print(f"[red]Could not generate queries for service: {service}[/red]")
+                return
+        else:
+            # Generate queries based on category or all services
+            all_queries = generator.generate_queries(
+                max_queries=100 if run_all else max_queries,
+                category_filter=category if category else None
+            )
+            queries = all_queries
         
         if not queries:
             console.print("[yellow]No matching queries found[/yellow]")
@@ -862,7 +900,6 @@ def scrape_status():
         
         with console.status("[bold blue]Fetching scraper status...[/bold blue]", spinner="dots"):
             scraper_status = await scraper_service.get_status()
-            time.sleep(0.5)
         
         # Create status cards
         cards = []
@@ -1251,7 +1288,6 @@ def clean():
                 else:
                     os.remove(f)
                 progress.update(task, advance=1)
-                time.sleep(0.1)
         
         console.print("\n[green]✓[/green] Cleanup complete!")
     else:
