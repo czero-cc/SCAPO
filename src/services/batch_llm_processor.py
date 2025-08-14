@@ -109,12 +109,12 @@ class BatchLLMProcessor:
     
     def create_batch_prompt(self, posts: List[Dict], service_name: str) -> str:
         """Create prompt for batch processing multiple posts"""
-        # Simplify posts to just title and content
+        # Use FULL content - no truncation! Batching handles size limits
         simplified_posts = []
         for p in posts:
             simplified_posts.append({
                 "title": p.get("title", ""),
-                "content": p.get("content", "")[:500],  # Limit content length
+                "content": p.get("content", ""),  # FULL content - no truncation
                 "id": p.get("id", "")
             })
         
@@ -124,8 +124,10 @@ CRITICAL RULES:
 1. ONLY extract information DIRECTLY RELATED to {service_name}
 2. IGNORE any content about unrelated topics (e.g., 3D printing, cooking, gaming, etc.)
 3. IGNORE generic advice like "be respectful" or "read the docs"
-4. Each extracted item MUST mention {service_name} or be clearly about it
-5. Include the FULL context - don't truncate mid-sentence
+4. IGNORE promotional content like "Join my course", "Get more customers", "Save hours with AI"
+5. Each extracted item MUST mention {service_name} BY NAME or be SPECIFICALLY about {service_name}'s features
+6. Include the FULL context - don't truncate mid-sentence
+7. DO NOT include generic AI marketing/promotional content even if it mentions AI
 
 Posts:
 {json.dumps(simplified_posts, indent=2)}
@@ -192,12 +194,46 @@ Generic tips or unrelated content (3D printing, cooking, etc.) MUST BE IGNORED."
                 
                 # Check if single post is too large
                 if post_tokens > self.usable_tokens - base_tokens:
-                    logger.warning(f"Single post exceeds token limit ({post_tokens} tokens), truncating")
-                    # Truncate post content
-                    if 'content' in post:
-                        max_content_tokens = (self.usable_tokens - base_tokens - 500) * 4  # Convert to chars
-                        post['content'] = post['content'][:max_content_tokens] + "...[truncated]"
-                    current_tokens = self.count_tokens(json.dumps(post))
+                    logger.warning(f"Single post exceeds token limit ({post_tokens} tokens), will split")
+                    # Split the large post into smaller chunks that fit
+                    content = post.get('content', '')
+                    if content:
+                        # Calculate how many tokens we can use for content
+                        available_for_content = self.usable_tokens - base_tokens - 200  # Safety margin
+                        
+                        # Split content by tokens
+                        sentences = content.split('. ')
+                        current_chunk = []
+                        current_chunk_tokens = 0
+                        
+                        for sentence in sentences:
+                            sentence_tokens = self.count_tokens(sentence + '. ')
+                            if current_chunk_tokens + sentence_tokens > available_for_content:
+                                # Save current chunk as a separate post
+                                if current_chunk:
+                                    chunk_post = post.copy()
+                                    chunk_post['content'] = '. '.join(current_chunk) + '.'
+                                    batches.append([chunk_post])
+                                    logger.info(f"Created chunk with {current_chunk_tokens} tokens")
+                                # Start new chunk
+                                current_chunk = [sentence]
+                                current_chunk_tokens = sentence_tokens
+                            else:
+                                current_chunk.append(sentence)
+                                current_chunk_tokens += sentence_tokens
+                        
+                        # Add remaining chunk
+                        if current_chunk:
+                            chunk_post = post.copy()
+                            chunk_post['content'] = '. '.join(current_chunk)
+                            if not chunk_post['content'].endswith('.'):
+                                chunk_post['content'] += '.'
+                            batches.append([chunk_post])
+                            logger.info(f"Created final chunk with {current_chunk_tokens} tokens")
+                    
+                    # Reset current batch
+                    current_batch = []
+                    current_tokens = 0
             else:
                 # Add to current batch
                 current_batch.append(post)
@@ -261,10 +297,9 @@ Generic tips or unrelated content (3D printing, cooking, etc.) MUST BE IGNORED."
                 # Merge results
                 return self.merge_results([result1, result2])
             else:
-                logger.error("Cannot split single post, truncating")
-                # Truncate the single post
-                if 'content' in posts[0]:
-                    posts[0]['content'] = posts[0]['content'][:1000] + "...[truncated]"
+                logger.warning("Single post still too large, will process with full content")
+                # Let the LLM process as much as it can see within its context window
+                # The LLM will naturally work with what fits in its context
                 prompt = self.create_batch_prompt(posts, service_name)
         
         try:

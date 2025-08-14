@@ -307,16 +307,20 @@ class ModelEntryGenerator:
             results = data.get('results', [])
             entries_created = 0
             
-            # Merge results by service
+            # Merge results by service (case-insensitive)
             merged_by_service = {}
             for result in results:
                 service = result.get('service')
                 if not service:
                     continue
                 
-                if service not in merged_by_service:
-                    merged_by_service[service] = {
-                        'service': service,
+                # Normalize service name to handle case differences
+                # Use lowercase as key, but preserve original casing for display
+                service_key = service.lower()
+                
+                if service_key not in merged_by_service:
+                    merged_by_service[service_key] = {
+                        'service': service,  # Use first occurrence's casing
                         'tips': [],
                         'problems': [],
                         'settings': [],
@@ -325,12 +329,14 @@ class ModelEntryGenerator:
                         'timestamp': result.get('timestamp')
                     }
                 
-                # Merge data
-                merged_by_service[service]['tips'].extend(result.get('tips', []))
-                merged_by_service[service]['problems'].extend(result.get('problems', []))
-                merged_by_service[service]['settings'].extend(result.get('settings', []))
-                merged_by_service[service]['cost_info'].extend(result.get('cost_info', []))
-                merged_by_service[service]['batch_size'] += result.get('batch_size', 0)
+                # Merge data (handle typos like 'setttings')
+                merged_by_service[service_key]['tips'].extend(result.get('tips', []))
+                merged_by_service[service_key]['problems'].extend(result.get('problems', []))
+                # Handle both 'settings' and 'setttings' (typo from some LLMs)
+                merged_by_service[service_key]['settings'].extend(result.get('settings', []))
+                merged_by_service[service_key]['settings'].extend(result.get('setttings', []))  # Handle typo
+                merged_by_service[service_key]['cost_info'].extend(result.get('cost_info', []))
+                merged_by_service[service_key]['batch_size'] += result.get('batch_size', 0)
             
             # Deduplicate and normalize
             for service, data in merged_by_service.items():
