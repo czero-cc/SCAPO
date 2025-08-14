@@ -1,4 +1,4 @@
-Output ../assets/tui.mp4
+Output ../assets/tui.gif
 
 Require bash
 Require uv
