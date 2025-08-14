@@ -1,7 +1,7 @@
 {
   "service": "Cursor",
   "category": "code",
-  "last_updated": "2025-08-12T20:05:11.499882",
+  "last_updated": "2025-08-14T18:49:40.361209",
   "extraction_timestamp": null,
   "data_sources": [
     "Reddit API",

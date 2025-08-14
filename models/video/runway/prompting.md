@@ -1,14 +1,16 @@
 # Runway Prompting Guide
 
-*Last updated: 2025-08-12*
+*Last updated: 2025-08-14*
 
-## Usage Tips
+## Tips & Techniques
 
-- Use Python SDK v3.1 from https://github.com/runwayml/sdk-python
+- Gen-4 References is now available in our API
+- Use Python SDK v3.1 → https://github.com/runwayml/sdk-python
+- Get an API key at https://dev.runwayml.com/
 
 ## Recommended Settings
 
-- Maximum of 3 reference images per request
+- max_reference_images=3
 
 ## Sources
 

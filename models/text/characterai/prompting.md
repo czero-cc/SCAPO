@@ -1,14 +1,10 @@
 # Character.AI Prompting Guide
 
-*Last updated: 2025-08-12*
+*Last updated: 2025-08-14*
 
-## Technical Tips
+## Tips & Techniques
 
-- Use Janitor AI to jailbreak Character AI and access the NSFW version via prompts
-
-## Recommended Settings
-
-- Enable 'Goro' in the experimental settings under the Style tab
+- Compared to other sites where the X button is hard to find or is easily mashed in with stuff that will take you to the advertisers site, character ai's ads have clear X buttons and they are placed in a way that fat fingering them or missing by a few inches wont send you to google play store or some random site.
 
 ## Sources
 

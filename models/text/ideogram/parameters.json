@@ -1,9 +1,9 @@
 {
   "service": "Ideogram",
-  "last_updated": "2025-08-12T20:05:32.795932",
+  "last_updated": "2025-08-14T18:50:04.846403",
   "recommended_settings": {},
   "cost_optimization": {
-    "tip_0": "216 credits per day available for paid users using 3\u2011credit generations."
+    "tip_0": "Which, if 3-credit generations is used every time, translates to 216 credits per day."
   },
   "sources": [
     "Reddit community",

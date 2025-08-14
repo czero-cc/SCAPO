@@ -93,7 +93,7 @@ scapo scrape targeted --service "Midjourney" --limit 20
 # Or batch process multiple services
 scapo scrape batch --category video --limit 15
 
-# Process ALL priority services one by one (no limits!)
+# Process ALL priority services one by one (i.e. all services with 'ultra' tag, see targted_search_generator.py)
 scapo scrape all --priority ultra --limit 20
 ```
 

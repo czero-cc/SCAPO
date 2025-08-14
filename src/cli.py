@@ -12,6 +12,7 @@ warnings.filterwarnings(
 import asyncio
 import sys
 import click
+from datetime import datetime
 from rich.console import Console
 from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
@@ -99,8 +100,7 @@ def init():
     """Initialize SCAPO environment with interactive setup."""
     show_banner()
     
-    with console.status("[bold blue]Initializing SCAPO environment...[/bold blue]", spinner="dots"):
-        time.sleep(0.5)
+    # Initialize environment without fake delay
     
     # Check if .env exists
     import os
@@ -230,30 +230,90 @@ def run_scraper(sources, limit, interactive):
             console.print("[yellow]Scraping cancelled[/yellow]")
             return
         
-        # Run scraper with enhanced progress
+        # Run scraper with real progress tracking
+        num_sources = len(sources_list) if sources_list else 5  # Default has 5 sources
+        
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
             BarColumn(),
             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+            TextColumn("{task.completed}/{task.total}"),
             TimeElapsedColumn(),
             console=console,
         ) as progress:
-            task = progress.add_task("Collecting AI/ML best practices...", total=100)
-            
-            # Simulate progress updates
-            for i in range(20):
-                progress.update(task, advance=5)
-                await asyncio.sleep(0.1)
-            
-            result = await service.run_scrapers(
-                sources=sources_list,
-                max_posts_per_source=limit,
+            # Track total posts expected across all sources
+            total_posts_expected = num_sources * limit
+            task = progress.add_task(
+                f"Processing {num_sources} source{'s' if num_sources > 1 else ''} (up to {total_posts_expected} posts)...", 
+                total=total_posts_expected
             )
             
-            progress.update(task, completed=100)
+            # Process sources one by one for real progress
+            all_results = {
+                "status": "success",
+                "posts_scraped": 0,
+                "models_found": set(),
+                "best_practices": 0,
+                "practices_extracted": 0,
+                "processing_time": 0,
+                "sources_processed": []
+            }
             
-        display_scraper_result_enhanced(result)
+            start_time = datetime.utcnow()
+            
+            if sources_list:
+                total_posts_processed = 0
+                
+                # Create progress callback
+                async def report_progress(source_name, posts_done, total_posts):
+                    nonlocal total_posts_processed
+                    current_progress = total_posts_processed + posts_done
+                    progress.update(task, completed=current_progress, 
+                                  description=f"Processing {format_source_identifier(f'reddit:{source_name}')} [{posts_done}/{total_posts} posts]...")
+                
+                for idx, source in enumerate(sources_list):
+                    progress.update(task, description=f"Starting {format_source_identifier(source)}...")
+                    
+                    # Run scraper for single source with progress callback
+                    result = await service.run_scrapers(
+                        sources=[source],
+                        max_posts_per_source=limit,
+                        progress_callback=report_progress
+                    )
+                    
+                    # Aggregate results
+                    posts_found = result.get("posts_scraped", 0)
+                    all_results["posts_scraped"] += posts_found
+                    all_results["models_found"].update(result.get("models_found", []))
+                    all_results["best_practices"] += result.get("best_practices", 0)
+                    all_results["practices_extracted"] += result.get("best_practices", 0)  # Same as best_practices
+                    all_results["sources_processed"].append(source)
+                    
+                    # Update total posts processed
+                    total_posts_processed += min(posts_found, limit)
+            else:
+                # Use default sources
+                result = await service.run_scrapers(
+                    sources=None,
+                    max_posts_per_source=limit,
+                )
+                # Ensure result has all required fields
+                all_results = result
+                if "status" not in all_results:
+                    all_results["status"] = "success"
+                if "practices_extracted" not in all_results:
+                    all_results["practices_extracted"] = all_results.get("best_practices", 0)
+                progress.update(task, completed=total_posts_expected)
+            
+            end_time = datetime.utcnow()
+            all_results["processing_time"] = (end_time - start_time).total_seconds()
+            
+            # Convert set to list for display
+            if isinstance(all_results.get("models_found"), set):
+                all_results["models_found"] = list(all_results["models_found"])
+            
+        display_scraper_result_enhanced(all_results)
     
     asyncio.run(_run())
 
@@ -862,7 +922,6 @@ def scrape_status():
         
         with console.status("[bold blue]Fetching scraper status...[/bold blue]", spinner="dots"):
             scraper_status = await scraper_service.get_status()
-            time.sleep(0.5)
         
         # Create status cards
         cards = []
@@ -1251,7 +1310,6 @@ def clean():
                 else:
                     os.remove(f)
                 progress.update(task, advance=1)
-                time.sleep(0.1)
         
         console.print("\n[green]✓[/green] Cleanup complete!")
     else:

@@ -1,13 +1,12 @@
 {
   "service": "Runway",
-  "last_updated": "2025-08-12T20:10:15.827498",
+  "last_updated": "2025-08-14T18:58:55.198172",
   "recommended_settings": {
     "setting_0": {
-      "description": "Maximum of 3 reference images per request"
+      "description": "max_reference_images=3"
     }
   },
   "cost_optimization": {
-    "tip_0": "Daily image generation limit is 3 per day.",
     "pricing": "$0.08 (8 credits) per image generation"
   },
   "sources": [

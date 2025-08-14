@@ -33,6 +33,7 @@ dependencies = [
     "PyYAML>=6.0.2",
     "python-dateutil>=2.9.0",
     "tiktoken>=0.11.0",
+    "datetime>=5.5",
 ]
 
 [project.optional-dependencies]

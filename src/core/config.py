@@ -32,7 +32,7 @@ class Settings(BaseSettings):
 
     # Logging
     log_level: str = Field(default="INFO", description="Logging level")
-    log_format: str = Field(default="json", description="Log format (json or text)")
+    log_format: str = Field(default="pretty", description="Log format (json, text, or pretty)")
 
     # Paths
     models_dir: Path = Field(default=Path("models"), description="Models directory")

@@ -63,6 +63,7 @@ class ScraperService:
         self,
         sources: List[str] = None,
         max_posts_per_source: int = 10,
+        progress_callback=None,
     ) -> Dict[str, Any]:
         """Run intelligent scraper on specified sources."""
         
@@ -85,7 +86,8 @@ class ScraperService:
             start_time = datetime.utcnow()
             await self.intelligent_scraper.scrape_sources(
                 sources=sources,
-                max_posts_per_source=max_posts_per_source
+                max_posts_per_source=max_posts_per_source,
+                progress_callback=progress_callback
             )
             end_time = datetime.utcnow()
             processing_time = (end_time - start_time).total_seconds()

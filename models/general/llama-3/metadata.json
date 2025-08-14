@@ -1,0 +1,13 @@
+{
+  "service": "llama-3",
+  "category": "general",
+  "last_updated": "2025-08-14T19:04:03.385627",
+  "extraction_timestamp": "2025-08-14T19:04:03.385627",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 0,
+  "confidence": "medium",
+  "version": "1.0.0"
+}
