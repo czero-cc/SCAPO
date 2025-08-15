@@ -746,43 +746,6 @@ def batch_scrape(category, limit, max_services, priority):
     asyncio.run(_batch())
 
 
-@scrape.command(name="update-status")
-def update_status():
-    """Show which services need updating."""
-    show_banner()
-    
-    from src.services.update_manager import UpdateManager
-    manager = UpdateManager()
-    status = manager.get_update_status()
-    
-    # Display update status
-    console.print(Panel(
-        f"[bold]Update Status[/bold]\n\n"
-        f"Total services tracked: [cyan]{status['total_services']}[/cyan]\n"
-        f"Last update: [yellow]{status.get('last_update', 'Never')}[/yellow]\n"
-        f"Update frequency: {status.get('update_frequency', 'N/A')}\n",
-        border_style="blue",
-        title="SCAPO Update Tracker"
-    ))
-    
-    if status['recent_updates']:
-        console.print("\n[green]Recently Updated:[/green]")
-        for service in status['recent_updates'][:10]:
-            console.print(f"  ✓ {service}")
-    
-    if status['stale_services']:
-        console.print("\n[yellow]Needs Update (>30 days old):[/yellow]")
-        for service in status['stale_services'][:10]:
-            console.print(f"  ⚠ {service}")
-        
-        if len(status['stale_services']) > 10:
-            console.print(f"  ... and {len(status['stale_services']) - 10} more")
-    
-    # Suggest next action
-    if status['stale_services']:
-        console.print(f"\n[dim]Tip: Run 'scapo scrape batch --max-services {min(3, len(status['stale_services']))}' to update stale services[/dim]")
-
-
 @scrape.command(name="all")
 @click.option('-l', '--limit', default=20, help='Max posts per search (default: 20)')
 @click.option('-c', '--category', help='Filter by category (video, audio, code, etc)')
@@ -1167,8 +1130,9 @@ def search_models(query, limit):
         console.print("[yellow]No models directory found. Run 'sota scrape run' first.[/yellow]")
         return
     
-    # Search through all categories and models
-    for category in ["text", "image", "video", "audio", "multimodal"]:
+    # Search through all categories and models dynamically
+    categories = [d for d in os.listdir(models_dir) if os.path.isdir(os.path.join(models_dir, d))]
+    for category in categories:
         cat_dir = os.path.join(models_dir, category)
         if os.path.exists(cat_dir):
             for model in os.listdir(cat_dir):

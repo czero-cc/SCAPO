@@ -16,7 +16,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-### 🎯 Real optimization tips from real users for AI services
+### 🎯 Real usage tips from real users for AI services
 
 If you find **SCAPO** useful, please consider giving it a star on GitHub!  
 Your support helps the project grow and reach more people.  
@@ -29,54 +29,51 @@ Your support helps the project grow and reach more people.
 
 **Keywords**: AI cost optimization, prompt engineering, LLM tips, OpenAI, Claude, Anthropic, Midjourney, Stable Diffusion, ElevenLabs, GitHub Copilot, reduce AI costs, AI service best practices, Reddit scraper, community knowledge base
 
-Ever burned through credits in minutes? Searching Reddit for that one optimization tip? Getting generic advice when you need specific settings?
+Ever burned through credits in minutes? Searching Reddit for one peculiar problem that you were having? Seach results telling you just generic advice when you need specific info?
 
 ![Scapo Intro](assets/intro.gif)
 
-**SCAPO** extracts **specific, actionable optimization techniques** from Reddit about AI services - not generic "write better prompts" advice, but real discussions.
+**SCAPO** extracts **specific usage tips and discussion** from Reddit about AI services - not generic "write better prompts" advice, but real discussions. So, can be sometimes wrong (i.e., crowd wisdom) but for sure will lift your eyebrows often "huh? ok, didn't know that..."
 
 ## ✨ Two Approaches
 
 SCAPO offers two distinct workflows:
 
-### 1. 🎯 **Service Discovery Mode** (NEW - Recommended)
+### 1. 🎯 **Batch Processing via Service Discovery (recommended)** 
 
-Automatically discovers AI services and extracts specific optimization tips:
-
-![Scapo Discover](assets/scrape-discovery.gif)
-
-Discover services from GitHub Awesome lists
-
+Discovers existing AI services and cache them for reference and downstream usage (see below):
 ```bash
 scapo scrape discover --update
 ```
 
-![Scapo Discover](assets/scrape-targeted.gif)
+
+![Scapo Discover](assets/scrape-discovery.gif)
+
 
 Extract optimization tips for specific services
 
 ```bash
 scapo scrape targeted --service "Eleven Labs" --limit 20
 ```
+![Scapo Discover](assets/scrape-targeted.gif)
 
-![Scapo Discover](assets/scrape-batch.gif)
 
-Batch process multiple priority services
+Batch process multiple priority services (Recommended)
 
 ```bash
 scapo scrape batch --max-services 3 --category audio
 ```
+![Scapo Discover](assets/scrape-batch.gif)
+
 
 ### 2. 📚 **Legacy Sources Mode**
-
-![Scapo Batch](assets/legacy.gif)
-
-
 Traditional approach using predefined sources from `sources.yaml`:
 ```bash
 # Scrape from configured sources
 scapo scrape run --sources reddit:LocalLLaMA --limit 10
 ```
+![Scapo Batch](assets/legacy.gif)
+
 
 ## 🏃‍♂️ Quick Start (2 Minutes)
 
@@ -102,6 +99,8 @@ cp .env.example .env
 ```
 
 Get your API key from [openrouter.ai](https://openrouter.ai/)
+* you can also use local LLMs (Ollama, LMstudio). Check [QUICKSTART.md](./QUICKSTART.md)
+
 
 ### 3. Start Extracting Optimization Tips
 
@@ -122,7 +121,7 @@ scapo scrape batch --category video --limit 15
 scapo scrape all --priority ultra --limit 20
 ```
 
-#### Option B: Legacy Sources
+#### Option B: Legacy method: using sources.yaml file
 
 ```bash
 # Use predefined sources from sources.yaml
@@ -155,13 +154,6 @@ cat models/video/heygen/pitfalls.md
 ❌ **Generic**: "Try different settings"  
 ✅ **Specific**: "Use 720p instead of 1080p in HeyGen to save 40% credits"
 
-## 📊 Real Results
-
-From actual extractions:
-- **Eleven Labs**: Found 15+ specific optimization techniques from 75 Reddit posts
-- **GitHub Copilot**: Discovered exact limits and configuration tips
-- **Character.AI**: Found 32,000 character limit and mobile workarounds
-- **HeyGen**: Credit optimization techniques and API alternatives
 
 ## 🛠️ How It Works
 
@@ -174,10 +166,10 @@ From actual extractions:
 ### Intelligent Extraction
 - **Specific search patterns**: "config settings", "API key", "rate limit daily", "parameters"
 - **Aggressive filtering**: Ignores generic advice like "be patient"
-- **Batch processing**: Processes 50+ posts at once for efficiency
-- **Context awareness**: Uses full 128k token windows when available
+- **Batch processing**: Can process 50+ posts at once for efficiency (we recommend minimum of 15 posts per query)
+- **Context awareness**: Uses full token windows of your chosen LLM when available (for local LLM, you need to set your context window in .env)
 
-### Smart Organization
+### Output Organization
 ```
 models/
 ├── audio/
@@ -202,7 +194,7 @@ scapo scrape discover --show-all        # List all services
 
 # Target specific services
 scapo scrape targeted \
-  --service "Eleven Labs" \              # Service name (handles variations)
+  --service "Eleven Labs" \              # Service name (handles variations, you can put whatever --> if we don't get hit in services.json, then it will be created under 'general' folder)
   --limit 20 \                          # Posts per search (15-20 recommended)
   --max-queries 10                      # Number of searches
 
@@ -212,9 +204,6 @@ scapo scrape batch \
   --max-services 3 \                    # Services to process
   --limit 15                           # Posts per search
 
-# Check update status
-scapo scrape update-status              # See what needs updating
-```
 
 ### Legacy Sources Mode
 ```bash
@@ -232,7 +221,7 @@ scapo scrape run \
 # CLI commands
 scapo models list                       # List all models
 scapo models search "copilot"          # Search models
-scapo models info github-copilot --category coding
+scapo models info github-copilot --category code
 ```
 
 ## ⚙️ Configuration
@@ -252,7 +241,7 @@ LOCAL_LLM_OPTIMAL_CHUNK=2048            # Optimal batch size (typically 1/4 of m
 LOCAL_LLM_TIMEOUT_SECONDS=600           # 10 minutes for slower local models
 LLM_TIMEOUT_SECONDS=120                 # 2 minutes for cloud models
 
-# Extraction Quality
+# Extraction Quality (depends on your chosen LLM's discretion)
 LLM_QUALITY_THRESHOLD=0.6               # Min quality (0.0-1.0)
 
 # Scraping
@@ -264,7 +253,7 @@ MAX_POSTS_PER_SCRAPE=100               # Limit per source
 ```bash
 --limit 5   # ❌ Often finds nothing (too few samples)
 --limit 15  # ✅ Good baseline (finds common issues)  
---limit 25  # 🎯 Optimal (uncovers hidden gems & edge cases)
+--limit 25  # 🎯 Will find something (as long as there is active discussion on it)
 ```
 so, hand-wavy breakdown: With 5 posts, extraction success ~20%. With 20+ posts, success jumps to ~80%.
 
@@ -283,7 +272,7 @@ Navigate extracted tips with:
 
 ## 🔄 Git-Friendly Updates tracking AI services in the Models folder
 
-SCAPO is designed for version control:
+SCAPO is designed for version control (this is only for tracking the models folder):
 ```bash
 # Check what changed
 uv run scripts/git_update.py --status
