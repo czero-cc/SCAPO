@@ -34,11 +34,25 @@ class ModelEntryGenerator:
         alias_manager = ServiceAliasManager()
         service_match = alias_manager.match_service(service_name)
         
+        category = 'general'
         if service_match:
-            return service_match.get('category', 'general')
+            category = service_match.get('category', 'general')
         
-        # Default to general if not found
-        return 'general'
+        # If category is 'general', try to determine it from known keywords
+        if category == 'general':
+            service_name_lower = service_name.lower()
+            if any(keyword in service_name_lower for keyword in ['midjourney', 'dall-e', 'stable diffusion', 'leonardo', 'ideogram']):
+                category = 'image'
+            elif any(keyword in service_name_lower for keyword in ['runway', 'pika', 'luma', 'kaiber', 'genmo', 'haiper']):
+                category = 'video'
+            elif any(keyword in service_name_lower for keyword in ['elevenlabs', 'eleven labs', 'murf', 'play.ht', 'wellsaid', 'descript']):
+                category = 'audio'
+            elif any(keyword in service_name_lower for keyword in ['gpt', 'claude', 'llama', 'gemini', 'mistral']):
+                category = 'text'
+            elif any(keyword in service_name_lower for keyword in ['copilot', 'cursor', 'codeium', 'tabnine']):
+                category = 'code'
+        
+        return category
     
     def normalize_service_name(self, service_name: str) -> str:
         """Normalize service name for file/folder naming"""
