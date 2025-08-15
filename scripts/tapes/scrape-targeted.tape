@@ -1,4 +1,4 @@
-Output ../assets/legacy.gif
+Output ../../assets/scrape-targeted.gif
 
 Require bash
 Require uv
@@ -7,7 +7,7 @@ Set Shell bash
 Set Width 1200
 Set Height 650
 Set FontFamily "Monaco"
-Set FontSize 18
+Set FontSize 14
 Set LetterSpacing 0
 Set LineHeight 1.2
 Set Padding 5
@@ -20,7 +20,7 @@ Set PlaybackSpeed 1
 Set TypingSpeed 30 ms
 Set CursorBlink false
 Set Theme "Catppuccin Frappe"
-Set WaitTimeout 120 s
+Set WaitTimeout 160 s
 
 # hidden: go to right folder
 Hide
@@ -30,15 +30,9 @@ Type "clear"
 Enter
 Show
 
-# Scene 2: Run a Reddit scrape (auto-confirm)
-Type "uv run scapo scrape run --sources reddit:LocalLLaMA --limit 2"
-Sleep 2s
-Enter
-Sleep 1s
-Type "y"
+# Extract optimization tips for specific services
+Type "uv run scapo scrape targeted --service 'Eleven Labs' --limit 2"
 Sleep 1s
 Enter
 Wait
-# End pause
-Sleep 2s
-
+Sleep 5s

@@ -1,13 +1,13 @@
-Output ../assets/intro.gif
+Output ../../assets/legacy.gif
 
 Require bash
 Require uv
 
 Set Shell bash
 Set Width 1200
-Set Height 700
+Set Height 650
 Set FontFamily "Monaco"
-Set FontSize 20
+Set FontSize 18
 Set LetterSpacing 0
 Set LineHeight 1.2
 Set Padding 5
@@ -30,11 +30,15 @@ Type "clear"
 Enter
 Show
 
-Type "uv run scapo"
+# Scene 2: Run a Reddit scrape (auto-confirm)
+Type "uv run scapo scrape run --sources reddit:LocalLLaMA --limit 2"
+Sleep 2s
+Enter
+Sleep 1s
+Type "y"
 Sleep 1s
 Enter
-Sleep 5s
-
+Wait
 # End pause
-Sleep 1 s
+Sleep 2s
 

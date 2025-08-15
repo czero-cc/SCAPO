@@ -1,4 +1,4 @@
-Output ../assets/scrape-discovery.gif
+Output ../../assets/scrape-batch.gif
 
 Require bash
 Require uv
@@ -30,9 +30,13 @@ Type "clear"
 Enter
 Show
 
-# Discover services from GitHub Awesome lists
-Type "uv run scapo scrape discover --update"
+# Batch process multiple priority services
+Type "uv run scapo scrape batch --max-services 1 --category audio"
 Sleep 1 s
 Enter
-Sleep 5 s
+Sleep 1 s
+Type "y"
+Enter
+Wait
+Sleep 3s
 

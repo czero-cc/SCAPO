@@ -1,4 +1,4 @@
-Output ../assets/scrape-targeted.gif
+Output ../../assets/scrape-discovery.gif
 
 Require bash
 Require uv
@@ -30,9 +30,9 @@ Type "clear"
 Enter
 Show
 
-# Extract optimization tips for specific services
-Type "uv run scapo scrape targeted --service 'Eleven Labs' --limit 2"
-Sleep 1s
+# Discover services from GitHub Awesome lists
+Type "uv run scapo scrape discover --update"
+Sleep 1 s
 Enter
-Wait
-Sleep 5s
+Sleep 5 s
+
