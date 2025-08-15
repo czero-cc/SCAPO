@@ -55,7 +55,8 @@ class ModelExplorer(App):
         padding: 1;
         overflow-y: auto;
         background: $surface;
-        color: $text;
+        color: cyan;
+        text-style: bold;
     }
 
     #content-viewer {
@@ -189,9 +190,7 @@ class ModelExplorer(App):
     def get_welcome_message(self, focus: str = "tree") -> str:
         """Generate welcome message with command recap."""
     
-        return f"""{SCAPO_BANNER}
-Navigation: ↑/↓ Navigate | Enter Select | Space Expand | Tab Cycle Focus | q Quit | h Help
-"""
+        return f"""{SCAPO_BANNER}"""
         
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
@@ -207,7 +206,7 @@ Navigation: ↑/↓ Navigate | Enter Select | Space Expand | Tab Cycle Focus | q
                     yield Markdown(id="md-view")
                 yield DataTable(id="json-table")
                 
-        yield Static("q Quit  h Help  space Toggle Expand  c Copy Content  o Open Location", id="footer", classes="scapo-footer")
+        yield Static("q Quit  h Help  tab Cycle Focus  space Toggle Expand  c Copy Content  o Open Location", id="footer", classes="scapo-footer")
     
     def on_mount(self) -> None:
         """Set up the app when it starts."""
