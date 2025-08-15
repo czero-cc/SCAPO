@@ -26,7 +26,7 @@ OPENROUTER_MODEL=your_model
 #### Option B: Ollama (Local)
 ```bash
 ollama serve
-ollama pull model_alias
+ollama pull model_alias # or you can just configure using the recent Ollama gui 
 # Edit .env:
 LLM_PROVIDER=local
 LOCAL_LLM_TYPE=ollama
@@ -79,7 +79,6 @@ scapo scrape all --dry-run                      # Preview what will be processed
 - `targeted --service NAME` - Extract tips for one service
 - `batch --category TYPE` - Process multiple services (limited)
 - `all --priority LEVEL` - Process ALL services one by one
-- `update-status` - See what needs updating
 
 ## 📚 Approach 2: Legacy Sources
 
@@ -189,9 +188,8 @@ NOT generic advice like (but sometimes we get them... sadly):
 ## 🚀 Next Steps
 
 1. **Explore extracted tips**: `scapo tui`
-2. **Update regularly**: `scapo scrape update-status`
-3. **Track changes**: `python scripts/git_update.py --status`
-4. **Contribute**: Share your findings via PR!
+2. **Track changes**: `python scripts/git_update.py --status`
+3. **Contribute**: Share your findings via PR!
 
 ## Need Help?
 
