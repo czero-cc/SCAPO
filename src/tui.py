@@ -18,6 +18,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 from rich.syntax import Syntax
+from src.cli import SCAPO_BANNER
 
 
 class ModelExplorer(App):
@@ -187,15 +188,10 @@ class ModelExplorer(App):
     
     def get_welcome_message(self, focus: str = "tree") -> str:
         """Generate welcome message with command recap."""
-        focus_status = "Tree" if focus == "tree" else "Content"
-        
-        return f"""SCAPO Model Explorer
-
-Status: Ready | Focus: {focus_status} | Viewer: Active
-
-Navigation: ↑/↓ Navigate | Enter Select | Space Expand | Tab Cycle | q Quit | h Help
-
-Select a model from the tree to view content."""
+    
+        return f"""{SCAPO_BANNER}
+Navigation: ↑/↓ Navigate | Enter Select | Space Expand | Tab Cycle Focus | q Quit | h Help
+"""
         
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
@@ -206,7 +202,7 @@ Select a model from the tree to view content."""
                 yield Tree("📚 Models", id="model-tree")
                 
             with Vertical(id="content"):
-                yield Static(self.get_welcome_message("tree"), id="welcome")
+                yield Static(Text.from_markup(self.get_welcome_message("tree")), id="welcome")
                 with VerticalScroll(id="content-viewer"):
                     yield Markdown(id="md-view")
                 yield DataTable(id="json-table")
@@ -431,26 +427,20 @@ Select a model from the tree to view content."""
         help_text = """# SCAPO Model Explorer Help
 
 ## Navigation
-- ↑/↓ - Navigate through the tree
+- ↑/↓ - Navigate the tree
 - Enter - Select a file or model
 - Space - Expand/collapse tree nodes
-- q - Quit the TUI
-- h - Show this help
+- Tab - Cycle focus between tree and content
 - c - Copy current content to clipboard
 - o - Open file/model location in Finder
+- h - Show this help
+- q - Quit the TUI
 
 ## File Types
-- 📝 Markdown files (.md) - Best practices and guides
-- ⚙️ JSON files (.json) - Parameters and metadata
-- 📋 YAML files (.yml/.yaml) - Configuration files
-- 📄 Other files - Raw content
-
-## Features
-- Interactive tree navigation
-- Markdown rendering
-- JSON table view
-- File size information
-- Copy content to clipboard
+- 📝 Markdown (.md)
+- ⚙️ JSON (.json)
+- 📋 YAML (.yml/.yaml)
+- 📄 Other files
 """
         # Hide welcome after first selection
         self.query_one("#welcome").display = False
