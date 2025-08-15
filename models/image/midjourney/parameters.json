@@ -1,0 +1,14 @@
+{
+  "service": "Midjourney",
+  "last_updated": "2025-08-15T14:50:41.953959",
+  "recommended_settings": {},
+  "cost_optimization": {
+    "tip_0": "200 image limit",
+    "tip_1": "I use Midjourney quite a bit for graphic design (mainly to generate assets for thumbnails to save trawling through hundreds of pages of stock images). But the tier I use is \u00a330 a month.",
+    "pricing": "$4 additional rollover GPU time"
+  },
+  "sources": [
+    "Reddit community",
+    "User reports"
+  ]
+}

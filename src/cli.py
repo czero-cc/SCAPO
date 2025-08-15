@@ -389,7 +389,8 @@ def discover_services(update, show_all):
 @click.option("--all", "run_all", is_flag=True, help="Run all generated queries")
 @click.option("--max-queries", "-m", default=10, help="Maximum queries to run (default: 10)")
 @click.option("--parallel", "-p", default=3, help="Number of parallel scraping tasks")
-def targeted_scrape(service, category, limit, batch_size, dry_run, run_all, max_queries, parallel):
+@click.option("--use-all-patterns", is_flag=True, help="Use ALL 20 search patterns instead of just 5 (uses all 4 patterns from each category: cost, optimization, technical, workarounds, bugs)")
+def targeted_scrape(service, category, limit, batch_size, dry_run, run_all, max_queries, parallel, use_all_patterns):
     """Run targeted searches for specific AI services."""
     show_banner()
     
@@ -404,7 +405,7 @@ def targeted_scrape(service, category, limit, batch_size, dry_run, run_all, max_
         from datetime import datetime
         
         # Access outer scope variables
-        nonlocal service, category, limit, batch_size, dry_run, run_all, max_queries, parallel
+        nonlocal service, category, limit, batch_size, dry_run, run_all, max_queries, parallel, use_all_patterns
         
         # Generate targeted searches
         generator = TargetedSearchGenerator()
@@ -413,7 +414,9 @@ def targeted_scrape(service, category, limit, batch_size, dry_run, run_all, max_
         if service and not category:
             # Just generate queries for the requested service - don't generate for all services first
             console.print(f"[cyan]Generating queries for {service}...[/cyan]")
-            queries = generator.generate_queries_for_service(service, max_queries=max_queries)
+            if use_all_patterns:
+                console.print(f"[yellow]Using ALL patterns (20 total search queries)[/yellow]")
+            queries = generator.generate_queries_for_service(service, max_queries=max_queries, use_all_patterns=use_all_patterns)
             
             if not queries:
                 console.print(f"[red]Could not generate queries for service: {service}[/red]")
@@ -422,7 +425,8 @@ def targeted_scrape(service, category, limit, batch_size, dry_run, run_all, max_
             # Generate queries based on category or all services
             all_queries = generator.generate_queries(
                 max_queries=100 if run_all else max_queries,
-                category_filter=category if category else None
+                category_filter=category if category else None,
+                use_all_patterns=use_all_patterns
             )
             queries = all_queries
         

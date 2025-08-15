@@ -77,41 +77,98 @@ class TargetedSearchGenerator:
                 data = json.load(f)
                 self.services = data.get('services', {})
     
-    def generate_queries_for_service(self, service_name: str, max_queries: int = 10) -> List[Dict]:
-        """Generate queries for a specific service"""
+    def generate_queries_for_service(self, service_name: str, max_queries: int = 10, use_all_patterns: bool = False) -> List[Dict]:
+        """Generate queries for a specific service
+        
+        Args:
+            service_name: The service to generate queries for
+            max_queries: Maximum number of queries to generate
+            use_all_patterns: If True, use ALL patterns (20 total), not just first from each category
+        """
         queries = []
         
-        # Generate queries for each problem pattern
-        patterns_to_use = list(self.problem_patterns.keys())
-        queries_per_pattern = max(1, max_queries // len(patterns_to_use))
+        # Try to get service info from alias manager
+        service_info = self.alias_manager.match_service(service_name)
+        if service_info:
+            service_category = service_info['category']
+            service_key = service_info['service_key']
+        else:
+            service_category = 'general'
+            service_key = service_name.lower().replace(' ', '-')
         
-        for pattern_type in patterns_to_use[:max_queries]:
-            pattern_list = self.problem_patterns[pattern_type]
-            # Use first pattern from each type
-            if pattern_list:
-                pattern = pattern_list[0]
-                query_text = pattern.replace('{service}', service_name)
-                query_url = f'https://old.reddit.com/search?q={query_text.replace(" ", "+").replace('"', "%22")}'
-                
-                query = {
-                    'service': service_name,
-                    'service_key': service_name.lower().replace(' ', '-'),
-                    'category': 'general',  # Default category for custom queries
-                    'query': query_text,
-                    'query_url': query_url,
-                    'pattern': query_text,
-                    'pattern_type': pattern_type,
-                    'priority': 'custom',
-                    'generated': datetime.now().isoformat()
-                }
-                queries.append(query)
+        # If category is 'general', try to determine it from known keywords
+        if service_category == 'general':
+            service_name_lower = service_name.lower()
+            if any(keyword in service_name_lower for keyword in ['midjourney', 'dall-e', 'stable diffusion', 'leonardo', 'ideogram']):
+                service_category = 'image'
+            elif any(keyword in service_name_lower for keyword in ['runway', 'pika', 'luma', 'kaiber', 'genmo', 'haiper']):
+                service_category = 'video'
+            elif any(keyword in service_name_lower for keyword in ['elevenlabs', 'eleven labs', 'murf', 'play.ht', 'wellsaid', 'descript']):
+                service_category = 'audio'
+            elif any(keyword in service_name_lower for keyword in ['gpt', 'claude', 'llama', 'gemini', 'mistral']):
+                service_category = 'text'
+            elif any(keyword in service_name_lower for keyword in ['copilot', 'cursor', 'codeium', 'tabnine']):
+                service_category = 'code'
+        
+        if use_all_patterns:
+            # Use ALL patterns from each category
+            for pattern_type, pattern_list in self.problem_patterns.items():
+                for pattern in pattern_list:
+                    query_text = pattern.replace('{service}', service_name)
+                    query_url = f'https://old.reddit.com/search?q={query_text.replace(" ", "+").replace('"', "%22")}'
+                    
+                    query = {
+                        'service': service_name,
+                        'service_key': service_key,
+                        'category': service_category,
+                        'query': query_text,
+                        'query_url': query_url,
+                        'pattern': query_text,
+                        'pattern_type': pattern_type,
+                        'priority': 'custom',
+                        'generated': datetime.now().isoformat()
+                    }
+                    queries.append(query)
+                    
+                    if len(queries) >= max_queries:
+                        return queries[:max_queries]
+        else:
+            # Original behavior: use first pattern from each type
+            patterns_to_use = list(self.problem_patterns.keys())
+            queries_per_pattern = max(1, max_queries // len(patterns_to_use))
+            
+            for pattern_type in patterns_to_use[:max_queries]:
+                pattern_list = self.problem_patterns[pattern_type]
+                # Use first pattern from each type
+                if pattern_list:
+                    pattern = pattern_list[0]
+                    query_text = pattern.replace('{service}', service_name)
+                    query_url = f'https://old.reddit.com/search?q={query_text.replace(" ", "+").replace('"', "%22")}'
+                    
+                    query = {
+                        'service': service_name,
+                        'service_key': service_key,
+                        'category': service_category,
+                        'query': query_text,
+                        'query_url': query_url,
+                        'pattern': query_text,
+                        'pattern_type': pattern_type,
+                        'priority': 'custom',
+                        'generated': datetime.now().isoformat()
+                    }
+                    queries.append(query)
         
         return queries[:max_queries]
     
-    def generate_queries(self, max_queries: int = 100, category_filter: str = None) -> List[Dict]:
+    def generate_queries(self, max_queries: int = 100, category_filter: str = None, use_all_patterns: bool = False) -> List[Dict]:
         """
         Generate targeted search queries for discovered services
         Returns list of query dicts with: service, query_url, pattern_type, priority
+        
+        Args:
+            max_queries: Maximum number of queries to generate
+            category_filter: Filter services by category
+            use_all_patterns: If True, use ALL patterns (20 total), not just first from each category
         """
         queries = []
         
@@ -152,7 +209,12 @@ class TargetedSearchGenerator:
                 prioritized_services.append((service_data, 'medium'))
         
         # Calculate services to process
-        services_to_process = min(len(prioritized_services), max(1, max_queries // 5))  # At least 1 service
+        if use_all_patterns:
+            # When using all patterns, we generate 20 queries per service
+            services_to_process = min(len(prioritized_services), max(1, max_queries // 20))
+        else:
+            # Original behavior: 5 queries per service (one from each category)
+            services_to_process = min(len(prioritized_services), max(1, max_queries // 5))
         
         # Generate queries for prioritized services
         for service_data, priority in prioritized_services[:services_to_process]:
@@ -160,7 +222,10 @@ class TargetedSearchGenerator:
             
             # Generate queries for each pattern type
             for pattern_type, patterns in self.problem_patterns.items():
-                for pattern in patterns[:1]:  # Take first pattern of each type to avoid explosion
+                # Use all patterns or just first one based on flag
+                patterns_to_use = patterns if use_all_patterns else patterns[:1]
+                
+                for pattern in patterns_to_use:
                     query = pattern.replace('{service}', service_name)
                     query_url = f'https://old.reddit.com/search?q={query.replace(" ", "+").replace('"', "%22")}'
                     
