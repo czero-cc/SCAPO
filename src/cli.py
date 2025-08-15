@@ -18,6 +18,7 @@ from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
 from rich.panel import Panel
 from rich.text import Text
+from rich.align import Align
 from rich.prompt import Prompt, Confirm
 from rich.columns import Columns
 from rich.syntax import Syntax
@@ -56,7 +57,7 @@ SCAPO_BANNER = r"""
 
 def show_banner():
     """Display the SCAPO banner."""
-    console.print(SCAPO_BANNER)
+    console.print(Align.center(Text.from_markup(SCAPO_BANNER)))
     console.print()
 
 def create_status_panel(title: str, content: str, style: str = "cyan"):

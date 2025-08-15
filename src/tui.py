@@ -18,6 +18,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 from rich.syntax import Syntax
+from rich.align import Align
 from src.cli import SCAPO_BANNER
 
 
@@ -57,6 +58,7 @@ class ModelExplorer(App):
         background: $surface;
         color: cyan;
         text-style: bold;
+        text-align: center;
     }
 
     #content-viewer {
@@ -201,7 +203,7 @@ class ModelExplorer(App):
                 yield Tree("📚 Models", id="model-tree")
                 
             with Vertical(id="content"):
-                yield Static(Text.from_markup(self.get_welcome_message("tree")), id="welcome")
+                yield Static(Align.center(Text.from_markup(self.get_welcome_message("tree"))), id="welcome")
                 with VerticalScroll(id="content-viewer"):
                     yield Markdown(id="md-view")
                 yield DataTable(id="json-table")
