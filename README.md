@@ -266,6 +266,9 @@ scapo tui
 Navigate extracted tips with:
 - **↑/↓** - Browse models
 - **Enter** - View content
+- **Space** - Expand/collapse tree nodes
+- **Tab** - Cycle focus between tree and content
+- **h** - Show help
 - **c** - Copy to clipboard
 - **o** - Open file location
 - **q** - Quit
