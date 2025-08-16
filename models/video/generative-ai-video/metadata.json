@@ -1,0 +1,13 @@
+{
+  "service": "Generative AI Video",
+  "category": "video",
+  "last_updated": "2025-08-16T13:04:51.485428",
+  "extraction_timestamp": "2025-08-16T12:57:13.619612",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 137,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

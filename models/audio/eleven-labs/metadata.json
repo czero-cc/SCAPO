@@ -1,13 +1,13 @@
 {
   "service": "Eleven Labs",
   "category": "audio",
-  "last_updated": "2025-08-14T18:53:47.086694",
+  "last_updated": "2025-08-16T13:46:28.510586",
   "extraction_timestamp": null,
   "data_sources": [
     "Reddit API",
     "Community discussions"
   ],
-  "posts_analyzed": 79,
+  "posts_analyzed": 338,
   "confidence": "medium",
   "version": "1.0.0"
 }

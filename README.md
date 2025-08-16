@@ -53,7 +53,7 @@ scapo scrape discover --update
 Extract optimization tips for specific services
 
 ```bash
-scapo scrape targeted --service "Eleven Labs" --limit 20
+scapo scrape targeted --service "Eleven Labs" --limit 20 --query-limit 20
 ```
 ![Scapo Discover](assets/scrape-targeted.gif)
 
@@ -61,7 +61,7 @@ scapo scrape targeted --service "Eleven Labs" --limit 20
 Batch process multiple priority services (Recommended)
 
 ```bash
-scapo scrape batch --max-services 3 --category audio
+scapo scrape batch --category audio --batch-size 3 --limit 20
 ```
 ![Scapo Discover](assets/scrape-batch.gif)
 
@@ -89,6 +89,8 @@ uv run playwright install  # Browser automation
 
 ### 2. Configure Your LLM Provider
 
+**Note:** Extraction quality depends on your chosen LLM - experiment with different models for best results!
+
 #### Recommended: OpenRouter (Cloud)
 ```bash
 cp .env.example .env
@@ -111,14 +113,14 @@ Get your API key from [openrouter.ai](https://openrouter.ai/)
 scapo scrape discover --update
 
 # Step 2: Extract optimization tips for services
-scapo scrape targeted --service "HeyGen" --limit 20
-scapo scrape targeted --service "Midjourney" --limit 20
+scapo scrape targeted --service "HeyGen" --limit 20 --query-limit 20
+scapo scrape targeted --service "Midjourney" --limit 20 --query-limit 20
 
 # Or batch process multiple services
-scapo scrape batch --category video --limit 15
+scapo scrape batch --category video --limit 20 --batch-size 3
 
 # Process ALL priority services one by one (i.e. all services with 'ultra' tag, see targted_search_generator.py)
-scapo scrape all --priority ultra --limit 20
+scapo scrape all --limit 20 --query-limit 20 --priority ultra
 ```
 
 #### Option B: Legacy method: using sources.yaml file
@@ -196,13 +198,13 @@ scapo scrape discover --show-all        # List all services
 scapo scrape targeted \
   --service "Eleven Labs" \              # Service name (handles variations, you can put whatever --> if we don't get hit in services.json, then it will be created under 'general' folder)
   --limit 20 \                          # Posts per search (15-20 recommended)
-  --max-queries 10                      # Number of searches
+  --query-limit 20                      # Query patterns per service (20 = all)
 
 # Batch process
 scapo scrape batch \
   --category audio \                    # Filter by category
-  --max-services 3 \                    # Services to process
-  --limit 15                           # Posts per search
+  --batch-size 3 \                      # Services per batch
+  --limit 20                           # Posts per search
 
 
 ### Legacy Sources Mode
@@ -249,13 +251,52 @@ SCRAPING_DELAY_SECONDS=2                # Be respectful
 MAX_POSTS_PER_SCRAPE=100               # Limit per source
 ```
 
-### Why --limit Matters (More Posts = Better Tips)
+### Key Parameters Explained
+
+**--query-limit** (How many search patterns per service)
+```bash
+--query-limit 5   # Quick scan: 1 pattern per category (cost, optimization, technical, workarounds, bugs)
+--query-limit 20  # Full scan: All 4 patterns per category (default, most comprehensive)
+```
+
+**--batch-size** (For `batch` command: services processed in parallel)
+```bash
+--batch-size 1  # Sequential (slowest, least resource intensive)
+--batch-size 3  # Default (good balance)
+--batch-size 5  # Faster (more resource intensive)
+```
+
+**--limit** (Posts per search - More = Better extraction)
 ```bash
 --limit 5   # ❌ Often finds nothing (too few samples)
 --limit 15  # ✅ Good baseline (finds common issues)  
 --limit 25  # 🎯 Will find something (as long as there is active discussion on it)
 ```
-so, hand-wavy breakdown: With 5 posts, extraction success ~20%. With 20+ posts, success jumps to ~80%.
+Hand-wavy breakdown: With 5 posts, extraction success ~20%. With 20+ posts, success jumps to ~80%.
+
+## 🤖 MCP Server for Claude Desktop
+
+Query your extracted tips directly in Claude (reads from models/ folder - run scrapers first!):
+
+```json
+// Add to %APPDATA%\Claude\claude_desktop_config.json (Windows)
+// or ~/Library/Application Support/Claude/claude_desktop_config.json (macOS)
+{
+  "mcpServers": {
+    "scapo": {
+      "command": "npx",
+      "args": ["@scapo/mcp-server"],
+      "env": {
+        "SCAPO_MODELS_PATH": "C:\\path\\to\\scapo\\models"  // Your models folder
+      }
+    }
+  }
+}
+```
+
+Then ask Claude: "Get me best practices for GitHub Copilot" or "What models are good for coding?"
+
+See [mcp/README.md](mcp/README.md) for full setup and available commands.
 
 ## 🎨 Interactive TUI
 

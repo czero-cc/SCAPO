@@ -1,0 +1,37 @@
+{
+  "service": "Whisper",
+  "last_updated": "2025-08-16T13:46:29.798264",
+  "recommended_settings": {
+    "setting_0": {
+      "description": "language=en"
+    },
+    "setting_1": {
+      "description": "beam_size=5"
+    },
+    "setting_2": {
+      "description": "no_speech_threshold=0.3"
+    },
+    "setting_3": {
+      "description": "condition_on_previous_text=False"
+    },
+    "setting_4": {
+      "description": "temperature=0"
+    },
+    "setting_5": {
+      "description": "vad_filter=True"
+    },
+    "setting_6": {
+      "description": "model=base"
+    },
+    "setting_7": {
+      "description": "endpoint=http://192.168.60.96:5000/transcribe"
+    }
+  },
+  "cost_optimization": {
+    "unlimited_option": "free, private, and unlimited transcription system"
+  },
+  "sources": [
+    "Reddit community",
+    "User reports"
+  ]
+}

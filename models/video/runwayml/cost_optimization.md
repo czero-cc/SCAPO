@@ -1,11 +1,12 @@
 # RunwayML - Cost Optimization Guide
 
-*Last updated: 2025-08-14*
+*Last updated: 2025-08-16*
 
 ## Cost & Pricing Information
 
-- Runwayml Gen3 Too expensive than Kling and Vidu
-- lol see the limit is 3
-- Unlimited [$95/month] accounts
-- RunwayML Monthly 6 10s for 15$
+- daily_image_limit=3
+
+## Money-Saving Tips
+
+- I think Sam is taking my image generation limit as expectation lol. lol see the limit is 3
 

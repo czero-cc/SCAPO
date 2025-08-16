@@ -1,0 +1,29 @@
+{
+  "service": "Sora",
+  "last_updated": "2025-08-16T13:04:49.318183",
+  "recommended_settings": {
+    "setting_0": {
+      "description": "Image input capabilities=Enabled"
+    }
+  },
+  "cost_optimization": {
+    "tip_0": "5 secs per video",
+    "tip_1": "Sora video aspect ratio: 9:16",
+    "tip_2": "Sora video length limit: 5 seconds",
+    "tip_3": "After free clips: 100 Microsoft Rewards points per video",
+    "tip_4": "Free plan: 3 image generations per day",
+    "tip_5": "Plus users get 1000 credits per month.",
+    "unlimited_option": "Unlimited generations available for all paid tiers",
+    "pricing": "Sora: $20 for 50 videos (or) $200 for 500 videos == $0.4 per video",
+    "tip_8": "10,000 credits for Sora pro plan",
+    "tip_9": "60 credits per generation (example from user)",
+    "tip_10": "Free video generation: 10 clips per session",
+    "tip_11": "Sora is available on the ChatGPT Plus or Pro plans",
+    "tip_12": "Cost: zero (so far)",
+    "tip_13": "Table: | Resolution | Aspect Ratio | Credits | Total Generations |\n|------------|----------------|---------|-------------------|\n| 480p | 1:1 | 20 | 50 |\n| 480p | 16:9/9:16 | 25 | 40 |\n| 720p | 1:1 | 30 | 33 |\n| 720p | 16:9/9:16 | 60"
+  },
+  "sources": [
+    "Reddit community",
+    "User reports"
+  ]
+}

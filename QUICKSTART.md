@@ -14,6 +14,8 @@ uv run playwright install
 
 ### 2. Configure LLM (Choose One)
 
+**Important:** Extraction quality varies by LLM - stronger models find more specific tips!
+
 #### Option A: OpenRouter (Recommended - Free Model!)
 ```bash
 cp .env.example .env
@@ -63,22 +65,28 @@ Extract specific optimization tips for AI services:
 scapo scrape discover --update
 
 # Step 2: Extract tips for specific services
-scapo scrape targeted --service "Eleven Labs" --limit 20
-scapo scrape targeted --service "GitHub Copilot" --limit 20
+scapo scrape targeted --service "Eleven Labs" --limit 20 --query-limit 20
+scapo scrape targeted --service "GitHub Copilot" --limit 20 --query-limit 20
 
 # Or batch process by category
-scapo scrape batch --category video --limit 15
+scapo scrape batch --category video --limit 20 --batch-size 3
 
 # Process ALL priority services one by one
-scapo scrape all --priority ultra --limit 20    # Process all ultra priority services
-scapo scrape all --dry-run                      # Preview what will be processed
+scapo scrape all --limit 20 --query-limit 20 --priority ultra    # Process all ultra priority services
+scapo scrape all --dry-run                                       # Preview what will be processed
 ```
 
 ### Key Commands:
 - `discover --update` - Find services from GitHub Awesome lists  
 - `targeted --service NAME` - Extract tips for one service
-- `batch --category TYPE` - Process multiple services (limited)
+- `batch --category TYPE` - Process ALL services in category (in batches)
 - `all --priority LEVEL` - Process ALL services one by one
+
+### Important Parameters:
+- **--query-limit**: Number of search patterns (5 = quick, 20 = comprehensive)
+- **--batch-size**: Services to process in parallel (3 = default balance)
+- **--limit**: Posts per search (20+ recommended for best results)
+
 
 ## 📚 Approach 2: Legacy Sources
 
@@ -109,6 +117,27 @@ scapo models search "copilot"         # Search for specific models
 cat models/audio/eleven-labs/cost_optimization.md
 ```
 
+### 5. (Optional) Use with Claude Desktop
+
+Add SCAPO as an MCP server to query your extracted tips (from models/ folder) directly in Claude:
+
+```json
+// Add to claude_desktop_config.json
+{
+  "mcpServers": {
+    "scapo": {
+      "command": "npx",
+      "args": ["@scapo/mcp-server"],
+      "env": {
+        "SCAPO_MODELS_PATH": "path/to/scapo/models"
+      }
+    }
+  }
+}
+```
+
+Then ask Claude: "Get best practices for Midjourney" - no Python needed!
+
 ## 📊 Understanding the Output
 
 SCAPO creates organized documentation:
@@ -126,13 +155,13 @@ models/
 
 ```bash
 # ❌ Too few posts = no useful tips found
-scapo scrape targeted --service "HeyGen" --limit 5     # ~20% success rate
+scapo scrape targeted --service "HeyGen" --limit 5 --query-limit 5     # ~20% success rate
 
 # ✅ Sweet spot = reliable extraction  
-scapo scrape targeted --service "HeyGen" --limit 20    # ~80% success rate
+scapo scrape targeted --service "HeyGen" --limit 20 --query-limit 20    # ~80% success rate
 
 # 🎯 Maximum insights = comprehensive coverage
-scapo scrape targeted --service "HeyGen" --limit 30    # Finds rare edge cases
+scapo scrape targeted --service "HeyGen" --limit 30 --query-limit 20    # Finds rare edge cases
 ```
 **Why it matters:** LLMs need multiple examples to identify patterns. More posts = higher chance of finding specific pricing, bugs, and workarounds.
 
@@ -148,7 +177,7 @@ LLM_QUALITY_THRESHOLD=0.4   # More tips (less strict)
 ### "No tips extracted"
 ```bash
 # Solution: Use more posts
-scapo scrape targeted --service "Service Name" --limit 25
+scapo scrape targeted --service "Service Name" --limit 25 --query-limit 20
 ```
 
 ### "Service not found"

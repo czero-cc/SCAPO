@@ -1,0 +1,13 @@
+{
+  "service": "Beatoven.ai",
+  "category": "video",
+  "last_updated": "2025-08-16T13:04:55.894824",
+  "extraction_timestamp": "2025-08-16T13:03:25.229739",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 25,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

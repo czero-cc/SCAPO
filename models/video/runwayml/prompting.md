@@ -1,15 +1,19 @@
 # RunwayML Prompting Guide
 
-*Last updated: 2025-08-14*
+*Last updated: 2025-08-16*
 
 ## Tips & Techniques
 
-- While throttling is bad, there's a reasonable workaround using automation (https://useapi.net/docs/articles/runway-bash).
-- Use runwayml/stableiffusion-v1-5 as pretrained_model_name_or_path in training scripts
+- Gen-3 Alpha is now generally available, previously only partners and testers.
+- Runway brings 3D control to video generation.
+- I think Sam is taking my image generation limit as expectation lol. lol see the limit is 3
+- Adobe partners with OpenAI, RunwayML & Pika for Premiere Pro.
+- Runway brings 3D control to video generation
+- RunwayML: Best KREA alternative for built-in timeline editing.
 
 ## Recommended Settings
 
-- pretrained_model_name_or_path=runwayml/stable-diffusion-v1-5
+- model=runwayml/stable-diffusion-v1-5
 
 ## Sources
 

@@ -1,0 +1,13 @@
+{
+  "service": "Mubert",
+  "category": "audio",
+  "last_updated": "2025-08-16T13:46:30.709332",
+  "extraction_timestamp": "2025-08-16T13:42:52.386062",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 39,
+  "confidence": "medium",
+  "version": "1.0.0"
+}
