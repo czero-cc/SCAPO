@@ -82,7 +82,7 @@ scapo scrape run --sources reddit:LocalLLaMA --limit 10
 git clone https://github.com/czero-cc/scapo.git
 cd scapo
 curl -LsSf https://astral.sh/uv/install.sh | sh  # Install uv
-uv venv && source .venv/ben/activate  # On Windows: .venv\Scripts\activate / if, you do not want to activate venv, you need to run scapo commands with 'uv run'.
+uv venv && source .venv/bin/activate  # On Windows: .venv\Scripts\activate / if, you do not want to activate venv, you need to run scapo commands with 'uv run'.
 uv pip install -e .
 uv run playwright install  # Browser automation
 ```
