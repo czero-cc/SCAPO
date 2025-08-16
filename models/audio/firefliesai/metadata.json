@@ -1,0 +1,13 @@
+{
+  "service": "Fireflies.ai",
+  "category": "audio",
+  "last_updated": "2025-08-16T13:46:29.623761",
+  "extraction_timestamp": "2025-08-16T13:29:54.297790",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 171,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

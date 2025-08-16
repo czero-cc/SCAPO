@@ -1,13 +1,19 @@
 {
   "service": "HeyGen",
-  "last_updated": "2025-08-14T18:53:16.148751",
-  "recommended_settings": {},
+  "last_updated": "2025-08-16T13:04:46.544871",
+  "recommended_settings": {
+    "setting_0": {
+      "description": "voice_id=6d9be61f6e"
+    },
+    "setting_1": {
+      "description": "type=voice"
+    },
+    "setting_2": {
+      "description": "name=script_01"
+    }
+  },
   "cost_optimization": {
-    "tip_0": "Why am I doing this? HeyGen requires a minimum of two seats for",
-    "tip_1": "This is the same price as a single seat in the Team plan when billed annually.",
-    "tip_2": "You get all Team plan features and benefits.",
-    "pricing": "You pay $30/month (billed monthly).",
-    "tip_4": "No annual commitment required from you."
+    "pricing": "You pay $30/month (billed monthly) for a single seat in the HeyGen Team plan, which is the same price as a single seat when billed annually."
   },
   "sources": [
     "Reddit community",

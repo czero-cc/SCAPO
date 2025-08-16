@@ -1,12 +1,55 @@
 {
   "service": "Runway",
-  "last_updated": "2025-08-14T18:58:55.198172",
+  "last_updated": "2025-08-16T13:04:43.762221",
   "recommended_settings": {
     "setting_0": {
-      "description": "max_reference_images=3"
+      "description": "credits_per_video=25"
+    },
+    "setting_1": {
+      "description": "standard_plan_videos=25"
+    },
+    "setting_2": {
+      "description": "standard_plan_credits=625"
+    },
+    "setting_3": {
+      "description": "pro_plan_videos=90"
+    },
+    "setting_4": {
+      "description": "pro_plan_credits=2250"
+    },
+    "setting_5": {
+      "description": "unlimited_plan_cost=$95"
+    },
+    "setting_6": {
+      "description": "standard_plan_cost=$15"
+    },
+    "setting_7": {
+      "description": "pro_plan_cost=$35"
+    },
+    "setting_8": {
+      "description": "automation_workaround=use automation script"
+    },
+    "setting_9": {
+      "description": "credits_per_image=8"
+    },
+    "setting_10": {
+      "description": "cost_per_image=0.08"
+    },
+    "setting_11": {
+      "description": "max_references=3"
+    },
+    "setting_12": {
+      "description": "sdk_version=python_v3.1"
+    },
+    "setting_13": {
+      "description": "api_docs=https://docs.dev.runwayml.com/"
+    },
+    "setting_14": {
+      "description": "api_key_url=https://dev.runwayml.com/"
     }
   },
   "cost_optimization": {
+    "tip_0": "lol see the limit is 3",
     "pricing": "$0.08 (8 credits) per image generation"
   },
   "sources": [

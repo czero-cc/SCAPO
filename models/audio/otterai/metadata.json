@@ -1,0 +1,13 @@
+{
+  "service": "Otter.ai",
+  "category": "audio",
+  "last_updated": "2025-08-16T13:46:29.256512",
+  "extraction_timestamp": null,
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 174,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

@@ -384,14 +384,12 @@ def discover_services(update, show_all):
 @scrape.command(name="targeted")
 @click.option("--service", "-s", help="Target specific service")
 @click.option("--category", "-c", help="Target services by category (video, audio, etc)")
-@click.option("--limit", "-l", default=20, help="Max posts per search")
-@click.option("--batch-size", "-b", default=50, help="Posts per LLM batch")
+@click.option("--limit", "-l", default=20, help="Max posts per search (default: 20)")
+@click.option("--priority", type=click.Choice(['ultra', 'critical', 'high', 'all']), default='all', help="Service priority level")
+@click.option("--query-limit", "-q", default=20, help="Number of query patterns per service (default: 20, max: 20)")
+@click.option("--parallel", default=3, help="Number of parallel scraping tasks")
 @click.option("--dry-run", is_flag=True, help="Show queries without running")
-@click.option("--all", "run_all", is_flag=True, help="Run all generated queries")
-@click.option("--max-queries", "-m", default=10, help="Maximum queries to run (default: 10)")
-@click.option("--parallel", "-p", default=3, help="Number of parallel scraping tasks")
-@click.option("--use-all-patterns", is_flag=True, help="Use ALL 20 search patterns instead of just 5 (uses all 4 patterns from each category: cost, optimization, technical, workarounds, bugs)")
-def targeted_scrape(service, category, limit, batch_size, dry_run, run_all, max_queries, parallel, use_all_patterns):
+def targeted_scrape(service, category, limit, priority, query_limit, parallel, dry_run):
     """Run targeted searches for specific AI services."""
     show_banner()
     
@@ -406,7 +404,7 @@ def targeted_scrape(service, category, limit, batch_size, dry_run, run_all, max_
         from datetime import datetime
         
         # Access outer scope variables
-        nonlocal service, category, limit, batch_size, dry_run, run_all, max_queries, parallel, use_all_patterns
+        nonlocal service, category, limit, priority, query_limit, parallel, dry_run
         
         # Generate targeted searches
         generator = TargetedSearchGenerator()
@@ -415,17 +413,21 @@ def targeted_scrape(service, category, limit, batch_size, dry_run, run_all, max_
         if service and not category:
             # Just generate queries for the requested service - don't generate for all services first
             console.print(f"[cyan]Generating queries for {service}...[/cyan]")
+            use_all_patterns = query_limit >= 20  # Use all patterns if query_limit is 20 or more
             if use_all_patterns:
                 console.print(f"[yellow]Using ALL patterns (20 total search queries)[/yellow]")
-            queries = generator.generate_queries_for_service(service, max_queries=max_queries, use_all_patterns=use_all_patterns)
+            else:
+                console.print(f"[yellow]Using {query_limit} query patterns[/yellow]")
+            queries = generator.generate_queries_for_service(service, max_queries=query_limit, use_all_patterns=use_all_patterns)
             
             if not queries:
                 console.print(f"[red]Could not generate queries for service: {service}[/red]")
                 return
         else:
             # Generate queries based on category or all services
+            use_all_patterns = query_limit >= 20  # Use all patterns if query_limit is 20 or more
             all_queries = generator.generate_queries(
-                max_queries=100 if run_all else max_queries,
+                max_queries=1000,  # Get all services
                 category_filter=category if category else None,
                 use_all_patterns=use_all_patterns
             )
@@ -435,9 +437,13 @@ def targeted_scrape(service, category, limit, batch_size, dry_run, run_all, max_
             console.print("[yellow]No matching queries found[/yellow]")
             return
         
-        # Limit queries if not running all
-        if not run_all and len(queries) > max_queries:
-            queries = queries[:max_queries]
+        # Apply priority filter if specified
+        if priority != 'all':
+            queries = [q for q in queries if q.get('priority', 'all') == priority or priority == 'all']
+        
+        # Limit queries to query_limit
+        if len(queries) > query_limit:
+            queries = queries[:query_limit]
         
         console.print(f"[cyan]Generated {len(queries)} targeted searches[/cyan]")
         
@@ -622,11 +628,13 @@ def targeted_scrape(service, category, limit, batch_size, dry_run, run_all, max_
 
 @scrape.command(name="batch")
 @click.option("--category", "-c", help="Target services by category (video, audio, etc)")
-@click.option("--limit", "-l", default=15, help="Max posts per search (default: 15)")
-@click.option("--max-services", "-m", default=3, help="Maximum number of services to process (default: 3)")
-@click.option("--priority", "-p", type=click.Choice(['ultra', 'critical', 'high', 'all']), default='ultra', help="Service priority level")
-def batch_scrape(category, limit, max_services, priority):
-    """Batch process multiple high-priority services."""
+@click.option("--limit", "-l", default=20, help="Max posts per search (default: 20)")
+@click.option("--priority", type=click.Choice(['ultra', 'critical', 'high', 'all']), default='all', help="Service priority level")
+@click.option("--query-limit", "-q", default=20, help="Number of query patterns per service (default: 20, max: 20)")
+@click.option("--batch-size", "-b", default=3, help="Number of services to process in parallel per batch (default: 3)")
+@click.option("--dry-run", is_flag=True, help="Show what would be processed without running")
+def batch_scrape(category, limit, priority, query_limit, batch_size, dry_run):
+    """Batch process all services in a category (or all services) in parallel batches."""
     show_banner()
     
     async def _batch():
@@ -645,10 +653,12 @@ def batch_scrape(category, limit, max_services, priority):
         generator = TargetedSearchGenerator()
         alias_manager = ServiceAliasManager()
         
-        # Generate queries for multiple services
+        # Generate queries for all services in category
+        use_all_patterns = query_limit >= 20  # Use all patterns if query_limit is 20 or more
         all_queries = generator.generate_queries(
-            max_queries=max_services * 5,  # 5 query types per service
-            category_filter=category
+            max_queries=1000,  # High limit to get all services
+            category_filter=category,
+            use_all_patterns=use_all_patterns
         )
         
         # Filter by priority if specified
@@ -663,12 +673,19 @@ def batch_scrape(category, limit, max_services, priority):
                 queries_by_service[service] = []
             queries_by_service[service].append(query)
         
-        # Limit to max_services
-        services_to_process = list(queries_by_service.keys())[:max_services]
+        # Get all services (no limiting)
+        services_to_process = list(queries_by_service.keys())
         
         console.print(f"[cyan]Processing {len(services_to_process)} services:[/cyan]")
+        console.print(f"[yellow]Using {query_limit} query patterns per service[/yellow]")
         for service in services_to_process:
+            # Limit queries per service based on query_limit
+            queries_by_service[service] = queries_by_service[service][:query_limit]
             console.print(f"  • {service} ({len(queries_by_service[service])} queries)")
+        
+        if dry_run:
+            console.print("\n[yellow]DRY RUN - Would process these services[/yellow]")
+            return
         
         if not Confirm.ask(f"\n[yellow]Process {len(services_to_process)} services?[/yellow]", default=True):
             console.print("[red]Cancelled[/red]")
@@ -681,7 +698,7 @@ def batch_scrape(category, limit, max_services, priority):
         
         all_results = []
         
-        # Process each service
+        # Process services in batches
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -691,30 +708,43 @@ def batch_scrape(category, limit, max_services, priority):
             console=console,
         ) as progress:
             total_queries = sum(len(queries_by_service[s]) for s in services_to_process)
-            task = progress.add_task(f"Processing {len(services_to_process)} services...", total=total_queries)
+            task = progress.add_task(f"Processing {len(services_to_process)} services in batches of {batch_size}...", total=total_queries)
             
-            for service in services_to_process:
-                service_queries = queries_by_service[service]
-                progress.update(task, description=f"Processing {service}...")
+            # Process services in batches
+            for batch_start in range(0, len(services_to_process), batch_size):
+                batch_end = min(batch_start + batch_size, len(services_to_process))
+                batch_services = services_to_process[batch_start:batch_end]
                 
-                for query in service_queries:
-                    try:
-                        posts = await scraper.scrape(query['query_url'], max_posts=limit)
-                        
-                        if posts:
-                            # Batch process with LLM
-                            batches = batch_processor.batch_posts_by_tokens(posts, service)
+                console.print(f"\n[cyan]Processing batch {batch_start//batch_size + 1}: {', '.join(batch_services)}[/cyan]")
+                
+                # Process all services in this batch
+                for service in batch_services:
+                    service_queries = queries_by_service[service]
+                    progress.update(task, description=f"Processing {service}...")
+                    
+                    for query in service_queries:
+                        try:
+                            posts = await scraper.scrape(query['query_url'], max_posts=limit)
                             
-                            for batch in batches:
-                                result = await batch_processor.process_batch(batch, service, llm)
-                                all_results.append(result)
-                        
-                        progress.update(task, advance=1)
-                        await asyncio.sleep(1)  # Rate limiting
-                        
-                    except Exception as e:
-                        logger.error(f"Failed to process {service}: {e}")
-                        progress.update(task, advance=1)
+                            if posts:
+                                # Batch process with LLM
+                                batches = batch_processor.batch_posts_by_tokens(posts, service)
+                                
+                                for batch in batches:
+                                    result = await batch_processor.process_batch(batch, service, llm)
+                                    all_results.append(result)
+                            
+                            progress.update(task, advance=1)
+                            await asyncio.sleep(1)  # Rate limiting
+                            
+                        except Exception as e:
+                            logger.error(f"Failed to process {service}: {e}")
+                            progress.update(task, advance=1)
+                
+                # Add delay between batches if not the last batch
+                if batch_end < len(services_to_process):
+                    console.print(f"[dim]Waiting 2 seconds before next batch...[/dim]")
+                    await asyncio.sleep(2)
         
         # Save results
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -752,15 +782,13 @@ def batch_scrape(category, limit, max_services, priority):
 
 
 @scrape.command(name="all")
-@click.option('-l', '--limit', default=20, help='Max posts per search (default: 20)')
-@click.option('-c', '--category', help='Filter by category (video, audio, code, etc)')
-@click.option('-p', '--priority', 
-              type=click.Choice(['ultra', 'critical', 'high', 'all']),
-              default='ultra',
-              help='Service priority level')
+@click.option('--category', '-c', help='Filter by category (video, audio, code, etc)')
+@click.option('--limit', '-l', default=20, help='Max posts per search (default: 20)')
+@click.option('--priority', type=click.Choice(['ultra', 'critical', 'high', 'all']), default='all', help='Service priority level')
+@click.option('--query-limit', '-q', default=20, help='Number of query patterns per service (default: 20, max: 20)')
+@click.option('--delay', '-d', default=5, help='Delay in seconds between services (default: 5)')
 @click.option('--dry-run', is_flag=True, help='Show what would be processed without running')
-@click.option('--delay', default=5, help='Delay in seconds between services (default: 5)')
-def scrape_all(limit: int, category: str, priority: str, dry_run: bool, delay: int):
+def scrape_all(category: str, limit: int, priority: str, query_limit: int, delay: int, dry_run: bool):
     """Process all priority services one by one."""
     show_banner()
     
@@ -830,7 +858,7 @@ def scrape_all(limit: int, category: str, priority: str, dry_run: bool, delay: i
                 ['uv', 'run', 'scapo', 'scrape', 'targeted', 
                  '--service', service_name, 
                  '--limit', str(limit),
-                 '--max-queries', '5'],
+                 '--query-limit', str(query_limit)],
                 capture_output=True,
                 text=True
             )

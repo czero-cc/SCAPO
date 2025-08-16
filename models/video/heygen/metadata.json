@@ -1,13 +1,13 @@
 {
   "service": "HeyGen",
   "category": "video",
-  "last_updated": "2025-08-14T18:53:16.244752",
-  "extraction_timestamp": "2025-08-14T18:53:16.033238",
+  "last_updated": "2025-08-16T13:04:47.180134",
+  "extraction_timestamp": "2025-08-16T12:43:38.426608",
   "data_sources": [
     "Reddit API",
     "Community discussions"
   ],
-  "posts_analyzed": 48,
+  "posts_analyzed": 226,
   "confidence": "medium",
   "version": "1.0.0"
 }

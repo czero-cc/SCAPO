@@ -1,15 +1,13 @@
 {
   "service": "RunwayML",
-  "last_updated": "2025-08-14T18:55:25.373596",
+  "last_updated": "2025-08-16T13:04:47.882957",
   "recommended_settings": {
     "setting_0": {
-      "description": "pretrained_model_name_or_path=runwayml/stable-diffusion-v1-5"
+      "description": "model=runwayml/stable-diffusion-v1-5"
     }
   },
   "cost_optimization": {
-    "tip_0": "Runwayml Gen3 Too expensive than Kling and Vidu",
-    "tip_1": "lol see the limit is 3",
-    "pricing": "RunwayML Monthly 6 10s for 15$"
+    "tip_0": "daily_image_limit=3"
   },
   "sources": [
     "Reddit community",

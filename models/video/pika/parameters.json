@@ -1,0 +1,13 @@
+{
+  "service": "Pika",
+  "last_updated": "2025-08-16T13:04:45.145886",
+  "recommended_settings": {},
+  "cost_optimization": {
+    "pricing": "$1.26/mo for 5GB tier",
+    "tip_1": "free for next five days"
+  },
+  "sources": [
+    "Reddit community",
+    "User reports"
+  ]
+}
