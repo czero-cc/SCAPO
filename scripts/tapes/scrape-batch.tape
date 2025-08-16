@@ -20,18 +20,18 @@ Set PlaybackSpeed 1
 Set TypingSpeed 30 ms
 Set CursorBlink false
 Set Theme "Catppuccin Frappe"
-Set WaitTimeout 160 s
+Set WaitTimeout 1000 s
 
 # hidden: go to right folder
 Hide
-Type "cd .."
+Type "cd ../../"
 Enter
 Type "clear"
 Enter
 Show
 
 # Batch process multiple priority services
-Type "uv run scapo scrape batch --max-services 1 --category audio"
+Type "uv run scapo scrape batch --category audio --batch-size 10 --limit 1"
 Sleep 1 s
 Enter
 Sleep 1 s
