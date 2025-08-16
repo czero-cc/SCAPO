@@ -1,9 +1,14 @@
 {
   "service": "Fliki",
-  "last_updated": "2025-08-12T20:07:02.186904",
+  "last_updated": "2025-08-16T18:55:32.499344",
   "recommended_settings": {},
   "cost_optimization": {
-    "tip_0": "25% off premium plans for a whole year"
+    "tip_0": "Promo code FLIKI25ANNUAL (supposed to give 25% off yearly plans) didn\u2019t work at checkout.",
+    "tip_1": "Fliki doesn\u2019t offer a free trial of the Premium plan.",
+    "tip_2": "Premium features include 1000+ ultra\u2011realistic voices, longer exports, no watermark, and advanced video tools.",
+    "tip_3": "Promo code FLIKISUMMER50 didn\u2019t work.",
+    "tip_4": "25% off discount on Fliki premium plans for a whole year.",
+    "tip_5": "Promo code FLIKIBLACKFRIDAY50 didn\u2019t work."
   },
   "sources": [
     "Reddit community",

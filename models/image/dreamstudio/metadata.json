@@ -1,0 +1,13 @@
+{
+  "service": "DreamStudio",
+  "category": "image",
+  "last_updated": "2025-08-16T17:49:37.250570",
+  "extraction_timestamp": "2025-08-16T17:07:10.940959",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 149,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

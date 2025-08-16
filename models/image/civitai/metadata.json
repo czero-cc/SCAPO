@@ -1,0 +1,13 @@
+{
+  "service": "CivitAI",
+  "category": "image",
+  "last_updated": "2025-08-16T17:49:38.252539",
+  "extraction_timestamp": "2025-08-16T17:40:18.097614",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 130,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

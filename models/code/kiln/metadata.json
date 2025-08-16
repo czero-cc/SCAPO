@@ -1,0 +1,13 @@
+{
+  "service": "Kiln",
+  "category": "code",
+  "last_updated": "2025-08-16T18:29:24.579659",
+  "extraction_timestamp": "2025-08-16T18:12:59.239428",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 358,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

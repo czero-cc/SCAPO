@@ -1,0 +1,13 @@
+{
+  "service": "Jasper",
+  "category": "image",
+  "last_updated": "2025-08-16T17:49:36.921999",
+  "extraction_timestamp": "2025-08-16T17:02:01.206160",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 373,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

@@ -1,0 +1,13 @@
+{
+  "service": "DALLE 2",
+  "category": "image",
+  "last_updated": "2025-08-16T17:49:37.101723",
+  "extraction_timestamp": null,
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 113,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

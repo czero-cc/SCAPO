@@ -43,6 +43,18 @@ class GitHubAwesomeListSource(ServiceDiscoverySource):
             {
                 'url': 'https://raw.githubusercontent.com/mahseema/awesome-ai-tools/main/README.md',
                 'name': 'awesome-ai-tools'
+            },
+            {
+                'url': 'https://raw.githubusercontent.com/filipecalegario/awesome-generative-ai/main/README.md',
+                'name': 'filipecalegario-awesome-generative-ai'
+            },
+            {
+                'url': 'https://raw.githubusercontent.com/aishwaryanr/awesome-generative-ai-guide/main/README.md',
+                'name': 'awesome-generative-ai-guide'
+            },
+            {
+                'url': 'https://raw.githubusercontent.com/eudk/awesome-ai-tools/main/README.md',
+                'name': 'eudk-awesome-ai-tools'
             }
         ]
     
@@ -114,18 +126,55 @@ class GitHubAwesomeListSource(ServiceDiscoverySource):
     
     def _is_likely_service(self, name: str, url: str, description: str) -> bool:
         """Determine if entry is likely an AI service vs documentation/article"""
-        # Skip common non-service entries
-        skip_keywords = ['tutorial', 'guide', 'paper', 'book', 'course', 'awesome', 'list', 'collection']
+        # Skip common non-service entries and article-like titles
+        skip_keywords = ['tutorial', 'guide', 'paper', 'book', 'course', 'awesome', 'list', 
+                        'collection', 'article', 'news', 'blog', 'post', 'story', 'report',
+                        'analysis', 'review', 'opinion', 'party', 'craze', 'trend', 'revolution',
+                        'gold rush', 'heralds', 'announcement', 'release', 'sparks', 'transform']
         name_lower = name.lower()
+        description_lower = description.lower()
         
+        # Skip if name sounds like an article title (too many words, contains sentence-like structure)
+        if len(name.split()) > 5:  # Service names are typically short
+            return False
+            
         if any(keyword in name_lower for keyword in skip_keywords):
             return False
+            
+        # Skip descriptions that sound like article summaries
+        article_indicators = ['article', 'op-ed', 'announcement', 'examination of', 'summarizing',
+                             'comprehensive look', 'explores', 'discusses', 'argues']
+        if any(indicator in description_lower for indicator in article_indicators):
+            return False
         
-        # Look for service indicators
-        service_indicators = ['api', 'platform', 'tool', 'model', 'generate', 'ai', 'llm', 'gpt']
+        # Check URL patterns that indicate actual services
+        if url:
+            # Skip news/article URLs
+            if any(domain in url.lower() for domain in ['/blog/', '/news/', '/article/', 
+                                                         'medium.com', 'arxiv.org', 'youtube.com']):
+                return False
+                
+            service_domains = ['.ai', '.io', 'api.', 'app.', 'platform.', 'cloud.', 
+                             'huggingface.co', 'openai.com', 'anthropic.com', 'cohere.com',
+                             'replicate.com', 'stability.ai', 'github.com/.*api', 'github.com/.*sdk']
+            if any(domain in url.lower() for domain in service_domains):
+                return True
+        
+        # Look for service indicators (more specific now)
+        service_indicators = ['api access', 'platform for', 'sdk', 'model api', 'inference', 
+                             'endpoint', 'deployment', 'hosted', 'cloud service', 'playground',
+                             'provides access to', 'api for']
         combined = (name + ' ' + description).lower()
         
-        return any(indicator in combined for indicator in service_indicators)
+        # Require at least one strong indicator
+        strong_indicators = ['api', 'sdk', 'platform', 'model api', 'inference service', 
+                            'provides access to', 'api for']
+        has_strong = any(indicator in combined for indicator in strong_indicators)
+        
+        # If name looks like a product name (single word or two words max)
+        is_product_name = len(name.split()) <= 2
+        
+        return has_strong and is_product_name
     
     def _clean_service_name(self, name: str) -> str:
         """Clean and normalize service name"""
@@ -137,20 +186,71 @@ class GitHubAwesomeListSource(ServiceDiscoverySource):
     
     def _infer_category(self, name: str, description: str) -> str:
         """Infer service category from name and description"""
+        name_lower = name.lower()
+        desc_lower = description.lower()
         combined = (name + ' ' + description).lower()
         
-        categories = {
-            'text': ['llm', 'language model', 'chat', 'text', 'gpt', 'claude', 'writing'],
-            'image': ['image', 'picture', 'photo', 'art', 'dall-e', 'midjourney', 'stable diffusion'],
-            'video': ['video', 'animation', 'motion', 'runway', 'pika'],
-            'audio': ['audio', 'voice', 'speech', 'music', 'sound', 'tts', 'elevenlabs'],
-            'code': ['code', 'copilot', 'programming', 'developer'],
-            'multimodal': ['multimodal', 'vision', 'multi-modal']
-        }
+        # Priority-based categorization with weighted keywords
+        # Check for most specific categories first
         
-        for category, keywords in categories.items():
-            if any(keyword in combined for keyword in keywords):
-                return category
+        # Video - very specific keywords
+        video_strong = ['video', 'animation', 'motion graphics', 'movie', 'film', 'footage']
+        video_names = ['synthesia', 'heygen', 'runway', 'pika', 'pictory', 'fliki', 
+                      'invideo', 'luma', 'kaiber', 'genmo', 'hour one', 'deepbrain',
+                      'colossyan', 'elai', 'steve.ai', 'rephrase', 'd-id']
+        if any(kw in name_lower for kw in video_names):
+            return 'video'
+        if any(kw in combined for kw in video_strong):
+            return 'video'
+        
+        # Audio - specific audio keywords
+        audio_strong = ['audio', 'voice', 'speech', 'music', 'sound', 'tts', 'text-to-speech',
+                       'voice synthesis', 'voice clone', 'podcast', 'transcription']
+        audio_names = ['elevenlabs', 'eleven labs', 'murf', 'play.ht', 'wellsaid', 
+                      'resemble', 'descript', 'overdub', 'respeecher', 'sonantic']
+        if any(kw in name_lower for kw in audio_names):
+            return 'audio'
+        if any(kw in combined for kw in audio_strong):
+            return 'audio'
+        
+        # Image - specific image keywords
+        image_strong = ['image', 'picture', 'photo', 'art', 'drawing', 'illustration',
+                       'graphic', 'visual', 'paint', 'design', 'artwork']
+        image_names = ['dall-e', 'midjourney', 'stable diffusion', 'leonardo', 'ideogram',
+                      'dreamstudio', 'nightcafe', 'artbreeder', 'deep dream']
+        if any(kw in name_lower for kw in image_names):
+            return 'image'
+        if any(kw in combined for kw in image_strong):
+            return 'image'
+        
+        # Code - programming specific
+        code_strong = ['code', 'programming', 'developer', 'ide', 'compiler', 'debugger',
+                      'repository', 'github', 'coding assistant']
+        code_names = ['copilot', 'codeium', 'cursor', 'tabnine', 'codex', 'replit']
+        if any(kw in name_lower for kw in code_names):
+            return 'code'
+        if any(kw in combined for kw in code_strong):
+            return 'code'
+        
+        # Multimodal - handles multiple modalities
+        multimodal_keywords = ['multimodal', 'vision', 'multi-modal', 'image and text',
+                              'vision language', 'vlm', 'visual language']
+        if any(kw in combined for kw in multimodal_keywords):
+            return 'multimodal'
+        
+        # Text/LLM - language models and text generation
+        # Check this AFTER more specific categories to avoid false positives
+        text_strong = ['llm', 'language model', 'chatbot', 'chat assistant', 'gpt', 
+                      'claude', 'writing assistant', 'text generation', 'conversation']
+        text_names = ['openai', 'anthropic', 'claude', 'gpt', 'mistral', 'llama',
+                     'gemini', 'palm', 'character.ai', 'replika']
+        # Exclude if it's clearly about text-to-X conversion
+        if not any(pattern in combined for pattern in ['text-to-video', 'text-to-image', 
+                                                       'text-to-speech', 'text-to-audio']):
+            if any(kw in name_lower for kw in text_names):
+                return 'text'
+            if any(kw in combined for kw in text_strong):
+                return 'text'
         
         return 'general'
 

@@ -1,13 +1,13 @@
 {
   "service": "Fliki",
   "category": "text",
-  "last_updated": "2025-08-12T20:07:02.281408",
-  "extraction_timestamp": null,
+  "last_updated": "2025-08-16T18:55:32.621056",
+  "extraction_timestamp": "2025-08-16T18:49:06.894427",
   "data_sources": [
     "Reddit API",
     "Community discussions"
   ],
-  "posts_analyzed": 23,
+  "posts_analyzed": 75,
   "confidence": "medium",
   "version": "1.0.0"
 }

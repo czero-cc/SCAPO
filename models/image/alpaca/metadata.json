@@ -1,0 +1,13 @@
+{
+  "service": "Alpaca",
+  "category": "image",
+  "last_updated": "2025-08-16T17:49:37.392759",
+  "extraction_timestamp": null,
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 137,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

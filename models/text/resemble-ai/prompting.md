@@ -1,10 +1,11 @@
 # Resemble AI Prompting Guide
 
-*Last updated: 2025-08-14*
+*Last updated: 2025-08-16*
 
 ## Tips & Techniques
 
-- Resemble.ai is an AI-powered text-to-voice and voice-to-voice generator that can be trained with your own voice, or offers a range of voices to choose from.
+- Emotion Control: Fine-tune speech expressiveness with a single parameter. From deadpan to dramatic—works out of the box.
+- Zero-Shot Voice Cloning: Clone any voice with just a few seconds of reference audio. No finetuning needed.
 
 ## Sources
 

@@ -103,6 +103,13 @@ cp .env.example .env
 Get your API key from [openrouter.ai](https://openrouter.ai/)
 * you can also use local LLMs (Ollama, LMstudio). Check [QUICKSTART.md](./QUICKSTART.md)
 
+#### Important: Update Model Context Cache (OpenRouter users)
+```bash
+# REQUIRED for optimal performance - fetches accurate token limits
+scapo update-context  # Creates cache for faster processing
+```
+Without this, SCAPO defaults to 4096 tokens (severely limiting batch efficiency)
+
 
 ### 3. Start Extracting Optimization Tips
 
@@ -274,18 +281,17 @@ MAX_POSTS_PER_SCRAPE=100               # Limit per source
 ```
 Hand-wavy breakdown: With 5 posts, extraction success ~20%. With 20+ posts, success jumps to ~80%.
 
-## 🤖 MCP Server for Claude Desktop
+## 🤖 MCP Server (Optional Reader)
 
-Query your extracted tips directly in Claude (reads from models/ folder - run scrapers first!):
+**Note:** The MCP server is a reader that queries your already-extracted tips. You must run SCAPO scrapers first to populate the models/ folder!
 
 ```json
-// Add to %APPDATA%\Claude\claude_desktop_config.json (Windows)
-// or ~/Library/Application Support/Claude/claude_desktop_config.json (macOS)
+// Add to your client's mcp config.json 
 {
   "mcpServers": {
     "scapo": {
       "command": "npx",
-      "args": ["@scapo/mcp-server"],
+      "args": ["@arahangua/scapo-mcp-server"],
       "env": {
         "SCAPO_MODELS_PATH": "C:\\path\\to\\scapo\\models"  // Your models folder
       }
@@ -293,9 +299,6 @@ Query your extracted tips directly in Claude (reads from models/ folder - run sc
   }
 }
 ```
-
-Then ask Claude: "Get me best practices for GitHub Copilot" or "What models are good for coding?"
-
 See [mcp/README.md](mcp/README.md) for full setup and available commands.
 
 ## 🎨 Interactive TUI
@@ -378,7 +381,12 @@ Built as part of the CZero Engine project to improve AI application development.
 - [OpenRouter](https://openrouter.ai/) for accessible AI APIs
 - Coffee ☕ for making this possible
 - [Ollama](https://ollama.com/) and [LMstudio](https://lmstudio.ai/) for awesome local LLM experience
-- [Awesome Generative AI](https://github.com/steven2358/awesome-generative-ai) & [Awesome AI Tools](https://github.com/mahseema/awesome-ai-tools) for service discovery
+- Service discovery powered by awesome lists:
+  - [steven2358/awesome-generative-ai](https://github.com/steven2358/awesome-generative-ai)
+  - [mahseema/awesome-ai-tools](https://github.com/mahseema/awesome-ai-tools)
+  - [filipecalegario/awesome-generative-ai](https://github.com/filipecalegario/awesome-generative-ai)
+  - [aishwaryanr/awesome-generative-ai-guide](https://github.com/aishwaryanr/awesome-generative-ai-guide)
+  - [eudk/awesome-ai-tools](https://github.com/eudk/awesome-ai-tools)
 - All opensource contributors in this space
 
 ---

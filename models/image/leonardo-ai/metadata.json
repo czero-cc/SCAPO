@@ -1,0 +1,13 @@
+{
+  "service": "Leonardo AI",
+  "category": "image",
+  "last_updated": "2025-08-16T18:35:13.933886",
+  "extraction_timestamp": null,
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 193,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

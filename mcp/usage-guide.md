@@ -13,15 +13,11 @@ The SCAPO MCP (Model Context Protocol) server provides intelligent access to AI/
 ### Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-org/scapo.git
-cd scapo/mcp
+# After installing SCAPO, the MCP server can be used directly
+npx @arahangua/scapo-mcp-server
 
-# Install dependencies
-npm install
-
-# Or run directly with npx (no installation needed)
-npx @scapo/mcp-server
+# Or install globally
+npm install -g @arahangua/scapo-mcp-server
 ```
 
 ### Basic Setup
@@ -43,8 +39,8 @@ npm start
 {
   "mcpServers": {
     "scapo": {
-      "command": "node",
-      "args": ["/path/to/scapo/mcp/index.js"],
+      "command": "npx",
+      "args": ["@arahangua/scapo-mcp-server"],
       "env": {
         "SCAPO_MODELS_PATH": "/path/to/scapo/models"
       }
