@@ -24,7 +24,7 @@ Set WaitTimeout 120 s
 
 # hidden: go to right folder
 Hide
-Type "cd .."
+Type "cd ../../"
 Enter
 Type "clear"
 Enter

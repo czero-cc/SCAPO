@@ -24,14 +24,14 @@ Set WaitTimeout 160 s
 
 # hidden: go to right folder
 Hide
-Type "cd .."
+Type "cd ../../"
 Enter
 Type "clear"
 Enter
 Show
 
 # Extract optimization tips for specific services
-Type "uv run scapo scrape targeted --service 'Eleven Labs' --limit 2"
+Type "uv run scapo scrape targeted --service 'Eleven Labs' --limit 20 --query-limit 20"
 Sleep 1s
 Enter
 Wait
