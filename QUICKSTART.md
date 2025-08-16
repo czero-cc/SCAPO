@@ -87,6 +87,7 @@ scapo scrape all --dry-run                                       # Preview what 
 - **--batch-size**: Services to process in parallel (3 = default balance)
 - **--limit**: Posts per search (20+ recommended for best results)
 
+
 ## 📚 Approach 2: Legacy Sources
 
 Use predefined sources from `sources.yaml`:

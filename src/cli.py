@@ -390,6 +390,7 @@ def discover_services(update, show_all):
 @click.option("--parallel", default=3, help="Number of parallel scraping tasks")
 @click.option("--dry-run", is_flag=True, help="Show queries without running")
 def targeted_scrape(service, category, limit, priority, query_limit, parallel, dry_run):
+
     """Run targeted searches for specific AI services."""
     show_banner()
     
@@ -405,6 +406,7 @@ def targeted_scrape(service, category, limit, priority, query_limit, parallel, d
         
         # Access outer scope variables
         nonlocal service, category, limit, priority, query_limit, parallel, dry_run
+
         
         # Generate targeted searches
         generator = TargetedSearchGenerator()
@@ -419,6 +421,7 @@ def targeted_scrape(service, category, limit, priority, query_limit, parallel, d
             else:
                 console.print(f"[yellow]Using {query_limit} query patterns[/yellow]")
             queries = generator.generate_queries_for_service(service, max_queries=query_limit, use_all_patterns=use_all_patterns)
+
             
             if not queries:
                 console.print(f"[red]Could not generate queries for service: {service}[/red]")
@@ -428,6 +431,7 @@ def targeted_scrape(service, category, limit, priority, query_limit, parallel, d
             use_all_patterns = query_limit >= 20  # Use all patterns if query_limit is 20 or more
             all_queries = generator.generate_queries(
                 max_queries=1000,  # Get all services
+
                 category_filter=category if category else None,
                 use_all_patterns=use_all_patterns
             )
