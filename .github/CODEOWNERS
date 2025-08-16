@@ -6,7 +6,6 @@
 
 # Documentation
 *.md @czero-cc
-/docs/ @czero-cc
 
 # Core functionality
 /src/core/ @czero-cc

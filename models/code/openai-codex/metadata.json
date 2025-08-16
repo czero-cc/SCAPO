@@ -1,0 +1,13 @@
+{
+  "service": "OpenAI Codex",
+  "category": "code",
+  "last_updated": "2025-08-16T18:29:23.810555",
+  "extraction_timestamp": null,
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 172,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

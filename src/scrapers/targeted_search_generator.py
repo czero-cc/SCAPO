@@ -208,6 +208,13 @@ class TargetedSearchGenerator:
             for service_key, service_data in filtered_services.items():
                 prioritized_services.append((service_data, 'medium'))
         
+        # If we still have room and want more services, add non-priority ones
+        # This ensures we use all available services when max_queries allows
+        if len(prioritized_services) < len(filtered_services):
+            for service_key, service_data in filtered_services.items():
+                if service_data not in [s[0] for s in prioritized_services]:
+                    prioritized_services.append((service_data, 'normal'))
+        
         # Calculate services to process
         if use_all_patterns:
             # When using all patterns, we generate 20 queries per service
@@ -247,7 +254,7 @@ class TargetedSearchGenerator:
             if len(queries) >= max_queries:
                 break
         
-        logger.info(f"Generated {len(queries)} targeted search queries")
+        logger.info(f"Generated {len(queries)} targeted search queries (max_queries={max_queries})")
         
         # Group by service for summary
         by_service = {}

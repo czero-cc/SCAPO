@@ -1,0 +1,13 @@
+{
+  "service": "OpenArt",
+  "category": "image",
+  "last_updated": "2025-08-16T17:49:37.678257",
+  "extraction_timestamp": "2025-08-16T17:16:13.255325",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 106,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

@@ -302,66 +302,70 @@ Generic tips or unrelated content (3D printing, cooking, etc.) MUST BE IGNORED."
                 # The LLM will naturally work with what fits in its context
                 prompt = self.create_batch_prompt(posts, service_name)
         
-        try:
-            # Process with LLM
-            response = await llm_processor.process_raw_prompt(prompt)
-            
-            # Check if response is empty
-            if not response or response.strip() == "":
-                logger.error(f"Empty response from LLM for {service_name}")
-                return {
-                    "service": service_name,
-                    "problems": [],
-                    "tips": [],
-                    "cost_info": [],
-                    "settings": [],
-                    "error": "Empty response from LLM",
-                    "batch_size": len(posts)
-                }
-            
-            # Parse response
-            result = json.loads(response)
-            
-            # Clean settings - ensure they are strings not dicts
-            if 'settings' in result:
-                clean_settings = []
-                for setting in result['settings']:
-                    if isinstance(setting, dict):
-                        # Convert dict to string format
-                        for key, value in setting.items():
-                            clean_settings.append(f"{key} = {value}")
-                    elif isinstance(setting, str):
-                        clean_settings.append(setting)
-                result['settings'] = clean_settings
-            
-            # Add metadata
-            result['batch_size'] = len(posts)
-            result['timestamp'] = datetime.now().isoformat()
-            result['token_count'] = prompt_tokens
-            
-            return result
-            
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse LLM response: {e}")
-            logger.error(f"Raw response: {response[:500]}...")
-            return {
-                "service": service_name,
-                "problems": [],
-                "optimizations": [],
-                "parameters": [],
-                "error": str(e),
-                "batch_size": len(posts)
-            }
-        except Exception as e:
-            logger.error(f"Batch processing failed: {e}")
-            return {
-                "service": service_name,
-                "problems": [],
-                "optimizations": [],
-                "parameters": [],
-                "error": str(e),
-                "batch_size": len(posts)
-            }
+        # Retry logic for JSON parsing failures
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                # Process with LLM
+                response = await llm_processor.process_raw_prompt(prompt)
+                
+                # Check if response is empty
+                if not response or response.strip() == "":
+                    logger.error(f"Empty response from LLM for {service_name}")
+                    return {
+                        "service": service_name,
+                        "problems": [],
+                        "tips": [],
+                        "cost_info": [],
+                        "settings": [],
+                        "error": "Empty response from LLM",
+                        "batch_size": len(posts)
+                    }
+                
+                # Parse response
+                result = json.loads(response)
+                
+                # Clean settings - ensure they are strings not dicts
+                if 'settings' in result:
+                    clean_settings = []
+                    for setting in result['settings']:
+                        if isinstance(setting, dict):
+                            # Convert dict to string format
+                            for key, value in setting.items():
+                                clean_settings.append(f"{key} = {value}")
+                        elif isinstance(setting, str):
+                            clean_settings.append(setting)
+                    result['settings'] = clean_settings
+                
+                # Add metadata
+                result['batch_size'] = len(posts)
+                result['timestamp'] = datetime.now().isoformat()
+                result['token_count'] = prompt_tokens
+                
+                # Success - return result
+                if attempt > 0:
+                    logger.info(f"JSON parsing succeeded on attempt {attempt + 1} for {service_name}")
+                return result
+                
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse LLM response (attempt {attempt + 1}/{max_retries}): {e}")
+                logger.error(f"Raw response: {response[:500]}...")
+                
+                if attempt < max_retries - 1:
+                    logger.info(f"Retrying JSON parsing for {service_name}...")
+                    # Add a small delay before retry
+                    await asyncio.sleep(1)
+                else:
+                    logger.error(f"All {max_retries} attempts failed for {service_name}")
+                    return {
+                        "service": service_name,
+                        "problems": [],
+                        "tips": [],
+                        "cost_info": [],
+                        "settings": [],
+                        "error": str(e),
+                        "batch_size": len(posts)
+                    }
     
     def merge_results(self, results: List[Dict]) -> Dict:
         """Merge multiple batch results into one"""

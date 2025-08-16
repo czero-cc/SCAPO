@@ -430,7 +430,7 @@ def targeted_scrape(service, category, limit, priority, query_limit, parallel, d
             # Generate queries based on category or all services
             use_all_patterns = query_limit >= 20  # Use all patterns if query_limit is 20 or more
             all_queries = generator.generate_queries(
-                max_queries=1000,  # Get all services
+                max_queries=2000,  # Get all services
 
                 category_filter=category if category else None,
                 use_all_patterns=use_all_patterns
@@ -478,14 +478,17 @@ def targeted_scrape(service, category, limit, priority, query_limit, parallel, d
         async def process_query(query, scraper, batch_processor, llm, semaphore):
             async with semaphore:
                 try:
+                    logger.info(f"Searching {query['service']}: {query['pattern_type']}")
                     posts = await scraper.scrape(query['query_url'], max_posts=limit)
                     
                     if posts:
+                        logger.info(f"Found {len(posts)} posts for {query['service']} ({query['pattern_type']})")
                         # Batch process with LLM
                         batches = batch_processor.batch_posts_by_tokens(posts, query['service'])
                         
                         results = []
-                        for batch in batches:
+                        for batch_idx, batch in enumerate(batches, 1):
+                            logger.info(f"Processing batch {batch_idx}/{len(batches)} for {query['service']} ({query['pattern_type']})")
                             result = await batch_processor.process_batch(batch, query['service'], llm)
                             results.append(result)
                         
@@ -495,6 +498,7 @@ def targeted_scrape(service, category, limit, priority, query_limit, parallel, d
                             'results': results
                         }
                     else:
+                        logger.info(f"No posts found for {query['service']} ({query['pattern_type']})")
                         return {
                             'query': query,
                             'posts_found': 0,
@@ -660,7 +664,7 @@ def batch_scrape(category, limit, priority, query_limit, batch_size, dry_run):
         # Generate queries for all services in category
         use_all_patterns = query_limit >= 20  # Use all patterns if query_limit is 20 or more
         all_queries = generator.generate_queries(
-            max_queries=1000,  # High limit to get all services
+            max_queries=2000,  # High limit to get all services
             category_filter=category,
             use_all_patterns=use_all_patterns
         )
@@ -726,17 +730,21 @@ def batch_scrape(category, limit, priority, query_limit, batch_size, dry_run):
                     service_queries = queries_by_service[service]
                     progress.update(task, description=f"Processing {service}...")
                     
-                    for query in service_queries:
+                    for query_idx, query in enumerate(service_queries, 1):
                         try:
+                            logger.info(f"Query {query_idx}/{len(service_queries)} for {service}: {query['pattern_type']}")
                             posts = await scraper.scrape(query['query_url'], max_posts=limit)
                             
                             if posts:
+                                logger.info(f"Found {len(posts)} posts for {service} ({query['pattern_type']})")
                                 # Batch process with LLM
                                 batches = batch_processor.batch_posts_by_tokens(posts, service)
                                 
                                 for batch in batches:
                                     result = await batch_processor.process_batch(batch, service, llm)
                                     all_results.append(result)
+                            else:
+                                logger.info(f"No posts found for {service} ({query['pattern_type']})")
                             
                             progress.update(task, advance=1)
                             await asyncio.sleep(1)  # Rate limiting
@@ -1190,6 +1198,81 @@ def search_models(query, limit):
         table.add_row(result["model"], result["category"])
     
     console.print(table)
+
+
+@cli.command(name="update-context")
+@click.option("--force", "-f", is_flag=True, help="Force update even if cache is recent")
+def update_context(force):
+    """Update OpenRouter model context cache for accurate token limits."""
+    show_banner()
+    
+    from src.services.openrouter_context import OpenRouterContextManager
+    from pathlib import Path
+    import json
+    from datetime import datetime, timedelta
+    
+    cache_file = Path("data/cache/openrouter_models.json")
+    
+    # Check if cache exists and is recent
+    if cache_file.exists() and not force:
+        try:
+            with open(cache_file, 'r') as f:
+                data = json.load(f)
+            fetched_at = datetime.fromisoformat(data.get("fetched_at", ""))
+            age = datetime.now() - fetched_at
+            
+            if age < timedelta(hours=24):
+                console.print(f"[yellow]Cache is recent ({age.total_seconds()/3600:.1f} hours old)[/yellow]")
+                console.print(f"[dim]Use --force to update anyway[/dim]")
+                
+                # Show current stats
+                models = data.get("models", {})
+                console.print(f"\n[cyan]Current cache:[/cyan] {len(models)} models")
+                
+                # Show some high-context models
+                high_context = [(k, v) for k, v in models.items() if v.get("context_length", 0) > 100000]
+                if high_context:
+                    console.print(f"[green]High-context models:[/green] {len(high_context)}")
+                    for model_id, info in sorted(high_context[:5], key=lambda x: x[1]["context_length"], reverse=True):
+                        console.print(f"  • {model_id}: {info['context_length']:,} tokens")
+                return
+        except Exception:
+            pass  # Cache is invalid, proceed with update
+    
+    # Update cache
+    console.print("[cyan]Fetching model context information from OpenRouter...[/cyan]")
+    
+    manager = OpenRouterContextManager()
+    models = manager.get_all_models()
+    
+    if not models:
+        console.print("[red]Failed to fetch models from OpenRouter[/red]")
+        console.print("[yellow]Make sure you have OPENROUTER_API_KEY set in .env[/yellow]")
+        return
+    
+    # Save cache
+    cache_file.parent.mkdir(parents=True, exist_ok=True)
+    manager.save_cache(str(cache_file))
+    
+    # Show results
+    console.print(f"\n[green]✓ Updated context cache with {len(models)} models[/green]")
+    
+    # Show some interesting stats
+    high_context = [(k, v) for k, v in models.items() if v.get("context_length", 0) > 100000]
+    free_models = [(k, v) for k, v in models.items() 
+                   if v.get("pricing", {}).get("prompt", 1) == 0]
+    
+    console.print(f"\n[bold]Model Statistics:[/bold]")
+    console.print(f"  • Total models: {len(models)}")
+    console.print(f"  • High-context (>100k): {len(high_context)}")
+    console.print(f"  • Free models: {len(free_models)}")
+    
+    if high_context:
+        console.print(f"\n[bold]Top 5 High-Context Models:[/bold]")
+        for model_id, info in sorted(high_context[:5], key=lambda x: x[1]["context_length"], reverse=True):
+            console.print(f"  • {model_id}: {info['context_length']:,} tokens")
+    
+    console.print(f"\n[dim]Cache saved to: {cache_file}[/dim]")
 
 
 @cli.command()
