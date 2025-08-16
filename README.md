@@ -364,10 +364,8 @@ Help us build the community knowledge base for AI service optimization!
 
 ## 📚 Documentation
 
-- [Configuration Guide](docs/CONFIGURATION.md)
 - [Quick Start Guide](QUICKSTART.md) 
 - [Contributing Guide](CONTRIBUTING.md)
-- [Add New Source Tutorial (legacy method)](docs/ADD_NEW_SOURCE.md)
 
 ## 📜 License
 
