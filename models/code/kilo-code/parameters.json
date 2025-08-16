@@ -1,0 +1,42 @@
+{
+  "service": "Kilo Code",
+  "last_updated": "2025-08-16T18:29:24.997151",
+  "recommended_settings": {
+    "setting_0": {
+      "description": "profile=Nano"
+    },
+    "setting_1": {
+      "description": "model=GPT-4.1-Nano"
+    },
+    "setting_2": {
+      "description": "global_shortcut=Cmd+Shift+A (Mac) or Ctrl+Shift+A (Windows)"
+    },
+    "setting_3": {
+      "description": "indexer=built-in"
+    },
+    "setting_4": {
+      "description": "llama.cpp=server_mode"
+    },
+    "setting_5": {
+      "description": "embedder=nomic-embed-code"
+    },
+    "setting_6": {
+      "description": "vector_db=Qdrant_Docker"
+    },
+    "setting_7": {
+      "description": "api_key_source=build.nvidia.com"
+    }
+  },
+  "cost_optimization": {
+    "pricing": "After three calls to Claude 4 Sonnet in Kilo Code, $1.50 was used, indicating high cost per request.",
+    "tip_1": "Openrouter doc states that purchasing at least 10 credits increases daily limit to 1000 :free model requests per day.",
+    "tip_2": "Kilo just broke 1 trillion tokens/month",
+    "tip_3": "Kilo Code covers all costs for premium models during the workshop, allowing use of Claude Opus 4, Gemini 2.5 Pro, GPT-4.1, and other premium models completely free of charge.",
+    "tip_4": "No monthly minimums or hidden fees",
+    "tip_5": "300% bonus credits on the next 500 top ups"
+  },
+  "sources": [
+    "Reddit community",
+    "User reports"
+  ]
+}

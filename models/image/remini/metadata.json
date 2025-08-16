@@ -1,0 +1,13 @@
+{
+  "service": "Remini",
+  "category": "image",
+  "last_updated": "2025-08-16T17:49:38.532390",
+  "extraction_timestamp": "2025-08-16T17:44:33.087901",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 128,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

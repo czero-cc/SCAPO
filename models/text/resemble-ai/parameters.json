@@ -1,9 +1,9 @@
 {
   "service": "Resemble AI",
-  "last_updated": "2025-08-14T18:54:04.497022",
+  "last_updated": "2025-08-16T18:55:33.003913",
   "recommended_settings": {},
   "cost_optimization": {
-    "pricing": "$0.006 per second"
+    "pricing": "basic package starts at $0.006 per second (because that\u2019s not confusing)."
   },
   "sources": [
     "Reddit community",

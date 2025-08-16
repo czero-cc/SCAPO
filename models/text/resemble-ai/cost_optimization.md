@@ -1,8 +1,9 @@
 # Resemble AI - Cost Optimization Guide
 
-*Last updated: 2025-08-14*
+*Last updated: 2025-08-16*
 
 ## Cost & Pricing Information
 
-- $0.006 per second
+- Pricing: basic package starts at $0.006 per second (because that’s not confusing).
+- basic package starts at $0.006 per second (because that’s not confusing).
 

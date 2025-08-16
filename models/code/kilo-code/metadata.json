@@ -1,0 +1,13 @@
+{
+  "service": "Kilo Code",
+  "category": "code",
+  "last_updated": "2025-08-16T18:29:25.127674",
+  "extraction_timestamp": "2025-08-16T18:18:16.158336",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 138,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

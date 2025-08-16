@@ -1,0 +1,13 @@
+{
+  "service": "Wordware",
+  "category": "code",
+  "last_updated": "2025-08-16T18:29:24.061206",
+  "extraction_timestamp": "2025-08-16T18:09:34.011851",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 53,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

@@ -23,6 +23,9 @@ cp .env.example .env
 LLM_PROVIDER=openrouter
 OPENROUTER_API_KEY=sk-or-v1-your-key-here  # Get from openrouter.ai
 OPENROUTER_MODEL=your_model
+
+# IMPORTANT: Update model context cache for accurate batching
+scapo update-context  # Without this, defaults to 4096 tokens (poor performance!)
 ```
 
 #### Option B: Ollama (Local)
@@ -117,26 +120,26 @@ scapo models search "copilot"         # Search for specific models
 cat models/audio/eleven-labs/cost_optimization.md
 ```
 
-### 5. (Optional) Use with Claude Desktop
+### 5. (Optional) MCP Server - Query Your Extracted Tips
 
-Add SCAPO as an MCP server to query your extracted tips (from models/ folder) directly in Claude:
+**Important:** The MCP server only reads tips you've already extracted. Run scrapers first (Steps 3-4) to populate models/ folder!
+
+Add SCAPO as an MCP server to query your extracted tips directly in MCP-compatible clients:
 
 ```json
-// Add to claude_desktop_config.json
+// Add to config.json
 {
   "mcpServers": {
     "scapo": {
       "command": "npx",
-      "args": ["@scapo/mcp-server"],
+      "args": ["@arahangua/scapo-mcp-server"],
       "env": {
-        "SCAPO_MODELS_PATH": "path/to/scapo/models"
+        "SCAPO_MODELS_PATH": "/path/to/scapo/models"
       }
     }
   }
 }
 ```
-
-Then ask Claude: "Get best practices for Midjourney" - no Python needed!
 
 ## 📊 Understanding the Output
 
@@ -149,6 +152,19 @@ models/
 │       ├── cost_optimization.md # Resource optimization
 │       ├── pitfalls.md         # Known issues & fixes
 │       └── parameters.json     # Recommended settings
+```
+
+## ⚙️ Utility Commands
+
+```bash
+# Update OpenRouter model context cache (for accurate batching)
+scapo update-context        # Updates if >24h old
+scapo update-context -f     # Force update
+
+# View extracted tips
+scapo tui                   # Interactive TUI explorer
+scapo models list           # List all extracted models
+scapo models search "copilot"  # Search for specific models
 ```
 
 ## ⚙️ The --limit flag

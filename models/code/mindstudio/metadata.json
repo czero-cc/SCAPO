@@ -1,0 +1,13 @@
+{
+  "service": "MindStudio",
+  "category": "code",
+  "last_updated": "2025-08-16T18:29:25.398108",
+  "extraction_timestamp": "2025-08-16T18:22:32.004848",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 72,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

@@ -1,0 +1,37 @@
+{
+  "service": "Astria",
+  "last_updated": "2025-08-16T17:49:38.038921",
+  "recommended_settings": {
+    "setting_0": {
+      "description": "SDXL Steps=30"
+    },
+    "setting_1": {
+      "description": "Size=768x1024"
+    },
+    "setting_2": {
+      "description": "dpm++2m_karras=true"
+    },
+    "setting_3": {
+      "description": "Film grain=true"
+    },
+    "setting_4": {
+      "description": "Super-Resolution=true"
+    },
+    "setting_5": {
+      "description": "Face Correct=true"
+    },
+    "setting_6": {
+      "description": "Face swap=true"
+    },
+    "setting_7": {
+      "description": "Inpaint Faces=true"
+    }
+  },
+  "cost_optimization": {
+    "pricing": "$100 for a configuration that's better than mine."
+  },
+  "sources": [
+    "Reddit community",
+    "User reports"
+  ]
+}

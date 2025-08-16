@@ -38,10 +38,12 @@ Fixes #(issue number)
 ## 🧪 Testing
 
 <!-- How did you test your changes? -->
-- [ ] Ran `uv run pytest`
-- [ ] Tested intelligent scraper with: `scapo scrape run --sources [source] --limit 5`
-- [ ] Verified LLM processing worked correctly
-- [ ] Checked that only AI/ML content was processed
+- [ ] Tested service discovery: `uv run scapo scrape discover --update`
+- [ ] Tested targeted scraping: `uv run scapo scrape targeted --service "[service]" --limit 10`
+- [ ] Tested batch processing: `uv run scapo scrape batch --category [category] --limit 10 --batch-size 2`
+- [ ] Verified LLM extraction quality (checked generated files in `models/`)
+- [ ] Tested TUI explorer: `uv run scapo tui`
+- [ ] For OpenRouter users: Updated context cache with `uv run scapo update-context`
 - [ ] Other testing (please describe):
 
 ## 📸 Screenshots (if applicable)

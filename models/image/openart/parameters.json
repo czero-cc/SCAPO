@@ -1,0 +1,13 @@
+{
+  "service": "OpenArt",
+  "last_updated": "2025-08-16T17:49:37.607203",
+  "recommended_settings": {},
+  "cost_optimization": {
+    "tip_0": "all of these have a free tier so you can test them out.",
+    "tip_1": "Open Art 50% OFF"
+  },
+  "sources": [
+    "Reddit community",
+    "User reports"
+  ]
+}

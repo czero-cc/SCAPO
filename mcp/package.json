@@ -1,6 +1,6 @@
 {
-  "name": "@scapo/mcp-server",
-  "version": "1.0.0",
+  "name": "@arahangua/scapo-mcp-server",
+  "version": "1.0.4",
   "description": "Stay Calm and Prompt On (SCAPO) - MCP server for AI/ML best practices",
   "main": "index.js",
   "type": "module",

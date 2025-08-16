@@ -1,0 +1,35 @@
+{
+  "service": "klingai",
+  "last_updated": "2025-08-16T17:49:37.894942",
+  "recommended_settings": {
+    "setting_0": {
+      "description": "kling_access_key=config.kling_access_key"
+    },
+    "setting_1": {
+      "description": "kling_secret_key=config.kling_secret_key"
+    },
+    "setting_2": {
+      "description": "alg=HS256"
+    },
+    "setting_3": {
+      "description": "typ=JWT"
+    },
+    "setting_4": {
+      "description": "iss=self.ak"
+    },
+    "setting_5": {
+      "description": "exp=int(time.time())+1800"
+    },
+    "setting_6": {
+      "description": "nbf=int(time.time())-5"
+    }
+  },
+  "cost_optimization": {
+    "pricing": "$6 for each 8 second video",
+    "tip_1": "20 credits per 5 seconds for video generation"
+  },
+  "sources": [
+    "Reddit community",
+    "User reports"
+  ]
+}

@@ -1,12 +1,23 @@
 {
   "service": "Character.AI",
-  "last_updated": "2025-08-12T20:04:44.782084",
+  "last_updated": "2025-08-16T18:55:31.740490",
   "recommended_settings": {
     "setting_0": {
-      "description": "Enable 'Goro' in the experimental settings under the Style tab"
+      "description": "character_definition_limit=32000"
+    },
+    "setting_1": {
+      "description": "reported_character_definition_limit=3200"
+    },
+    "setting_2": {
+      "description": "memory_pins=5"
+    },
+    "setting_3": {
+      "description": "style=Goro"
     }
   },
-  "cost_optimization": {},
+  "cost_optimization": {
+    "unlimited_option": "Free unlimited messaging"
+  },
   "sources": [
     "Reddit community",
     "User reports"
