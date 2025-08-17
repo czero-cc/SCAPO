@@ -25,6 +25,11 @@ Your support helps the project grow and reach more people.
 
 </div>
 
+> Looking for a quick way to browse all tips without installing anything?
+>
+> ▶️ Visit the live website: [czero-cc.github.io/SCAPO](https://czero-cc.github.io/SCAPO/)
+>
+
 ## 🤔 What is SCAPO?
 
 **Keywords**: AI cost optimization, prompt engineering, LLM tips, OpenAI, Claude, Anthropic, Midjourney, Stable Diffusion, ElevenLabs, GitHub Copilot, reduce AI costs, AI service best practices, Reddit scraper, community knowledge base
