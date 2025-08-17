@@ -23,12 +23,14 @@ Your support helps the project grow and reach more people.
 
 [![Star on GitHub](https://img.shields.io/github/stars/czero-cc/SCAPO?style=social)](https://github.com/czero-cc/SCAPO/stargazers)
 
-</div>
-
+> 
 > Looking for a quick way to browse all tips without installing anything?
 >
 > ▶️ Visit the live website: [czero-cc.github.io/SCAPO](https://czero-cc.github.io/SCAPO/)
->
+> 
+
+</div>
+
 
 ## 🤔 What is SCAPO?
 
