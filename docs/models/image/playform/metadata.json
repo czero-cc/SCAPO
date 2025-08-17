@@ -1,0 +1,13 @@
+{
+  "service": "Playform",
+  "category": "image",
+  "last_updated": "2025-08-16T17:49:38.393934",
+  "extraction_timestamp": "2025-08-16T17:43:08.370701",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 70,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

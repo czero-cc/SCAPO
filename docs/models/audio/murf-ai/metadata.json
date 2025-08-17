@@ -1,0 +1,13 @@
+{
+  "service": "Murf AI",
+  "category": "audio",
+  "last_updated": "2025-08-16T13:46:28.892820",
+  "extraction_timestamp": "2025-08-16T13:25:27.042235",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 111,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

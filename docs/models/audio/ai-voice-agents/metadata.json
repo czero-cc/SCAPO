@@ -1,0 +1,13 @@
+{
+  "service": "AI Voice Agents",
+  "category": "audio",
+  "last_updated": "2025-08-16T11:02:52.029054",
+  "extraction_timestamp": "2025-08-16T11:00:51.607016",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 14,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

@@ -1,0 +1,29 @@
+{
+  "service": "DALLE 2",
+  "last_updated": "2025-08-16T17:49:37.028423",
+  "recommended_settings": {
+    "setting_0": {
+      "description": "generation_increments=115"
+    },
+    "setting_1": {
+      "description": "price_per_increments=$15"
+    },
+    "setting_2": {
+      "description": "daily_use_limit_price=$6.52"
+    },
+    "setting_3": {
+      "description": "image_output=4"
+    },
+    "setting_4": {
+      "description": "image_output_v=3"
+    }
+  },
+  "cost_optimization": {
+    "pricing": "$6.52 for what has been up until now a daily use limit",
+    "tip_1": "Dalle-2 is > 1,000x as dollar efficient as hiring a human illustrator."
+  },
+  "sources": [
+    "Reddit community",
+    "User reports"
+  ]
+}

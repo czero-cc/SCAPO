@@ -1,0 +1,13 @@
+{
+  "service": "MeetGeek",
+  "category": "video",
+  "last_updated": "2025-08-16T13:04:52.935395",
+  "extraction_timestamp": "2025-08-16T12:59:13.624879",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 6,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

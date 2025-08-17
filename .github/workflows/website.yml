@@ -1,0 +1,61 @@
+name: Deploy docs (from main)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'models/**'
+      - 'docs/**'
+      - 'scripts/generate_models_manifest.py'
+      - '.github/workflows/website.yml'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Generate models manifest
+        run: python3 scripts/generate_models_manifest.py
+
+      - name: Copy models into docs
+        run: |
+          mkdir -p docs/models
+          rsync -a --delete models/ docs/models/
+      - name: Copy docs assets
+        run: |
+          mkdir -p docs/assets
+          cp -f assets/guy_freaking_out2.png docs/assets/ || true
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+

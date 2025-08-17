@@ -1,0 +1,13 @@
+{
+  "service": "FlexApp",
+  "category": "code",
+  "last_updated": "2025-08-16T18:29:24.858720",
+  "extraction_timestamp": "2025-08-16T18:15:53.143001",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 128,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

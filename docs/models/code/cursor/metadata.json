@@ -1,0 +1,13 @@
+{
+  "service": "Cursor",
+  "category": "code",
+  "last_updated": "2025-08-14T18:49:40.361209",
+  "extraction_timestamp": null,
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 100,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

@@ -1,0 +1,13 @@
+{
+  "service": "Lovo.ai",
+  "category": "video",
+  "last_updated": "2025-08-16T13:04:54.434190",
+  "extraction_timestamp": "2025-08-16T13:02:23.552424",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 42,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

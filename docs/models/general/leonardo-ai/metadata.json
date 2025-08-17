@@ -1,0 +1,13 @@
+{
+  "service": "Leonardo AI",
+  "category": "general",
+  "last_updated": "2025-08-14T18:50:25.753422",
+  "extraction_timestamp": "2025-08-14T18:50:25.553694",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 45,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

@@ -1,0 +1,13 @@
+{
+  "service": "Sora",
+  "category": "video",
+  "last_updated": "2025-08-16T13:04:49.996421",
+  "extraction_timestamp": "2025-08-16T12:50:04.667498",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 380,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

@@ -1,0 +1,13 @@
+{
+  "service": "Midjourney",
+  "category": "general",
+  "last_updated": "2025-08-14T16:23:43.168341",
+  "extraction_timestamp": "2025-08-14T16:23:40.652184",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 83,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

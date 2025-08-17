@@ -1,0 +1,29 @@
+{
+  "service": "CivitAI",
+  "last_updated": "2025-08-16T17:49:38.182838",
+  "recommended_settings": {
+    "setting_0": {
+      "description": "remote_api_tokens.url_regex=civitai.com"
+    },
+    "setting_1": {
+      "description": "remote_api_tokens.token=11111111111111111111111111111111111"
+    },
+    "setting_2": {
+      "description": "engine=kohya"
+    },
+    "setting_3": {
+      "description": "unetLR=0.0001"
+    },
+    "setting_4": {
+      "description": "clipSkip=1"
+    },
+    "setting_5": {
+      "description": "loraType=lora"
+    }
+  },
+  "cost_optimization": {},
+  "sources": [
+    "Reddit community",
+    "User reports"
+  ]
+}

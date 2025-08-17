@@ -1,0 +1,13 @@
+{
+  "service": "Mistral",
+  "category": "text",
+  "last_updated": "2025-08-14T11:31:55.424264",
+  "extraction_timestamp": "2025-08-14T11:31:55.424271",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 0,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

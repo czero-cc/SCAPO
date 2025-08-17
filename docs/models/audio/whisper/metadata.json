@@ -1,0 +1,13 @@
+{
+  "service": "Whisper",
+  "category": "audio",
+  "last_updated": "2025-08-16T13:46:29.973474",
+  "extraction_timestamp": "2025-08-16T13:31:51.650731",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 380,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

@@ -1,0 +1,13 @@
+{
+  "service": "Kiln",
+  "last_updated": "2025-08-16T18:29:24.454944",
+  "recommended_settings": {},
+  "cost_optimization": {
+    "tip_0": "Sadly if i want to set Ethereum to the Staking Pool it needs a fee of 0,038 (!) ethereum which is a lot.",
+    "tip_1": "fee of 0,038 ethereum"
+  },
+  "sources": [
+    "Reddit community",
+    "User reports"
+  ]
+}

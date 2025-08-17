@@ -1,0 +1,13 @@
+{
+  "service": "Qwen Coder 30bA3B",
+  "category": "general",
+  "last_updated": "2025-08-14T15:54:54.688679",
+  "extraction_timestamp": "2025-08-14T15:54:54.688687",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 0,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

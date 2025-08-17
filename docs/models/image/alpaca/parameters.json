@@ -1,0 +1,13 @@
+{
+  "service": "Alpaca",
+  "last_updated": "2025-08-16T17:49:37.323180",
+  "recommended_settings": {},
+  "cost_optimization": {
+    "tip_0": "0 transaction cost (PFOF)",
+    "pricing": "$1000 per month platform fee"
+  },
+  "sources": [
+    "Reddit community",
+    "User reports"
+  ]
+}

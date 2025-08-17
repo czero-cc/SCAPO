@@ -1,0 +1,13 @@
+{
+  "service": "qwen code 30b",
+  "category": "general",
+  "last_updated": "2025-08-14T11:31:55.674653",
+  "extraction_timestamp": "2025-08-14T11:31:55.674661",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 0,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

@@ -1,0 +1,13 @@
+{
+  "service": "Phygital",
+  "category": "image",
+  "last_updated": "2025-08-16T17:49:37.821434",
+  "extraction_timestamp": "2025-08-16T17:21:27.937519",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 107,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

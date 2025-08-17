@@ -1,0 +1,13 @@
+{
+  "service": "modyfi",
+  "category": "image",
+  "last_updated": "2025-08-16T17:49:37.533393",
+  "extraction_timestamp": "2025-08-16T17:13:11.124434",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 42,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

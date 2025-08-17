@@ -1,0 +1,13 @@
+{
+  "service": "Astria",
+  "category": "image",
+  "last_updated": "2025-08-16T17:49:38.107465",
+  "extraction_timestamp": "2025-08-16T17:31:15.393602",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 163,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

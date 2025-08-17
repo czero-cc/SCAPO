@@ -1,0 +1,13 @@
+{
+  "service": "Pika",
+  "category": "video",
+  "last_updated": "2025-08-16T13:04:45.881806",
+  "extraction_timestamp": "2025-08-16T12:40:48.986723",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 333,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

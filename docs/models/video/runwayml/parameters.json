@@ -1,0 +1,16 @@
+{
+  "service": "RunwayML",
+  "last_updated": "2025-08-16T13:04:47.882957",
+  "recommended_settings": {
+    "setting_0": {
+      "description": "model=runwayml/stable-diffusion-v1-5"
+    }
+  },
+  "cost_optimization": {
+    "tip_0": "daily_image_limit=3"
+  },
+  "sources": [
+    "Reddit community",
+    "User reports"
+  ]
+}
