@@ -15,7 +15,7 @@
 [![MCP Ready](https://img.shields.io/badge/Claude-MCP%20Ready-purple.svg)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-live-brightgreen)](https://czero-cc.github.io/scapo/)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-live-brightgreen)](czero-cc.github.io/SCAPO)
 
 
 ### 🎯 Real usage tips from real users for AI services
