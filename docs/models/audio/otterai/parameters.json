@@ -1,0 +1,12 @@
+{
+  "service": "Otter.ai",
+  "last_updated": "2025-08-16T13:46:29.085739",
+  "recommended_settings": {},
+  "cost_optimization": {
+    "tip_0": "subscription tier that had the 100 hours of audio transcription per month"
+  },
+  "sources": [
+    "Reddit community",
+    "User reports"
+  ]
+}

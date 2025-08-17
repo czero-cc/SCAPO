@@ -1,0 +1,16 @@
+{
+  "service": "Generative AI Video",
+  "last_updated": "2025-08-16T13:04:50.720592",
+  "recommended_settings": {
+    "setting_0": {
+      "description": "aspect_ratio=9:16"
+    }
+  },
+  "cost_optimization": {
+    "pricing": "$250/month"
+  },
+  "sources": [
+    "Reddit community",
+    "User reports"
+  ]
+}

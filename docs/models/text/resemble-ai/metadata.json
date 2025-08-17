@@ -1,0 +1,13 @@
+{
+  "service": "Resemble AI",
+  "category": "text",
+  "last_updated": "2025-08-16T18:55:33.152001",
+  "extraction_timestamp": "2025-08-16T18:54:13.363333",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 97,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

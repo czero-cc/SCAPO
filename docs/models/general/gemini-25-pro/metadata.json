@@ -1,0 +1,13 @@
+{
+  "service": "Gemini 2.5 Pro",
+  "category": "general",
+  "last_updated": "2025-08-14T11:31:55.508947",
+  "extraction_timestamp": "2025-08-14T11:31:55.508953",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 0,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

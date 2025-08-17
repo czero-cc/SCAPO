@@ -1,0 +1,13 @@
+{
+  "service": "R1, R2",
+  "category": "general",
+  "last_updated": "2025-08-14T16:25:44.284098",
+  "extraction_timestamp": "2025-08-14T16:25:44.284105",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 0,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

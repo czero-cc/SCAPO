@@ -1,0 +1,13 @@
+{
+  "service": "Character.AI",
+  "category": "text",
+  "last_updated": "2025-08-16T18:55:31.861763",
+  "extraction_timestamp": "2025-08-16T18:37:41.343566",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 355,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

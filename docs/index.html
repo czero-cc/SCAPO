@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SCAPO Models Browser</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <h1 id="siteHome" class="home-link" title="Go to all models">SCAPO Models</h1>
+      <div class="gh-cta">
+        <a id="ghRepoLink" class="gh-link" href="https://github.com/czero-cc/SCAPO" target="_blank" rel="noopener" aria-label="Open GitHub repository" title="Open GitHub repository">
+          <svg class="gh-icon" viewBox="0 0 16 16" width="22" height="22" aria-hidden="true">
+            <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+          </svg>
+        </a>
+        <span id="ghStars" class="gh-stars" title="Stargazers count">—</span>
+      </div>
+      <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle theme">🌙</button>
+      <div class="search-wrap">
+        <input id="searchInput" class="search" type="search" placeholder="Search models, tags..." />
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="sidebar">
+        <div class="sidebar-hero">
+          <a id="siteHomeImg" href="#" title="Go to all models">
+            <img src="assets/guy_freaking_out2.png" alt="CZero fun illustration" />
+          </a>
+        </div>
+        <div class="sidebar-info">
+          <p>
+            SCAPO extracts specific usage tips and real discussions from Reddit about AI services — not generic prompt advice. Browse models by category and open a model to see prompting, pitfalls, parameters, and cost optimization notes.
+          </p>
+        </div>
+        <nav id="categoryNav" class="categories"></nav>
+      </aside>
+
+      <section class="content" style="min-height: auto;">
+        <div id="listView" class="list-view"></div>
+        <article id="detailView" class="detail-view hidden">
+          <button id="backButton" class="back">← Back</button>
+          <h2 id="detailTitle"></h2>
+          <p id="detailSummary" class="summary"></p>
+          <div id="detailMeta" class="meta"></div>
+          <div id="detailFiles" class="files"></div>
+          <div id="fileContent" class="file-content"></div>
+        </article>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span id="generatedAt"></span>
+      <span class="footer-credit">Built with ❤️ by The <a href="https://czero.cc/" target="_blank" rel="noopener">CZero Engine</a> Team</span>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+  </html>
+
+

@@ -1,0 +1,44 @@
+{
+  "service": "OpenAI Codex",
+  "last_updated": "2025-08-16T18:29:23.687512",
+  "recommended_settings": {
+    "setting_0": {
+      "description": "model=your-kobold-model"
+    },
+    "setting_1": {
+      "description": "provider=kobold"
+    },
+    "setting_2": {
+      "description": "providers.kobold.name=Kobold"
+    },
+    "setting_3": {
+      "description": "providers.kobold.baseURL=http://localhost:5001/v1"
+    },
+    "setting_4": {
+      "description": "providers.kobold.envKey=KOBOLD_API_KEY"
+    },
+    "setting_5": {
+      "description": "config_path=~/.codex/config.json"
+    },
+    "setting_6": {
+      "description": "provider=ollama"
+    },
+    "setting_7": {
+      "description": "model=deepseek-r1:1.5b"
+    },
+    "setting_8": {
+      "description": "command=codex -p ollama -m deepseek-r1:1.5b"
+    }
+  },
+  "cost_optimization": {
+    "tip_0": "One-time/USD",
+    "pricing": "pushed past $200 worth of usage in a day",
+    "tip_2": "included in a Pro subscription with no visible rate limits",
+    "tip_3": "effectively becomes free for targeted tasks that would normally rack up API fees",
+    "tip_4": "Included in a Pro subscription with no visible rate limits"
+  },
+  "sources": [
+    "Reddit community",
+    "User reports"
+  ]
+}

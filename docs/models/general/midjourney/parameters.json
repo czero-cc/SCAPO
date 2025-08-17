@@ -1,0 +1,22 @@
+{
+  "service": "Midjourney",
+  "last_updated": "2025-08-14T16:23:43.126195",
+  "recommended_settings": {
+    "setting_0": {
+      "description": "temperature=0.7"
+    }
+  },
+  "cost_optimization": {
+    "tip_0": "300 requests/day",
+    "tip_1": "Creation failed\n\nRelax mode for video is limited to Pro and Mega subscribers. You may upgrade your plan, or switch to fast mode.",
+    "pricing": "$4 additional rollover gpu time",
+    "tip_3": "Price is 0.03 ETH (or equivalent) per API Key!",
+    "tip_4": "Midjourney - All API Tiers available, at a fraction of the price. ask for specific tier.",
+    "tip_5": "10k character limit",
+    "tip_6": "Midjourney tier I use is \u00a330 a month"
+  },
+  "sources": [
+    "Reddit community",
+    "User reports"
+  ]
+}

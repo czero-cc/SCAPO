@@ -1,0 +1,13 @@
+{
+  "service": "Luma Dream Machine",
+  "category": "text",
+  "last_updated": "2025-08-16T18:55:32.876982",
+  "extraction_timestamp": "2025-08-16T18:53:04.830332",
+  "data_sources": [
+    "Reddit API",
+    "Community discussions"
+  ],
+  "posts_analyzed": 35,
+  "confidence": "medium",
+  "version": "1.0.0"
+}

@@ -1,0 +1,24 @@
+{
+  "service": "Leonardo AI",
+  "last_updated": "2025-08-16T18:35:13.807189",
+  "recommended_settings": {
+    "setting_0": {
+      "description": "resolution=1280x768"
+    },
+    "setting_1": {
+      "description": "resolution=1024x640"
+    }
+  },
+  "cost_optimization": {
+    "tip_0": "Leonardo allows you to produce free AI images with daily renewal credits, which are sufficient to experiment with art styles. You can buy more because the AI tool is worthwhile to use.",
+    "tip_1": "The \"Video\" tool costs 250 credits instead of 25.",
+    "tip_2": "Pricing calculator link: https://docs.leonardo.ai/docs/plan-with-the-pricing-calculator",
+    "tip_3": "Dear Leonardo AI Team, paying customers could use Flow State completely free of charge.",
+    "tip_4": "According to the calculator, the cost per image with my configuration should be 16 API credits, but in reality, it costs 24.",
+    "tip_5": "Video tool costs 250 credits instead of 25."
+  },
+  "sources": [
+    "Reddit community",
+    "User reports"
+  ]
+}

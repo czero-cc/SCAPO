@@ -1,0 +1,13 @@
+{
+  "service": "Suno AI",
+  "last_updated": "2025-08-16T11:02:51.784012",
+  "recommended_settings": {},
+  "cost_optimization": {
+    "tip_0": "2,500 credits allow generating 250 songs, not 500 as advertised",
+    "pricing": "$10/month"
+  },
+  "sources": [
+    "Reddit community",
+    "User reports"
+  ]
+}
