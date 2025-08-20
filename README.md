@@ -1,3 +1,5 @@
+[![MSeeP.ai Security Assessment Badge](https://mseep.net/pr/czero-cc-scapo-badge.png)](https://mseep.ai/app/czero-cc-scapo)
+
 # 🧘 Stay Calm and Prompt On (SCAPO)
 
 <div align="center">
